@@ -49,7 +49,16 @@ func (s *Scanner) unread() {
 	_ = s.r.UnreadRune()
 }
 
-// scanIdentifiant scans the next whitespace
+func (s *Scanner) peek() rune {
+	ch, _, err := s.r.ReadRune()
+	if err != nil {
+		ch = eof
+	}
+	s.r.UnreadRune()
+	return ch
+}
+
+// scanWhitespace scans the next whitespace
 func (s *Scanner) scanWhitespace() (ch Character, lit string) {
 	// buffer to store contigous whitespace character
 	var buf bytes.Buffer
@@ -70,6 +79,13 @@ func (s *Scanner) scanWhitespace() (ch Character, lit string) {
 // scanIdentifiant scans the next identifiant, a two runes keyword
 func (s *Scanner) scanIdentifiant() (Character, string) {
 	ch := s.read()
+	tmp := s.peek()
+	// we check it's really an identifiant, only one character and it's a letter
+	if !isWhitespace(tmp) || ch < 'A' || ch > 'Z' {
+		s.unread()
+		s.unread()
+		return s.scanToken()
+	}
 	return Identifiant, "." + string(ch)
 }
 
