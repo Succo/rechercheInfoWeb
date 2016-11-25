@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"sort"
+	"strconv"
 )
 
 // field serves to identify the different field
@@ -80,7 +81,7 @@ func (p *Parser) parse() bool {
 	if ch == Token {
 		// then the only token is the id
 		if p.field == id {
-			p.id = int(id)
+			p.id, _ = strconv.Atoi(lit)
 			return true
 		}
 		if p.isCommonWord(lit) {
@@ -93,9 +94,6 @@ func (p *Parser) parse() bool {
 }
 
 func (p *Parser) Parse() {
-	for {
-		if !p.parse() {
-			break
-		}
+	for p.parse() {
 	}
 }
