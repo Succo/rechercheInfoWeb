@@ -55,8 +55,11 @@ func NewParser(r io.Reader, commonWord []string) *Parser {
 }
 
 // isCommonWord returns wether the word is part of the common word list
-// It expeccts a sorted list, as provide by NewParser
+// It expects a sorted list, as provide by NewParser
 func (p *Parser) isCommonWord(lit string) bool {
+	if len(lit) < 3 {
+		return true
+	}
 	for _, word := range p.commonWord {
 		if lit == word {
 			return true
