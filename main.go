@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 )
 
@@ -26,4 +27,6 @@ func main() {
 
 	parser := NewParser(cacm, cw)
 	parser.Parse()
+
+	fmt.Println(parser.IndexSize())
 }

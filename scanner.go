@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"unicode"
 )
 
 // Character represent a lexical token
@@ -20,13 +21,8 @@ const (
 
 var eof = rune(0)
 
-func isWhitespace(ch rune) bool {
-	return ch == ' ' || ch == '\t' || ch == '\n'
-}
-
-func isLetter(ch rune) bool {
-	// Not precise enough, but should not be a problem here
-	return !isWhitespace(ch) && ch != '.' && ch != eof
+func tokenMember(ch rune) bool {
+	return unicode.IsLetter(ch) || unicode.IsDigit(ch)
 }
 
 type Scanner struct {
@@ -67,7 +63,7 @@ func (s *Scanner) scanWhitespace() (ch Character, lit string) {
 		ch := s.read()
 		if ch == eof {
 			break
-		} else if !isWhitespace(ch) {
+		} else if !unicode.IsSpace(ch) {
 			s.unread()
 			break
 		}
@@ -81,7 +77,7 @@ func (s *Scanner) scanIdentifiant() (Character, string) {
 	ch := s.read()
 	tmp := s.peek()
 	// we check it's really an identifiant, only one character and it's a letter
-	if !isWhitespace(tmp) || ch < 'A' || ch > 'Z' {
+	if !unicode.IsSpace(tmp) || ch < 'A' || ch > 'Z' {
 		s.unread()
 		s.unread()
 		return s.scanToken()
@@ -90,15 +86,14 @@ func (s *Scanner) scanIdentifiant() (Character, string) {
 }
 
 func (s *Scanner) scanToken() (Character, string) {
-	// buffer to store contigous whitespace character
+	// buffer to store the character
 	var buf bytes.Buffer
-	buf.WriteRune(s.read())
 	for {
 		ch := s.read()
 		if ch == eof {
 			break
 		}
-		if !isLetter(ch) {
+		if !tokenMember(ch) {
 			s.unread()
 			break
 		}
@@ -110,14 +105,14 @@ func (s *Scanner) scanToken() (Character, string) {
 // Scan reads the next "word"
 func (s *Scanner) Scan() (Character, string) {
 	ch := s.read()
-	if isWhitespace(ch) {
+	if unicode.IsSpace(ch) {
 		s.unread()
 		return s.scanWhitespace()
 	}
 	if ch == '.' {
 		return s.scanIdentifiant()
 	}
-	if isLetter(ch) {
+	if tokenMember(ch) {
 		s.unread()
 		return s.scanToken()
 	}

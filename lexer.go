@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 // field serves to identify the different field
@@ -30,6 +32,11 @@ func identToField(ident string) field {
 	}
 	// This correspond to all untreated field
 	return other
+}
+
+func cleanWord(word string) string {
+	word = strings.ToLower(word)
+	return word
 }
 
 type Parser struct {
@@ -62,7 +69,9 @@ func (p *Parser) isCommonWord(lit string) bool {
 }
 
 func (p *Parser) addWord(lit string) {
-	p.index[lit] = append(p.index[lit], p.id)
+	if lit != "" {
+		p.index[lit] = append(p.index[lit], p.id)
+	}
 }
 
 // Parses one "word"
@@ -75,6 +84,9 @@ func (p *Parser) parse() bool {
 		p.field = identToField(lit)
 		return true
 	}
+	if p.field == other {
+		return true
+	}
 	if ch == WS {
 		return true
 	}
@@ -84,6 +96,7 @@ func (p *Parser) parse() bool {
 			p.id, _ = strconv.Atoi(lit)
 			return true
 		}
+		lit = cleanWord(lit)
 		if p.isCommonWord(lit) {
 			return true
 		}
@@ -96,4 +109,11 @@ func (p *Parser) parse() bool {
 func (p *Parser) Parse() {
 	for p.parse() {
 	}
+	for k, v := range p.index {
+		fmt.Println(k, v)
+	}
+}
+
+func (p *Parser) IndexSize() int {
+	return len(p.index)
 }
