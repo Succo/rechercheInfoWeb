@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"io"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -43,15 +41,25 @@ type Parser struct {
 	s          *Scanner
 	field      field
 	id         int
-	commonWord []string
+	token      map[string]bool
+	commonWord map[string]bool
 	index      map[string][]int
 }
 
 // NewParser creates a parser struct from an io reader and a common word list
 func NewParser(r io.Reader, commonWord []string) *Parser {
-	sort.Strings(commonWord)
 	index := make(map[string][]int)
-	return &Parser{s: NewScanner(r), commonWord: commonWord, index: index}
+
+	// construct and initialise the common word set
+	cw := make(map[string]bool)
+	for _, word := range commonWord {
+		cw[word] = true
+	}
+
+	// construct the token set
+	token := make(map[string]bool)
+
+	return &Parser{s: NewScanner(r), commonWord: cw, index: index, token: token}
 }
 
 // isCommonWord returns wether the word is part of the common word list
@@ -60,21 +68,13 @@ func (p *Parser) isCommonWord(lit string) bool {
 	if len(lit) < 3 {
 		return true
 	}
-	for _, word := range p.commonWord {
-		if lit == word {
-			return true
-		}
-		if lit > word {
-			return false
-		}
-	}
-	return false
+	_, found := p.commonWord[lit]
+	return found
 }
 
+// addWord adds the token to the index
 func (p *Parser) addWord(lit string) {
-	if lit != "" {
-		p.index[lit] = append(p.index[lit], p.id)
-	}
+	p.index[lit] = append(p.index[lit], p.id)
 }
 
 // Parses one "word"
@@ -99,10 +99,13 @@ func (p *Parser) parse() bool {
 			p.id, _ = strconv.Atoi(lit)
 			return true
 		}
+		// we add to token to a token set to count it's size
+		p.token[lit] = true
 		lit = cleanWord(lit)
 		if p.isCommonWord(lit) {
 			return true
 		}
+		// We add non commob word to the token list
 		p.addWord(lit)
 		return true
 	}
@@ -112,11 +115,12 @@ func (p *Parser) parse() bool {
 func (p *Parser) Parse() {
 	for p.parse() {
 	}
-	for k, v := range p.index {
-		fmt.Println(k, v)
-	}
 }
 
 func (p *Parser) IndexSize() int {
 	return len(p.index)
+}
+
+func (p *Parser) TokenSize() int {
+	return len(p.token)
 }

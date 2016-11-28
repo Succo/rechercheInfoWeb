@@ -28,5 +28,6 @@ func main() {
 	parser := NewParser(cacm, cw)
 	parser.Parse()
 
-	fmt.Println(parser.IndexSize())
+	fmt.Printf("Size of the vocabulary %d\n", parser.IndexSize())
+	fmt.Printf("Number of token %d\n", parser.TokenSize())
 }
