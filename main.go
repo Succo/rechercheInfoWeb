@@ -18,16 +18,18 @@ var commonWordFile string
 var plotFile string
 
 const (
-	outputFormat = `For the whole corpus (%d) :
+	outputFormat = `For the whole corpus (%d documents) :
 Size of the vocabulary %d
 Number of token %d
-For half the corpus (%d):
+For half the corpus (%d documents):
 Size of the vocabulary %d
 Number of token %d
 
 Heaps Law gives us:
 b = %f
 k = %f
+
+For 1 million token we get %f as vocabulary size
 `
 )
 
@@ -84,7 +86,8 @@ func printDetails(parser *Parser) {
 		halfVocabSize,
 		halfTokenSize,
 		b,
-		k)
+		k,
+		k*math.Pow(1000000000, b))
 }
 
 func draw(parser *Parser) {
