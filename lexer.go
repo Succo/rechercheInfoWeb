@@ -37,6 +37,8 @@ func cleanWord(word string) string {
 	return word
 }
 
+// Parser is the struct that will parse using a Scanner
+// and hold the parsed data
 type Parser struct {
 	s          *Scanner
 	field      field
@@ -105,22 +107,25 @@ func (p *Parser) parse() bool {
 		if p.isCommonWord(lit) {
 			return true
 		}
-		// We add non commob word to the token list
+		// We add non common word to the token list
 		p.addWord(lit)
 		return true
 	}
 	return true
 }
 
+// Parse will parse the whole buffer
 func (p *Parser) Parse() {
 	for p.parse() {
 	}
 }
 
+// IndexSize returns the terme -> Document index size
 func (p *Parser) IndexSize() int {
 	return len(p.index)
 }
 
+// TokenSize returns the total nulber of token in the parsed part of the document
 func (p *Parser) TokenSize() int {
 	return len(p.token)
 }
