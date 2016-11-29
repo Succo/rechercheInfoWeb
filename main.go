@@ -38,6 +38,11 @@ func main() {
 	parser := NewParser(cacm, cw)
 	parser.Parse()
 
-	fmt.Printf("Size of the vocabulary %d\n", parser.IndexSize())
-	fmt.Printf("Number of token %d\n", parser.TokenSize())
+	corpusSize := parser.CorpusSize()
+	fmt.Printf("For the whole corpus :\n")
+	fmt.Printf("Size of the vocabulary %d\n", parser.IndexSize(corpusSize))
+	fmt.Printf("Number of token %d\n", parser.TokenSize(corpusSize))
+	fmt.Printf("For half the corpus :\n")
+	fmt.Printf("Size of the vocabulary %d\n", parser.IndexSize(corpusSize/2))
+	fmt.Printf("Number of token %d\n", parser.TokenSize(corpusSize/2))
 }

@@ -40,10 +40,11 @@ func cleanWord(word string) string {
 // Parser is the struct that will parse using a Scanner
 // and hold the parsed data
 type Parser struct {
-	s          *Scanner
-	field      field
-	id         int
-	token      map[string]bool
+	s     *Scanner
+	field field
+	id    int
+	// For each token we store the id of the first document where it was seen for heap law
+	token      map[string]int
 	commonWord map[string]bool
 	index      map[string][]int
 }
@@ -59,7 +60,7 @@ func NewParser(r io.Reader, commonWord []string) *Parser {
 	}
 
 	// construct the token set
-	token := make(map[string]bool)
+	token := make(map[string]int)
 
 	return &Parser{s: NewScanner(r), commonWord: cw, index: index, token: token}
 }
@@ -101,8 +102,12 @@ func (p *Parser) parse() bool {
 			p.id, _ = strconv.Atoi(lit)
 			return true
 		}
-		// we add to token to a token set to count it's size
-		p.token[lit] = true
+		// we store the lowest ID where the word was seen
+		// it's easy since id are seen in order
+		_, found := p.token[lit]
+		if !found {
+			p.token[lit] = p.id
+		}
 		lit = cleanWord(lit)
 		if p.isCommonWord(lit) {
 			return true
@@ -120,12 +125,31 @@ func (p *Parser) Parse() {
 	}
 }
 
-// IndexSize returns the terme -> Document index size
-func (p *Parser) IndexSize() int {
-	return len(p.index)
+// IndexSize returns the term -> Document index size
+// for document with ID < maxID
+func (p *Parser) IndexSize(maxID int) int {
+	var indexSize int
+	for _, documents := range p.index {
+		if documents[0] <= maxID {
+			indexSize++
+		}
+	}
+	return indexSize
 }
 
-// TokenSize returns the total nulber of token in the parsed part of the document
-func (p *Parser) TokenSize() int {
-	return len(p.token)
+// TokenSize returns the total number of token in the parsed part of the document
+// for document with ID < maxID
+func (p *Parser) TokenSize(maxID int) int {
+	var tokenSize int
+	for _, document := range p.token {
+		if document <= maxID {
+			tokenSize++
+		}
+	}
+	return tokenSize
+}
+
+// CorpusSize returns the total number of document
+func (p *Parser) CorpusSize() int {
+	return p.id
 }
