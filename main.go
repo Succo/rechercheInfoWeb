@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 
 	"github.com/gonum/plot"
@@ -15,6 +16,20 @@ import (
 var cacmFile string
 var commonWordFile string
 var plotFile string
+
+const (
+	outputFormat = `For the whole corpus (%d) :
+Size of the vocabulary %d
+Number of token %d
+For half the corpus (%d):
+Size of the vocabulary %d
+Number of token %d
+
+Heaps Law gives us:
+b = %f
+k = %f
+`
+)
 
 func init() {
 	flag.StringVar(&cacmFile, "cacm", "data/CACM/cacm.all", "Path to cacm file")
@@ -45,14 +60,31 @@ func main() {
 	parser := NewParser(cacm, cw)
 	parser.Parse()
 
-	corpusSize := parser.CorpusSize()
-	fmt.Printf("For the whole corpus (%d) :\n", corpusSize)
-	fmt.Printf("Size of the vocabulary %d\n", parser.IndexSize(corpusSize))
-	fmt.Printf("Number of token %d\n", parser.TokenSize(corpusSize))
-	fmt.Printf("For half the corpus (%d):\n", corpusSize/2)
-	fmt.Printf("Size of the vocabulary %d\n", parser.IndexSize(corpusSize/2))
-	fmt.Printf("Number of token %d\n", parser.TokenSize(corpusSize/2))
+	printDetails(parser)
 	draw(parser)
+}
+
+func printDetails(parser *Parser) {
+	corpusSize := parser.CorpusSize()
+	tokenSize := parser.TokenSize(corpusSize)
+	halfTokenSize := parser.TokenSize(corpusSize / 2)
+	vocabSize := parser.IndexSize(corpusSize)
+	halfVocabSize := parser.IndexSize(corpusSize / 2)
+
+	// Heaps law calculation
+	b := (math.Log(float64(tokenSize)) - math.Log(float64(halfTokenSize))) / (math.Log(float64(vocabSize)) - math.Log(float64(halfVocabSize)))
+	k := float64(tokenSize) / (math.Pow(float64(vocabSize), b))
+
+	fmt.Printf(
+		outputFormat,
+		corpusSize,
+		vocabSize,
+		tokenSize,
+		corpusSize/2,
+		halfVocabSize,
+		halfTokenSize,
+		b,
+		k)
 }
 
 func draw(parser *Parser) {
