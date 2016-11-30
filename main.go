@@ -59,7 +59,7 @@ func main() {
 		cw = append(cw, scanner.Text())
 	}
 
-	parser := NewParser(cacm, cw)
+	parser := NewCACMParser(cacm, cw)
 	parser.Parse()
 
 	printDetails(parser)

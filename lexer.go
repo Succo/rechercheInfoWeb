@@ -40,7 +40,7 @@ func cleanWord(word string) string {
 // Parser is the struct that will parse using a Scanner
 // and hold the parsed data
 type Parser struct {
-	s     *Scanner
+	s     Scanner
 	field field
 	id    int
 	// For each token we store the id of the first document where it was seen for heap law
@@ -49,8 +49,8 @@ type Parser struct {
 	index      map[string][]int
 }
 
-// NewParser creates a parser struct from an io reader and a common word list
-func NewParser(r io.Reader, commonWord []string) *Parser {
+// NewCACMParser creates a parser struct from an io reader and a common word list
+func NewCACMParser(r io.Reader, commonWord []string) *Parser {
 	index := make(map[string][]int)
 
 	// construct and initialise the common word set
@@ -62,7 +62,7 @@ func NewParser(r io.Reader, commonWord []string) *Parser {
 	// construct the token set
 	token := make(map[string]int)
 
-	return &Parser{s: NewScanner(r), commonWord: cw, index: index, token: token}
+	return &Parser{s: NewCACMScanner(r), commonWord: cw, index: index, token: token}
 }
 
 // isCommonWord returns wether the word is part of the common word list
