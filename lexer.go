@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"strconv"
 	"strings"
 )
 
@@ -65,6 +64,19 @@ func NewCACMParser(r io.Reader, commonWord []string) *Parser {
 	return &Parser{s: NewCACMScanner(r), commonWord: cw, index: index, token: token}
 }
 
+// NewCS276Parser creates a parser struct from an io reader and a common word list
+func NewCS276Parser(root string) *Parser {
+	index := make(map[string][]int)
+
+	// construct the common word set
+	cw := make(map[string]bool)
+
+	// construct the token set
+	token := make(map[string]int)
+
+	return &Parser{s: NewCS276Scanner(root), commonWord: cw, index: index, token: token, id: 0}
+}
+
 // isCommonWord returns wether the word is part of the common word list
 // It expects a sorted list, as provide by NewParser
 func (p *Parser) isCommonWord(lit string) bool {
@@ -99,7 +111,7 @@ func (p *Parser) parse() bool {
 	if ch == Token {
 		// then the only token is the id
 		if p.field == id {
-			p.id, _ = strconv.Atoi(lit)
+			p.id += 1
 			return true
 		}
 		// we store the lowest ID where the word was seen

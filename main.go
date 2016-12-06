@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"time"
 
 	"github.com/gonum/plot"
 	"github.com/gonum/plot/plotter"
@@ -16,9 +17,11 @@ import (
 var cacmFile string
 var commonWordFile string
 var plotFile string
+var cs276 string
 
 const (
-	outputFormat = `For the whole corpus (%d documents) :
+	outputFormat = `For the whole %s corpus (%d documents) :
+It took %s
 Size of the vocabulary %d
 Number of token %d
 For half the corpus (%d documents):
@@ -36,7 +39,8 @@ For 1 million token we get %f as vocabulary size
 func init() {
 	flag.StringVar(&cacmFile, "cacm", "data/CACM/cacm.all", "Path to cacm file")
 	flag.StringVar(&commonWordFile, "common_word", "data/CACM/common_words", "Path to common_word file")
-	flag.StringVar(&plotFile, "plot", "cacm_plot.png", "Path to output plot file")
+	flag.StringVar(&plotFile, "plot", "_plot.svg", "Path to output plot file")
+	flag.StringVar(&cs276, "cs276", "data/CS276/pa1-data", "Path to cs 276 root folder")
 }
 
 func main() {
@@ -59,14 +63,23 @@ func main() {
 		cw = append(cw, scanner.Text())
 	}
 
-	parser := NewCACMParser(cacm, cw)
-	parser.Parse()
+	now := time.Now()
+	cacmParser := NewCACMParser(cacm, cw)
+	cacmParser.Parse()
 
-	printDetails(parser)
-	draw(parser)
+	printDetails(cacmParser, "cacm", time.Since(now))
+	draw(cacmParser, "cacm")
+
+	fmt.Println() // empty line
+	now = time.Now()
+	cs276Parser := NewCS276Parser(cs276)
+	cs276Parser.Parse()
+
+	printDetails(cs276Parser, "cs276", time.Since(now))
+	draw(cs276Parser, "cs276")
 }
 
-func printDetails(parser *Parser) {
+func printDetails(parser *Parser, name string, calculTime time.Duration) {
 	corpusSize := parser.CorpusSize()
 	tokenSize := parser.TokenSize(corpusSize)
 	halfTokenSize := parser.TokenSize(corpusSize / 2)
@@ -79,7 +92,9 @@ func printDetails(parser *Parser) {
 
 	fmt.Printf(
 		outputFormat,
+		name,
 		corpusSize,
+		calculTime.String(),
 		vocabSize,
 		tokenSize,
 		corpusSize/2,
@@ -90,7 +105,7 @@ func printDetails(parser *Parser) {
 		k*math.Pow(1000000000, b))
 }
 
-func draw(parser *Parser) {
+func draw(parser *Parser, name string) {
 	corpusSize := parser.CorpusSize()
 
 	plt, err := plot.New()
@@ -98,22 +113,22 @@ func draw(parser *Parser) {
 		panic(err)
 	}
 
-	plt.Title.Text = "Heaps law plot"
+	plt.Title.Text = "Heaps law plot for " + name
 	plt.X.Label.Text = "Text size"
 	plt.Y.Label.Text = "Distinct vocabulary"
 
-	pts := make(plotter.XYs, corpusSize/10+1)
-	for i := 0; i < corpusSize; i += 10 {
-		pts[i/10].X = float64(parser.IndexSize(i))
-		pts[i/10].Y = float64(parser.TokenSize(i))
+	pts := make(plotter.XYs, 100)
+	for i := 0; i < 100; i++ {
+		pts[i].X = float64(parser.IndexSize(i * corpusSize / 100))
+		pts[i].Y = float64(parser.TokenSize(i * corpusSize / 100))
 	}
 
-	err = plotutil.AddLines(plt, "cacm", pts)
+	err = plotutil.AddLines(plt, name, pts)
 	if err != nil {
 		panic(err)
 	}
 
-	if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, plotFile); err != nil {
+	if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, name+plotFile); err != nil {
 		panic(err)
 	}
 }
