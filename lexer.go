@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"strings"
 )
@@ -44,38 +45,30 @@ type Parser struct {
 	field      field
 	id         int
 	commonWord map[string]bool
+	title      bytes.Buffer
 	// search only stores result from the indexing
 	search *Search
 }
 
 // NewCACMParser creates a parser struct from an io reader and a common word list
 func NewCACMParser(r io.Reader, commonWord []string) *Parser {
-	index := make(map[string][]int)
-
 	// construct and initialise the common word set
 	cw := make(map[string]bool)
 	for _, word := range commonWord {
 		cw[word] = true
 	}
 
-	// construct the token set
-	token := make(map[string]int)
-
-	search := &Search{Token: token, Index: index}
+	search := emptySearch()
 	return &Parser{s: NewCACMScanner(r), commonWord: cw, search: search}
 }
 
 // NewCS276Parser creates a parser struct from an io reader and a common word list
 func NewCS276Parser(root string) *Parser {
-	index := make(map[string][]int)
-
 	// construct the common word set
+	// It's empty since CS276 doesn't provide a common word list
 	cw := make(map[string]bool)
 
-	// construct the token set
-	token := make(map[string]int)
-
-	search := &Search{Token: token, Index: index}
+	search := emptySearch()
 	return &Parser{s: NewCS276Scanner(root), commonWord: cw, search: search}
 }
 
@@ -101,6 +94,11 @@ func (p *Parser) parse() bool {
 		return false
 	}
 	if ch == Identifiant {
+		if p.field == title {
+			// The title as parsed from the file will be appended
+			p.search.Titles[p.id] = p.title.String()
+			p.title.Reset()
+		}
 		p.field = identToField(lit)
 		return true
 	}
@@ -108,6 +106,9 @@ func (p *Parser) parse() bool {
 		return true
 	}
 	if ch == WS {
+		if p.field == title {
+			p.title.WriteRune(' ')
+		}
 		return true
 	}
 	if ch == Token {
@@ -115,6 +116,9 @@ func (p *Parser) parse() bool {
 		if p.field == id {
 			p.id++
 			return true
+		}
+		if p.field == title {
+			p.title.WriteString(lit)
 		}
 		// we store the lowest ID where the word was seen
 		// it's easy since id are seen in order

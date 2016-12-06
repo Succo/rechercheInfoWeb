@@ -8,9 +8,17 @@ import (
 // Search stores information relavant to parsed documents
 type Search struct {
 	// For each token we store the id of the first document where it was seen for heap law
-	Token map[string]int
-	Index map[string][]int
-	Size  int
+	Token  map[string]int
+	Index  map[string][]int
+	Size   int
+	Titles map[int]string
+}
+
+func emptySearch() *Search {
+	token := make(map[string]int)
+	index := make(map[string][]int)
+	title := make(map[int]string)
+	return &Search{Token: token, Index: index, Titles: title}
 }
 
 // NewSearch generates a Search loading a serialized file
