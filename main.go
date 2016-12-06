@@ -39,7 +39,7 @@ For 1 million token we get %f as vocabulary size
 func init() {
 	flag.StringVar(&cacmFile, "cacm", "data/CACM/cacm.all", "Path to cacm file")
 	flag.StringVar(&commonWordFile, "common_word", "data/CACM/common_words", "Path to common_word file")
-	flag.StringVar(&plotFile, "plot", "_plot.svg", "Common ending for plot file (extension can be different)")
+	flag.StringVar(&plotFile, "plot", "", "Common ending for plot file (extension can be different)")
 	flag.StringVar(&cs276File, "cs276", "data/CS276/pa1-data", "Path to cs276 root folder")
 	flag.StringVar(&cacmEnc, "serializedCacm", "", "File path to serialized index for cacm")
 	flag.StringVar(&cs276Enc, "serializedCS276", "", "File path to serialized index for cs276")
@@ -65,8 +65,13 @@ func main() {
 	}
 
 	printDetails(cacmSearch, "cacm")
-	draw(cacmSearch, "cacm")
-	cacmSearch.Serialize("cacm")
+
+	if plotFile != "" {
+		draw(cacmSearch, "cacm")
+	}
+	if cacmEnc == "" {
+		cacmSearch.Serialize("cacm")
+	}
 
 	fmt.Println() // empty line
 	if cs276Enc == "" {
@@ -80,8 +85,13 @@ func main() {
 		cs276Search = NewSearch(cs276Enc)
 	}
 	printDetails(cs276Search, "cs276")
-	draw(cs276Search, "cs276")
-	cs276Search.Serialize("cs276")
+
+	if plotFile != "" {
+		draw(cs276Search, "cs276")
+	}
+	if cs276Enc == "" {
+		cs276Search.Serialize("cs276")
+	}
 }
 
 func printDetails(search *Search, name string) {
