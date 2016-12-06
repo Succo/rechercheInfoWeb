@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"io"
+	"os"
 	"strings"
 )
 
@@ -51,11 +53,17 @@ type Parser struct {
 }
 
 // NewCACMParser creates a parser struct from an io reader and a common word list
-func NewCACMParser(r io.Reader, commonWord []string) *Parser {
-	// construct and initialise the common word set
+func NewCACMParser(r io.Reader, commonWordFile string) *Parser {
+	commonWord, err := os.Open(commonWordFile)
+	if err != nil {
+		panic(err)
+	}
+	defer commonWord.Close()
+
 	cw := make(map[string]bool)
-	for _, word := range commonWord {
-		cw[word] = true
+	scanner := bufio.NewScanner(commonWord)
+	for scanner.Scan() {
+		cw[scanner.Text()] = true
 	}
 
 	search := emptySearch()

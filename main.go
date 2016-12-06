@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"math"
@@ -41,7 +40,7 @@ func init() {
 	flag.StringVar(&cacmFile, "cacm", "data/CACM/cacm.all", "Path to cacm file")
 	flag.StringVar(&commonWordFile, "common_word", "data/CACM/common_words", "Path to common_word file")
 	flag.StringVar(&plotFile, "plot", "_plot.svg", "Common ending for plot file (extension can be different)")
-	flag.StringVar(&cs276File, "cs276", "data/CS276/pa1-data", "Path to cs 276 root folder")
+	flag.StringVar(&cs276File, "cs276", "data/CS276/pa1-data", "Path to cs276 root folder")
 	flag.StringVar(&cacmEnc, "serializedCacm", "", "File path to serialized index for cacm")
 	flag.StringVar(&cs276Enc, "serializedCS276", "", "File path to serialized index for cs276")
 }
@@ -57,21 +56,9 @@ func main() {
 			panic(err)
 		}
 		defer cacm.Close()
-
-		commonWord, err := os.Open(commonWordFile)
-		if err != nil {
-			panic(err)
-		}
-		defer commonWord.Close()
-
-		var cw []string
-		scanner := bufio.NewScanner(commonWord)
-		for scanner.Scan() {
-			cw = append(cw, scanner.Text())
-		}
-
-		cacmParser := NewCACMParser(cacm, cw)
+		cacmParser := NewCACMParser(cacm, commonWordFile)
 		cacmSearch = cacmParser.Parse()
+		cacm.Close()
 	} else {
 		fmt.Println("Loading cacm index from file")
 		cacmSearch = NewSearch(cacmEnc)
