@@ -39,13 +39,13 @@ func cleanWord(word string) string {
 // Parser is the struct that will parse using a Scanner
 // and hold the parsed data
 type Parser struct {
-	s     Scanner
-	field field
-	id    int
-	// For each token we store the id of the first document where it was seen for heap law
-	token      map[string]int
+	// Those are the field used while parsing
+	s          Scanner
+	field      field
+	id         int
 	commonWord map[string]bool
-	index      map[string][]int
+	// search only stores result from the indexing
+	search *Search
 }
 
 // NewCACMParser creates a parser struct from an io reader and a common word list
@@ -61,7 +61,8 @@ func NewCACMParser(r io.Reader, commonWord []string) *Parser {
 	// construct the token set
 	token := make(map[string]int)
 
-	return &Parser{s: NewCACMScanner(r), commonWord: cw, index: index, token: token}
+	search := &Search{token: token, index: index}
+	return &Parser{s: NewCACMScanner(r), commonWord: cw, search: search}
 }
 
 // NewCS276Parser creates a parser struct from an io reader and a common word list
@@ -74,7 +75,8 @@ func NewCS276Parser(root string) *Parser {
 	// construct the token set
 	token := make(map[string]int)
 
-	return &Parser{s: NewCS276Scanner(root), commonWord: cw, index: index, token: token, id: 0}
+	search := &Search{token: token, index: index}
+	return &Parser{s: NewCS276Scanner(root), commonWord: cw, search: search}
 }
 
 // isCommonWord returns wether the word is part of the common word list
@@ -89,7 +91,7 @@ func (p *Parser) isCommonWord(lit string) bool {
 
 // addWord adds the token to the index
 func (p *Parser) addWord(lit string) {
-	p.index[lit] = append(p.index[lit], p.id)
+	p.search.index[lit] = append(p.search.index[lit], p.id)
 }
 
 // Parses one "word"
@@ -116,9 +118,9 @@ func (p *Parser) parse() bool {
 		}
 		// we store the lowest ID where the word was seen
 		// it's easy since id are seen in order
-		_, found := p.token[lit]
+		_, found := p.search.token[lit]
 		if !found {
-			p.token[lit] = p.id
+			p.search.token[lit] = p.id
 		}
 		lit = cleanWord(lit)
 		if p.isCommonWord(lit) {
@@ -132,36 +134,9 @@ func (p *Parser) parse() bool {
 }
 
 // Parse will parse the whole buffer
-func (p *Parser) Parse() {
+func (p *Parser) Parse() *Search {
 	for p.parse() {
 	}
-}
-
-// IndexSize returns the term -> Document index size
-// for document with ID < maxID
-func (p *Parser) IndexSize(maxID int) int {
-	var indexSize int
-	for _, documents := range p.index {
-		if documents[0] <= maxID {
-			indexSize++
-		}
-	}
-	return indexSize
-}
-
-// TokenSize returns the total number of token in the parsed part of the document
-// for document with ID < maxID
-func (p *Parser) TokenSize(maxID int) int {
-	var tokenSize int
-	for _, document := range p.token {
-		if document <= maxID {
-			tokenSize++
-		}
-	}
-	return tokenSize
-}
-
-// CorpusSize returns the total number of document
-func (p *Parser) CorpusSize() int {
-	return p.id
+	p.search.size = p.id
+	return p.search
 }

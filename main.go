@@ -65,26 +65,26 @@ func main() {
 
 	now := time.Now()
 	cacmParser := NewCACMParser(cacm, cw)
-	cacmParser.Parse()
+	cacmSearch := cacmParser.Parse()
 
-	printDetails(cacmParser, "cacm", time.Since(now))
-	draw(cacmParser, "cacm")
+	printDetails(cacmSearch, "cacm", time.Since(now))
+	draw(cacmSearch, "cacm")
 
 	fmt.Println() // empty line
 	now = time.Now()
 	cs276Parser := NewCS276Parser(cs276)
-	cs276Parser.Parse()
+	cs276Search := cs276Parser.Parse()
 
-	printDetails(cs276Parser, "cs276", time.Since(now))
-	draw(cs276Parser, "cs276")
+	printDetails(cs276Search, "cs276", time.Since(now))
+	draw(cs276Search, "cs276")
 }
 
-func printDetails(parser *Parser, name string, calculTime time.Duration) {
-	corpusSize := parser.CorpusSize()
-	tokenSize := parser.TokenSize(corpusSize)
-	halfTokenSize := parser.TokenSize(corpusSize / 2)
-	vocabSize := parser.IndexSize(corpusSize)
-	halfVocabSize := parser.IndexSize(corpusSize / 2)
+func printDetails(search *Search, name string, calculTime time.Duration) {
+	corpusSize := search.CorpusSize()
+	tokenSize := search.TokenSize(corpusSize)
+	halfTokenSize := search.TokenSize(corpusSize / 2)
+	vocabSize := search.IndexSize(corpusSize)
+	halfVocabSize := search.IndexSize(corpusSize / 2)
 
 	// Heaps law calculation
 	b := (math.Log(float64(tokenSize)) - math.Log(float64(halfTokenSize))) / (math.Log(float64(vocabSize)) - math.Log(float64(halfVocabSize)))
@@ -105,8 +105,8 @@ func printDetails(parser *Parser, name string, calculTime time.Duration) {
 		k*math.Pow(1000000000, b))
 }
 
-func draw(parser *Parser, name string) {
-	corpusSize := parser.CorpusSize()
+func draw(search *Search, name string) {
+	corpusSize := search.CorpusSize()
 
 	plt, err := plot.New()
 	if err != nil {
@@ -119,8 +119,8 @@ func draw(parser *Parser, name string) {
 
 	pts := make(plotter.XYs, 100)
 	for i := 0; i < 100; i++ {
-		pts[i].X = float64(parser.IndexSize(i * corpusSize / 100))
-		pts[i].Y = float64(parser.TokenSize(i * corpusSize / 100))
+		pts[i].X = float64(search.IndexSize(i * corpusSize / 100))
+		pts[i].Y = float64(search.TokenSize(i * corpusSize / 100))
 	}
 
 	err = plotutil.AddLines(plt, name, pts)
