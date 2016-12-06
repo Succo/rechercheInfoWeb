@@ -17,11 +17,12 @@ import (
 var cacmFile string
 var commonWordFile string
 var plotFile string
-var cs276 string
+var cs276File string
+var cacmEnc string
+var cs276Enc string
 
 const (
 	outputFormat = `For the whole %s corpus (%d documents) :
-It took %s
 Size of the vocabulary %d
 Number of token %d
 For half the corpus (%d documents):
@@ -39,47 +40,64 @@ For 1 million token we get %f as vocabulary size
 func init() {
 	flag.StringVar(&cacmFile, "cacm", "data/CACM/cacm.all", "Path to cacm file")
 	flag.StringVar(&commonWordFile, "common_word", "data/CACM/common_words", "Path to common_word file")
-	flag.StringVar(&plotFile, "plot", "_plot.svg", "Path to output plot file")
-	flag.StringVar(&cs276, "cs276", "data/CS276/pa1-data", "Path to cs 276 root folder")
+	flag.StringVar(&plotFile, "plot", "_plot.svg", "Common ending for plot file (extension can be different)")
+	flag.StringVar(&cs276File, "cs276", "data/CS276/pa1-data", "Path to cs 276 root folder")
+	flag.StringVar(&cacmEnc, "serializedCacm", "", "File path to serialized index for cacm")
+	flag.StringVar(&cs276Enc, "serializedCS276", "", "File path to serialized index for cs276")
 }
 
 func main() {
 	flag.Parse()
-	cacm, err := os.Open(cacmFile)
-	if err != nil {
-		panic(err)
+	var cacmSearch *Search
+	var cs276Search *Search
+	if cacmEnc == "" {
+		fmt.Println("Building cacm index from scratch")
+		cacm, err := os.Open(cacmFile)
+		if err != nil {
+			panic(err)
+		}
+		defer cacm.Close()
+
+		commonWord, err := os.Open(commonWordFile)
+		if err != nil {
+			panic(err)
+		}
+		defer commonWord.Close()
+
+		var cw []string
+		scanner := bufio.NewScanner(commonWord)
+		for scanner.Scan() {
+			cw = append(cw, scanner.Text())
+		}
+
+		cacmParser := NewCACMParser(cacm, cw)
+		cacmSearch = cacmParser.Parse()
+	} else {
+		fmt.Println("Loading cacm index from file")
+		cacmSearch = NewSearch(cacmEnc)
 	}
-	defer cacm.Close()
 
-	commonWord, err := os.Open(commonWordFile)
-	if err != nil {
-		panic(err)
-	}
-	defer commonWord.Close()
-
-	var cw []string
-	scanner := bufio.NewScanner(commonWord)
-	for scanner.Scan() {
-		cw = append(cw, scanner.Text())
-	}
-
-	now := time.Now()
-	cacmParser := NewCACMParser(cacm, cw)
-	cacmSearch := cacmParser.Parse()
-
-	printDetails(cacmSearch, "cacm", time.Since(now))
+	printDetails(cacmSearch, "cacm")
 	draw(cacmSearch, "cacm")
+	cacmSearch.Serialize("cacm")
 
 	fmt.Println() // empty line
-	now = time.Now()
-	cs276Parser := NewCS276Parser(cs276)
-	cs276Search := cs276Parser.Parse()
-
-	printDetails(cs276Search, "cs276", time.Since(now))
+	if cs276Enc == "" {
+		fmt.Println("Building cs276 index from scratch")
+		now := time.Now()
+		cs276Parser := NewCS276Parser(cs276File)
+		cs276Search = cs276Parser.Parse()
+		fmt.Printf("It took %s \n", time.Since(now).String())
+	} else {
+		fmt.Println("Loading cs276 index from file")
+		cs276Search = NewSearch(cs276Enc)
+	}
+	printDetails(cs276Search, "cs276")
 	draw(cs276Search, "cs276")
+	cs276Search.Serialize("cs276")
 }
 
-func printDetails(search *Search, name string, calculTime time.Duration) {
+func printDetails(search *Search, name string) {
 	corpusSize := search.CorpusSize()
 	tokenSize := search.TokenSize(corpusSize)
 	halfTokenSize := search.TokenSize(corpusSize / 2)
@@ -94,7 +112,6 @@ func printDetails(search *Search, name string, calculTime time.Duration) {
 		outputFormat,
 		name,
 		corpusSize,
-		calculTime.String(),
 		vocabSize,
 		tokenSize,
 		corpusSize/2,

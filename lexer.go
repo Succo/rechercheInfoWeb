@@ -61,7 +61,7 @@ func NewCACMParser(r io.Reader, commonWord []string) *Parser {
 	// construct the token set
 	token := make(map[string]int)
 
-	search := &Search{token: token, index: index}
+	search := &Search{Token: token, Index: index}
 	return &Parser{s: NewCACMScanner(r), commonWord: cw, search: search}
 }
 
@@ -75,7 +75,7 @@ func NewCS276Parser(root string) *Parser {
 	// construct the token set
 	token := make(map[string]int)
 
-	search := &Search{token: token, index: index}
+	search := &Search{Token: token, Index: index}
 	return &Parser{s: NewCS276Scanner(root), commonWord: cw, search: search}
 }
 
@@ -91,7 +91,7 @@ func (p *Parser) isCommonWord(lit string) bool {
 
 // addWord adds the token to the index
 func (p *Parser) addWord(lit string) {
-	p.search.index[lit] = append(p.search.index[lit], p.id)
+	p.search.Index[lit] = append(p.search.Index[lit], p.id)
 }
 
 // Parses one "word"
@@ -113,14 +113,14 @@ func (p *Parser) parse() bool {
 	if ch == Token {
 		// then the only token is the id
 		if p.field == id {
-			p.id += 1
+			p.id++
 			return true
 		}
 		// we store the lowest ID where the word was seen
 		// it's easy since id are seen in order
-		_, found := p.search.token[lit]
+		_, found := p.search.Token[lit]
 		if !found {
-			p.search.token[lit] = p.id
+			p.search.Token[lit] = p.id
 		}
 		lit = cleanWord(lit)
 		if p.isCommonWord(lit) {
@@ -137,6 +137,6 @@ func (p *Parser) parse() bool {
 func (p *Parser) Parse() *Search {
 	for p.parse() {
 	}
-	p.search.size = p.id
+	p.search.Size = p.id
 	return p.search
 }

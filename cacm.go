@@ -7,7 +7,7 @@ import (
 	"unicode"
 )
 
-// CACMCACMScanner will walk the buffer and return character
+// CACMScanner will walk the buffer and return character
 type CACMScanner struct {
 	r *bufio.Reader
 }
