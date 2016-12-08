@@ -88,10 +88,14 @@ func NewCS276Scanner(root string) *CS276Scanner {
 // either adding new file to scan or :w
 func (s *CS276Scanner) scan() {
 	for filename := range s.toScan {
+		// This whole section is hack to fit cacm data model
+		// TODO update scanner design
 		scanned := []token{
 			token{word: ".I", ch: Identifiant},
-			token{word: filename, ch: Token},
+			token{word: "", ch: Token},
 			token{word: ".T", ch: Identifiant},
+			token{word: filename, ch: Token},
+			token{word: ".W", ch: Identifiant},
 		}
 		file, err := os.Open(s.root + "/" + filename)
 		defer file.Close()
