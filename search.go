@@ -72,9 +72,12 @@ func (s *Search) Search(word string) []string {
 	if !ok {
 		return make([]string, 0)
 	}
-	result := make([]string, len(docs))
-	for _, doc := range docs {
-		result = append(result, s.Titles[doc])
+	result := make([]string, 0, len(docs))
+	for i, doc := range docs {
+		// Because result are ordered this prevent printing twice the same doc
+		if i == 0 || doc != docs[i-1] {
+			result = append(result, s.Titles[doc])
+		}
 	}
 	return result
 }

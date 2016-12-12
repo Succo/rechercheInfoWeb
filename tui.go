@@ -13,7 +13,7 @@ func dynamicSearch(cacm, cs276 *Search) {
 
 	fmt.Println("Ctrl-C to exit the program")
 	line.SetCtrlCAborts(true)
-	corpus, err := line.Prompt("What corpus do you want to search? 'cacm' or 'cs276'")
+	corpus, err := line.Prompt("What corpus do you want to search? 'cacm' or 'cs276'? ")
 	if err == liner.ErrPromptAborted {
 		fmt.Println("Aborting prompt")
 		return
@@ -30,7 +30,7 @@ func dynamicSearch(cacm, cs276 *Search) {
 		return
 	}
 	for {
-		if searched, err := line.Prompt("Searched keyword?"); err == nil {
+		if searched, err := line.Prompt("Searched keyword? "); err == nil {
 			results := search.Search(searched)
 			fmt.Printf("Found %d result\n", len(results))
 			for _, result := range results {

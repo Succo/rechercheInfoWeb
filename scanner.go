@@ -22,7 +22,7 @@ const (
 var eof = rune(0)
 
 func tokenMember(ch rune) bool {
-	return unicode.IsLetter(ch) || unicode.IsDigit(ch)
+	return unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '\'' || ch == '-' || ch == '/'
 }
 
 // Scanner is an interface reading words one at a time
