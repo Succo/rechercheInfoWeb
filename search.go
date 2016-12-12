@@ -65,6 +65,20 @@ func (s *Search) CorpusSize() int {
 	return s.Size
 }
 
+// Search returns  the list of document title that mention a word
+func (s *Search) Search(word string) []string {
+	word = cleanWord(word)
+	docs, ok := s.Index[word]
+	if !ok {
+		return make([]string, 0)
+	}
+	result := make([]string, len(docs))
+	for _, doc := range docs {
+		result = append(result, s.Titles[doc])
+	}
+	return result
+}
+
 // Serialize a search struct to a file, adding the .gob extension
 func (s *Search) Serialize(filename string) {
 	file, err := os.Create(filename + ".gob")
