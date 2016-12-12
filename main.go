@@ -92,6 +92,7 @@ func main() {
 	if cs276Enc == "" {
 		cs276Search.Serialize("cs276")
 	}
+	dynamicSearch(cacmSearch, cs276Search)
 }
 
 func printDetails(search *Search, name string) {
