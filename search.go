@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/gob"
 	"os"
+	"strings"
 )
 
 // Search stores information relavant to parsed documents
@@ -66,11 +67,27 @@ func (s *Search) CorpusSize() int {
 }
 
 // Search returns  the list of document title that mention a word
-func (s *Search) Search(word string) []string {
-	word = cleanWord(word)
-	docs, ok := s.Index[word]
-	if !ok {
-		return make([]string, 0)
+func (s *Search) Search(input string) []string {
+	words := strings.Split(input, " ")
+	docs := make([]int, 0)
+	for _, word := range words {
+		word = cleanWord(word)
+		newDocs, ok := s.Index[word]
+		if !ok {
+			continue
+		}
+		if len(docs) == 0 {
+			docs = newDocs
+			continue
+		}
+		// Perform the merge
+		merged := make([]int, 0, len(docs))
+		for _, doc := range docs {
+			if contains(doc, newDocs) {
+				merged = append(merged, doc)
+			}
+		}
+		docs = merged
 	}
 	result := make([]string, 0, len(docs))
 	for i, doc := range docs {
@@ -94,4 +111,17 @@ func (s *Search) Serialize(filename string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+// contains check if an int is in a _sorted_ list of int
+func contains(needle int, haystack []int) bool {
+	for _, i := range haystack {
+		if i == needle {
+			return true
+		} else if i > needle {
+			return false
+		}
+	}
+	return true
+
 }
