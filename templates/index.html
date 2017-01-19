@@ -1,19 +1,42 @@
+<!DOCTYPE html>
 <html>
 	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title> RIW </title>
+		<style type="text/css">
+		body{
+			margin:40px auto;
+			max-width:650px;
+			line-height:1.6;
+			font-size:18px;
+			color:#141414;
+			padding:0 10px}
+		h1,h2,h3{line-height:1.2}
+		</style>
 	</head>
+
 	<body>
-
 		<h2> Recherche Info Web </h2>
-
-		<p>
-			Vous pouvez cherchez les corpus via la barre ci dessous:
-		</p>
+		<p> Vous pouvez cherchez les corpus via la barre ci dessous: </p>
 
 		<form action="/" method="POST">
-		<div><input type="text" name="search" size="100"></input></div>
-		<div><input type="submit" value="Save"></div>
+			<div><input type="text" name="search" style="width:98.5%"></input></div>
+			<br>
+			<div>
+				<label for="CACM"> CACM</label>
+				<input type="radio" name="corpus" value="cacm" id="CACM" checked>
+				<label for="cs276"> CS276</label>
+				<input type="radio" name="corpus" value="cs276" id="cs276">
+				<input type="submit" value="Search" style="float:right">
+			</div>
 		</form>
+
+		<ul>
+			{{ range .Results }}
+			<li>{{ . }}</li>
+			{{end}}
+		</ul>
 
 	</body>
 </html>

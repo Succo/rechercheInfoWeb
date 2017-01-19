@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"math"
+	"os"
+	"time"
 
 	"github.com/gonum/plot"
 	"github.com/gonum/plot/plotter"
@@ -43,56 +45,53 @@ func init() {
 	flag.StringVar(&cs276Enc, "serializedCS276", "", "File path to serialized index for cs276")
 }
 
-//func main() {
-//	flag.Parse()
-//	var cacmSearch *Search
-//	var cs276Search *Search
-//	if cacmEnc == "" {
-//		fmt.Println("Building cacm index from scratch")
-//		cacm, err := os.Open(cacmFile)
-//		if err != nil {
-//			panic(err)
-//		}
-//		defer cacm.Close()
-//		cacmParser := NewCACMParser(cacm, commonWordFile)
-//		cacmSearch = cacmParser.Parse()
-//		cacm.Close()
-//	} else {
-//		fmt.Println("Loading cacm index from file")
-//		cacmSearch = NewSearch(cacmEnc)
-//	}
-//
-//	printDetails(cacmSearch, "cacm")
-//
-//	if plotFile != "" {
-//		draw(cacmSearch, "cacm")
-//	}
-//	if cacmEnc == "" {
-//		cacmSearch.Serialize("cacm")
-//	}
-//
-//	fmt.Println() // empty line
-//	if cs276Enc == "" {
-//		fmt.Println("Building cs276 index from scratch")
-//		now := time.Now()
-//		cs276Parser := NewCS276Parser(cs276File)
-//		cs276Search = cs276Parser.Parse()
-//		fmt.Printf("It took %s \n", time.Since(now).String())
-//	} else {
-//		fmt.Println("Loading cs276 index from file")
-//		cs276Search = NewSearch(cs276Enc)
-//	}
-//	printDetails(cs276Search, "cs276")
-//	if plotFile != "" {
-//		draw(cs276Search, "cs276")
-//	}
-//	if cs276Enc == "" {
-//		cs276Search.Serialize("cs276")
-//	}
-//	dynamicSearch(cacmSearch, cs276Search)
-//}
 func main() {
-	serve()
+	flag.Parse()
+	var cacmSearch *Search
+	var cs276Search *Search
+	if cacmEnc == "" {
+		fmt.Println("Building cacm index from scratch")
+		cacm, err := os.Open(cacmFile)
+		if err != nil {
+			panic(err)
+		}
+		defer cacm.Close()
+		cacmParser := NewCACMParser(cacm, commonWordFile)
+		cacmSearch = cacmParser.Parse()
+		cacm.Close()
+	} else {
+		fmt.Println("Loading cacm index from file")
+		cacmSearch = NewSearch(cacmEnc)
+	}
+
+	printDetails(cacmSearch, "cacm")
+
+	if plotFile != "" {
+		draw(cacmSearch, "cacm")
+	}
+	if cacmEnc == "" {
+		cacmSearch.Serialize("cacm")
+	}
+
+	fmt.Println() // empty line
+	if cs276Enc == "" {
+		fmt.Println("Building cs276 index from scratch")
+		now := time.Now()
+		cs276Parser := NewCS276Parser(cs276File)
+		cs276Search = cs276Parser.Parse()
+		fmt.Printf("It took %s \n", time.Since(now).String())
+	} else {
+		fmt.Println("Loading cs276 index from file")
+		cs276Search = NewSearch(cs276Enc)
+	}
+	printDetails(cs276Search, "cs276")
+	if plotFile != "" {
+		draw(cs276Search, "cs276")
+	}
+	if cs276Enc == "" {
+		cs276Search.Serialize("cs276")
+	}
+	serve(cacmSearch, cs276Search)
 }
 
 func printDetails(search *Search, name string) {
