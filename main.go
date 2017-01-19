@@ -14,15 +14,17 @@ import (
 
 var cacmFile string
 var commonWordFile string
-var plotFile string
 var cs276File string
 var cacmEnc string
 var cs276Enc string
 
+const (
+	plotFile = ".svg"
+)
+
 func init() {
 	flag.StringVar(&cacmFile, "cacm", "data/CACM/cacm.all", "Path to cacm file")
 	flag.StringVar(&commonWordFile, "common_word", "data/CACM/common_words", "Path to common_word file")
-	flag.StringVar(&plotFile, "plot", "", "Common ending for plot file (extension can be different)")
 	flag.StringVar(&cs276File, "cs276", "data/CS276/pa1-data", "Path to cs276 root folder")
 	flag.StringVar(&cacmEnc, "serializedCacm", "", "File path to serialized index for cacm")
 	flag.StringVar(&cs276Enc, "serializedCS276", "", "File path to serialized index for cs276")
@@ -75,6 +77,11 @@ func main() {
 }
 
 func draw(search *Search, name string) {
+	if _, err := os.Stat(name + plotFile); err == nil {
+		// the file exist, whe assume it's the plot
+		return
+	}
+
 	corpusSize := search.CorpusSize()
 
 	plt, err := plot.New()

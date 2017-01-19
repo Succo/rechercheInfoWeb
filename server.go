@@ -90,11 +90,11 @@ func serve(cacm, cs276 *Search) {
 	})
 
 	http.HandleFunc("/cacm.svg", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "cacm_plot.svg")
+		http.ServeFile(w, r, "cacm.svg")
 	})
 
 	http.HandleFunc("/cs276.svg", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "cs276_plot.svg")
+		http.ServeFile(w, r, "cs276.svg")
 	})
 
 	http.ListenAndServe(":8080", nil)
