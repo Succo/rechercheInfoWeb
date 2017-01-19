@@ -29,7 +29,8 @@
 				Ainsi la loi de HEAPS nous donne b = {{ .B | printf "%f" }}
 				et k = {{ .K | printf "%f" }}.
 			</p>
-			<img src="{{ .Name }}.svg">
+			<img src="{{ .Name }}.svg" style="margin:auto;width:100%"
+			alt="Heap law plot {{ .Name }}">
 		</div>
 		{{ end }}
 	</body>
