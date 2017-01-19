@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"math"
 	"os"
 	"time"
 
@@ -19,22 +18,6 @@ var plotFile string
 var cs276File string
 var cacmEnc string
 var cs276Enc string
-
-const (
-	outputFormat = `For the whole %s corpus (%d documents) :
-Size of the vocabulary %d
-Number of token %d
-For half the corpus (%d documents):
-Size of the vocabulary %d
-Number of token %d
-
-Heaps Law gives us:
-b = %f
-k = %f
-
-For 1 million token we get %f as vocabulary size
-`
-)
 
 func init() {
 	flag.StringVar(&cacmFile, "cacm", "data/CACM/cacm.all", "Path to cacm file")
@@ -64,8 +47,6 @@ func main() {
 		cacmSearch = NewSearch(cacmEnc)
 	}
 
-	printDetails(cacmSearch, "cacm")
-
 	if plotFile != "" {
 		draw(cacmSearch, "cacm")
 	}
@@ -73,7 +54,6 @@ func main() {
 		cacmSearch.Serialize("cacm")
 	}
 
-	fmt.Println() // empty line
 	if cs276Enc == "" {
 		fmt.Println("Building cs276 index from scratch")
 		now := time.Now()
@@ -84,7 +64,7 @@ func main() {
 		fmt.Println("Loading cs276 index from file")
 		cs276Search = NewSearch(cs276Enc)
 	}
-	printDetails(cs276Search, "cs276")
+
 	if plotFile != "" {
 		draw(cs276Search, "cs276")
 	}
@@ -92,31 +72,6 @@ func main() {
 		cs276Search.Serialize("cs276")
 	}
 	serve(cacmSearch, cs276Search)
-}
-
-func printDetails(search *Search, name string) {
-	corpusSize := search.CorpusSize()
-	tokenSize := search.TokenSize(corpusSize)
-	halfTokenSize := search.TokenSize(corpusSize / 2)
-	vocabSize := search.IndexSize(corpusSize)
-	halfVocabSize := search.IndexSize(corpusSize / 2)
-
-	// Heaps law calculation
-	b := (math.Log(float64(tokenSize)) - math.Log(float64(halfTokenSize))) / (math.Log(float64(vocabSize)) - math.Log(float64(halfVocabSize)))
-	k := float64(tokenSize) / (math.Pow(float64(vocabSize), b))
-
-	fmt.Printf(
-		outputFormat,
-		name,
-		corpusSize,
-		vocabSize,
-		tokenSize,
-		corpusSize/2,
-		halfVocabSize,
-		halfTokenSize,
-		b,
-		k,
-		k*math.Pow(1000000000, b))
 }
 
 func draw(search *Search, name string) {
