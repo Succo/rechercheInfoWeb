@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title> RIW </title>
+		<style type="text/css">
+		body{
+			margin:40px auto;
+			max-width:650px;
+			line-height:1.6;
+			font-size:18px;
+			color:#141414;
+			padding:0 10px}
+		h1,h2,h3{line-height:1.2}
+		</style>
+	</head>
+
+	<body>
+		<h2> Statistiques et loi de HEAP </h2>
+
+		{{ range . }}
+		<div>
+			<h3> Statistique pour le corpus {{ .Name }}</h3>
+			<p>
+				Le corpus est composé de {{ .Documents }} documents. 
+				La taille du vocabulaire est de {{ .Vocabulary }} lexemes
+				et il y a {{ .Tokens }} tokens. 
+				Ainsi la loi de HEAPS nous donne b = {{ .B | printf "%f" }}
+				et k = {{ .K | printf "%f" }}.
+			</p>
+			<img src="{{ .Name }}.svg">
+		</div>
+		{{ end }}
+	</body>
+
+</html>
