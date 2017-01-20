@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -31,11 +31,12 @@ func init() {
 }
 
 func main() {
+	log.Println("RIW server started")
 	flag.Parse()
 	var cacmSearch *Search
 	var cs276Search *Search
 	if cacmEnc == "" {
-		fmt.Println("Building cacm index from scratch")
+		log.Println("Building cacm index from scratch")
 		cacm, err := os.Open(cacmFile)
 		if err != nil {
 			panic(err)
@@ -45,7 +46,7 @@ func main() {
 		cacmSearch = cacmParser.Parse()
 		cacm.Close()
 	} else {
-		fmt.Println("Loading cacm index from file")
+		log.Println("Loading cacm index from file")
 		cacmSearch = NewSearch(cacmEnc)
 	}
 
@@ -57,13 +58,13 @@ func main() {
 	}
 
 	if cs276Enc == "" {
-		fmt.Println("Building cs276 index from scratch")
+		log.Println("Building cs276 index from scratch")
 		now := time.Now()
 		cs276Parser := NewCS276Parser(cs276File)
 		cs276Search = cs276Parser.Parse()
-		fmt.Printf("It took %s \n", time.Since(now).String())
+		log.Printf("It took %s \n", time.Since(now).String())
 	} else {
-		fmt.Println("Loading cs276 index from file")
+		log.Println("Loading cs276 index from file")
 		cs276Search = NewSearch(cs276Enc)
 	}
 

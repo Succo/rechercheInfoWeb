@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"sync"
 )
@@ -61,7 +61,7 @@ func NewCS276Scanner(root string) *CS276Scanner {
 		for _, dir := range dirs {
 			files, err := ioutil.ReadDir(s.root + "/" + dir.Name())
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			for _, file := range files {
@@ -100,7 +100,7 @@ func (s *CS276Scanner) scan() {
 		file, err := os.Open(s.root + "/" + filename)
 		defer file.Close()
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			break
 		}
 		scanner := bufio.NewReader(file)

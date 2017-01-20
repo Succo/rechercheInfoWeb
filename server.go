@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"log"
 	"math"
 	"net/http"
 )
@@ -97,5 +98,6 @@ func serve(cacm, cs276 *Search) {
 		http.ServeFile(w, r, "cs276.svg")
 	})
 
-	http.ListenAndServe(":8080", nil)
+	log.Println("riw starting to serve traffic")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
