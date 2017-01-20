@@ -42,7 +42,7 @@ type CS276Scanner struct {
 	root      string
 	dirs      []string
 	toScan    chan string
-	scanned   chan []token
+	scanned   chan *[]token
 	inProcess []token
 	wg        sync.WaitGroup
 }
@@ -51,7 +51,7 @@ type CS276Scanner struct {
 func NewCS276Scanner(root string) *CS276Scanner {
 	var wg sync.WaitGroup
 	toScan := make(chan string, 100)
-	s := &CS276Scanner{root: root, dirs: make([]string, 0), toScan: toScan, scanned: make(chan []token, 10), inProcess: make([]token, 0), wg: wg}
+	s := &CS276Scanner{root: root, dirs: make([]string, 0), toScan: toScan, scanned: make(chan *[]token, 10), inProcess: make([]token, 0), wg: wg}
 	dirs, err := ioutil.ReadDir(root)
 	if err != nil {
 		panic(err)
@@ -114,7 +114,7 @@ func (s *CS276Scanner) scan() {
 				scanned = append(scanned, token{word: scanToken(scanner), ch: Token})
 			}
 		}
-		s.scanned <- scanned
+		s.scanned <- &scanned
 		file.Close()
 	}
 	s.wg.Done()
@@ -126,7 +126,7 @@ func (s *CS276Scanner) Scan() (Character, string) {
 	if len(s.inProcess) == 0 {
 		toProcess, more := <-s.scanned
 		if more {
-			s.inProcess = toProcess
+			s.inProcess = *toProcess
 		} else {
 			return EOF, ""
 		}

@@ -62,7 +62,7 @@ func main() {
 		now := time.Now()
 		cs276Parser := NewCS276Parser(cs276File)
 		cs276Search = cs276Parser.Parse()
-		log.Printf("It took %s \n", time.Since(now).String())
+		log.Printf("cs276 index built in  %s \n", time.Since(now).String())
 	} else {
 		log.Println("Loading cs276 index from file")
 		cs276Search = NewSearch(cs276Enc)
