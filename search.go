@@ -6,12 +6,15 @@ import (
 	"strings"
 )
 
-// Search stores information relavant to parsed documents
+// Search stores information relevant to parsed documents
 type Search struct {
-	// For each token we store the id of the first document where it was seen for heap law
-	Token  map[string]int
-	Index  map[string][]int
-	Size   int
+	// Token stores the id of the first document containing a token for heap law
+	Token map[string]int
+	// Index is a map of token to document ID
+	Index map[string][]int
+	// Size is the total number of documents
+	Size int
+	// Titles maps docID to title
 	Titles map[int]string
 }
 
