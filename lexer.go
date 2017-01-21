@@ -98,28 +98,21 @@ func (p *Parser) addWord(lit string) {
 // Parses one "word"
 func (p *Parser) parse() bool {
 	ch, lit := p.s.Scan()
-	if ch == EOF {
+	switch ch {
+	case EOF:
 		return false
-	}
-	if ch == Identifiant {
+	case Identifiant:
 		if p.field == title {
 			// The title as parsed from the file will be appended
 			p.search.Titles[p.id] = p.title.String()
 			p.title.Reset()
 		}
 		p.field = identToField(lit)
-		return true
-	}
-	if p.field == other {
-		return true
-	}
-	if ch == WS {
+	case WS:
 		if p.field == title {
 			p.title.WriteRune(' ')
 		}
-		return true
-	}
-	if ch == Token {
+	case Token:
 		// then the only token is the id
 		if p.field == id {
 			p.id++
@@ -140,7 +133,6 @@ func (p *Parser) parse() bool {
 		}
 		// We add non common word to the token list
 		p.addWord(lit)
-		return true
 	}
 	return true
 }
