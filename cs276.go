@@ -51,7 +51,12 @@ type CS276Scanner struct {
 func NewCS276Scanner(root string) *CS276Scanner {
 	var wg sync.WaitGroup
 	toScan := make(chan string, 100)
-	s := &CS276Scanner{root: root, dirs: make([]string, 0), toScan: toScan, scanned: make(chan *[]token, 10), inProcess: make([]token, 0), wg: wg}
+	s := &CS276Scanner{root: root,
+		dirs:      make([]string, 0),
+		toScan:    toScan,
+		scanned:   make(chan *[]token, 10),
+		inProcess: make([]token, 0),
+		wg:        wg}
 	dirs, err := ioutil.ReadDir(root)
 	if err != nil {
 		panic(err)
