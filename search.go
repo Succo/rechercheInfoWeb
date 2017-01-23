@@ -5,20 +5,29 @@ import (
 	"os"
 )
 
+// Ref is a reference to a document
+type Ref struct {
+	Id   int
+	Freq float64
+}
+
 // Search stores information relevant to parsed documents
 type Search struct {
 	// Token stores the id of the first document containing a token for heap law
 	Token map[string]int
 	// Index is a map of token document pointers
-	Index map[string][]*Document
+	Index map[string][]Ref
 	// Size is the total number of documents
 	Size int
+	// Titles stores document title
+	Titles []string
 }
 
 func emptySearch() *Search {
 	token := make(map[string]int)
-	index := make(map[string][]*Document)
-	return &Search{Token: token, Index: index}
+	index := make(map[string][]Ref)
+	var titles []string
+	return &Search{Token: token, Index: index, Titles: titles}
 }
 
 // NewSearch generates a Search loading a serialized file
@@ -39,10 +48,11 @@ func NewSearch(filename string) *Search {
 // AddDocument adds a parsed document to it's indexes
 func (s *Search) AddDocument(d *Document) {
 	d.calculFreqs()
-	for w := range d.Freqs {
-		s.Index[w] = append(s.Index[w], d)
+	for w, f := range d.Freqs {
+		s.Index[w] = append(s.Index[w], Ref{d.Id, f})
 	}
 	s.Size++
+	s.Titles = append(s.Titles, d.Title)
 }
 
 // IndexSize returns the term -> Document index size
@@ -77,12 +87,12 @@ func (s *Search) CorpusSize() int {
 // Search returns  the list of document title that mention a word
 func (s *Search) Search(input string) []string {
 	q := buildQuery(input)
-	docs := q.execute(s)
-	result := make([]string, 0, len(docs))
-	for i, doc := range docs {
+	refs := q.execute(s)
+	result := make([]string, 0, len(refs))
+	for i, ref := range refs {
 		// Because result are ordered this prevent printing twice the same doc
-		if i == 0 || doc != docs[i-1] {
-			result = append(result, doc.Title)
+		if i == 0 || ref.Id != refs[i-1].Id {
+			result = append(result, s.Titles[ref.Id])
 		}
 	}
 	return result

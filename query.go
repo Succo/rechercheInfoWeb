@@ -4,7 +4,7 @@ import "strings"
 
 // query is a generic interface for query
 type query interface {
-	execute(*Search) []*Document
+	execute(*Search) []Ref
 }
 
 type base struct {
@@ -12,7 +12,7 @@ type base struct {
 }
 
 // execute returns the query for one word
-func (b base) execute(s *Search) []*Document {
+func (b base) execute(s *Search) []Ref {
 	w := cleanWord(b.word)
 	return s.Index[w]
 }
@@ -22,34 +22,34 @@ type and struct {
 }
 
 // execute returns the intersection of two queries
-func (a and) execute(s *Search) []*Document {
-	docs := make([]*Document, 0)
+func (a and) execute(s *Search) []Ref {
+	var refs []Ref
 	for _, q := range a.queries {
-		newDocs := q.execute(s)
-		if len(docs) == 0 {
-			docs = newDocs
+		newRefs := q.execute(s)
+		if len(refs) == 0 {
+			refs = newRefs
 			continue
 		}
 		// Perform the merge
-		merged := make([]*Document, 0, len(docs))
+		merged := make([]Ref, 0, len(refs))
 		for {
-			if len(docs) == 0 || len(newDocs) == 0 {
+			if len(refs) == 0 || len(newRefs) == 0 {
 				break
 			}
 
-			if docs[0] == newDocs[0] {
-				merged = append(merged, docs[0])
-				docs = docs[1:]
-				newDocs = newDocs[1:]
-			} else if docs[0].Id < newDocs[0].Id {
-				docs = docs[1:]
+			if refs[0] == newRefs[0] {
+				merged = append(merged, refs[0])
+				refs = refs[1:]
+				newRefs = newRefs[1:]
+			} else if refs[0].Id < newRefs[0].Id {
+				refs = refs[1:]
 			} else {
-				newDocs = newDocs[1:]
+				newRefs = newRefs[1:]
 			}
 		}
-		docs = merged
+		refs = merged
 	}
-	return docs
+	return refs
 }
 
 type or struct {
@@ -57,30 +57,30 @@ type or struct {
 	query2 query
 }
 
-func (o or) execute(s *Search) []*Document {
-	docs1 := o.query1.execute(s)
-	docs2 := o.query2.execute(s)
-	merged := make([]*Document, 0, len(docs1)+len(docs2))
+func (o or) execute(s *Search) []Ref {
+	refs1 := o.query1.execute(s)
+	refs2 := o.query2.execute(s)
+	merged := make([]Ref, 0, len(refs1)+len(refs2))
 	for {
-		if len(docs1) == 0 {
-			merged = append(merged, docs2...)
+		if len(refs1) == 0 {
+			merged = append(merged, refs2...)
 			break
 		}
-		if len(docs2) == 0 {
-			merged = append(merged, docs1...)
+		if len(refs2) == 0 {
+			merged = append(merged, refs1...)
 			break
 		}
 
-		if docs1[0] == docs2[0] {
-			merged = append(merged, docs1[0])
-			docs1 = docs1[1:]
-			docs2 = docs2[1:]
-		} else if docs1[0].Id < docs2[0].Id {
-			merged = append(merged, docs1[0])
-			docs1 = docs1[1:]
+		if refs1[0] == refs2[0] {
+			merged = append(merged, refs1[0])
+			refs1 = refs1[1:]
+			refs2 = refs2[1:]
+		} else if refs1[0].Id < refs2[0].Id {
+			merged = append(merged, refs1[0])
+			refs1 = refs1[1:]
 		} else {
-			merged = append(merged, docs2[0])
-			docs2 = docs2[1:]
+			merged = append(merged, refs2[0])
+			refs2 = refs2[1:]
 		}
 	}
 	return merged

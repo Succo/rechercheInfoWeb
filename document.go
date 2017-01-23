@@ -1,6 +1,7 @@
 package main
 
 // Document implement a parsed document
+// It's a temporary structure until frequences are calulated
 type Document struct {
 	Title string
 	// Used to point to the "real document"
