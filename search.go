@@ -99,15 +99,3 @@ func (s *Search) Serialize(filename string) {
 		panic(err)
 	}
 }
-
-// contains check if an int is in a _sorted_ list of int
-func contains(needle int, haystack []int) bool {
-	for _, i := range haystack {
-		if i == needle {
-			return true
-		} else if i > needle {
-			return false
-		}
-	}
-	return true
-}
