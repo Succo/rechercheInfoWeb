@@ -146,6 +146,5 @@ func (p *Parser) parse() bool {
 func (p *Parser) Parse() *Search {
 	for p.parse() {
 	}
-	p.search.Size = p.id
 	return p.search
 }
