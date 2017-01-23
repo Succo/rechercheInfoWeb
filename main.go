@@ -53,9 +53,9 @@ func main() {
 	if plotFile != "" {
 		draw(cacmSearch, "cacm")
 	}
-	if cacmEnc == "" {
-		cacmSearch.Serialize("cacm")
-	}
+	//if cacmEnc == "" {
+	//	cacmSearch.Serialize("cacm")
+	//}
 
 	if cs276Enc == "" {
 		log.Println("Building cs276 index from scratch")
@@ -71,9 +71,9 @@ func main() {
 	if plotFile != "" {
 		draw(cs276Search, "cs276")
 	}
-	if cs276Enc == "" {
-		cs276Search.Serialize("cs276")
-	}
+	//if cs276Enc == "" {
+	//	cs276Search.Serialize("cs276")
+	//}
 	serve(cacmSearch, cs276Search)
 }
 

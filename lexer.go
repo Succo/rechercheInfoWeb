@@ -48,6 +48,7 @@ type Parser struct {
 	id         int
 	commonWord map[string]bool
 	title      bytes.Buffer
+	doc        *Document
 	// search only stores result from the indexing
 	search *Search
 }
@@ -92,7 +93,7 @@ func (p *Parser) isCommonWord(lit string) bool {
 
 // addWord adds the token to the index
 func (p *Parser) addWord(lit string) {
-	p.search.Index[lit] = append(p.search.Index[lit], p.id)
+	p.doc.addWord(lit)
 }
 
 // Parses one "word"
@@ -102,22 +103,26 @@ func (p *Parser) parse() bool {
 	case EOF:
 		return false
 	case Identifiant:
-		if p.field == title {
-			// The title as parsed from the file will be appended
-			p.search.Titles[p.id] = p.title.String()
-			p.title.Reset()
-		}
 		p.field = identToField(lit)
+		if p.field == id {
+			if p.id != 0 {
+				// Add the previous document
+				p.doc.Title = p.title.String()
+				// Add the document
+				p.search.AddDocument(p.doc)
+			}
+			// Reset the document
+			p.doc = newDocument(p.id)
+			p.title.Reset()
+			p.id++
+			return true
+		}
 	case WS:
 		if p.field == title {
 			p.title.WriteRune(' ')
 		}
 	case Token:
 		// then the only token is the id
-		if p.field == id {
-			p.id++
-			return true
-		}
 		if p.field == title {
 			p.title.WriteString(lit)
 		}
