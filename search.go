@@ -40,7 +40,7 @@ func emptySearch() *Search {
 
 // NewSearch generates a Search loading a serialized file
 func NewSearch(filename string) *Search {
-	file, err := os.Open(filename)
+	file, err := os.Open(filename + ".gob")
 	if err != nil {
 		panic(err)
 	}

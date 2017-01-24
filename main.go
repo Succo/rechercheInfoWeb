@@ -12,67 +12,64 @@ import (
 	"github.com/gonum/plot/vg"
 )
 
-var cacmFile string
-var commonWordFile string
-var cs276File string
-var cacmEnc string
-var cs276Enc string
+var buildIndex bool
 
 const (
-	plotFile = ".svg"
+	plotFile       = ".svg"
+	cacmFile       = "data/CACM/cacm.all"
+	commonWordFile = "data/CACM/common_words"
+	cs276File      = "data/CS276/pa1-data"
 )
 
 func init() {
-	flag.StringVar(&cacmFile, "cacm", "data/CACM/cacm.all", "Path to cacm file")
-	flag.StringVar(&commonWordFile, "common_word", "data/CACM/common_words", "Path to common_word file")
-	flag.StringVar(&cs276File, "cs276", "data/CS276/pa1-data", "Path to cs276 root folder")
-	flag.StringVar(&cacmEnc, "serializedCacm", "", "File path to serialized index for cacm")
-	flag.StringVar(&cs276Enc, "serializedCS276", "", "File path to serialized index for cs276")
+	flag.BoolVar(&buildIndex, "index", false, "-index=true to build index from scratch")
 }
 
 func main() {
 	log.Println("RIW server started")
 	flag.Parse()
-	var cacmSearch *Search
-	var cs276Search *Search
-	if cacmEnc == "" {
+	var cacm *Search
+	var cs276 *Search
+	// Get cacm and build related tools
+	if buildIndex {
 		log.Println("Building cacm index from scratch")
-		cacm, err := os.Open(cacmFile)
+		source, err := os.Open(cacmFile)
 		if err != nil {
 			panic(err)
 		}
-		defer cacm.Close()
-		cacmSearch = ParseCACM(cacm, commonWordFile)
-		cacm.Close()
+		defer source.Close()
+		cacm = ParseCACM(source, commonWordFile)
+		source.Close()
 	} else {
 		log.Println("Loading cacm index from file")
-		cacmSearch = NewSearch(cacmEnc)
+		cacm = NewSearch("cacm")
 	}
 
 	if plotFile != "" {
-		draw(cacmSearch, "cacm")
+		draw(cacm, "cacm")
 	}
-	if cacmEnc == "" {
-		cacmSearch.Serialize("cacm")
+	if buildIndex {
+		cacm.Serialize("cacm")
 	}
 
-	if cs276Enc == "" {
+	// get cs276 and build related tools
+	if buildIndex {
 		log.Println("Building cs276 index from scratch")
 		now := time.Now()
-		cs276Search = ParseCS276(cs276File)
+		cs276 = ParseCS276(cs276File)
 		log.Printf("cs276 index built in  %s \n", time.Since(now).String())
 	} else {
 		log.Println("Loading cs276 index from file")
-		cs276Search = NewSearch(cs276Enc)
+		cs276 = NewSearch("cs276")
 	}
 
 	if plotFile != "" {
-		draw(cs276Search, "cs276")
+		draw(cs276, "cs276")
 	}
-	if cs276Enc == "" {
-		cs276Search.Serialize("cs276")
+	if buildIndex {
+		cs276.Serialize("cs276")
 	}
-	serve(cacmSearch, cs276Search)
+	serve(cacm, cs276)
 }
 
 func draw(search *Search, name string) {
