@@ -13,9 +13,9 @@ type Document struct {
 	Id   int
 }
 
-func newDocument(id int) *Document {
+func newDocument() *Document {
 	freqs := make(map[string]float64)
-	return &Document{Title: "", Url: "", Id: id, Freqs: freqs}
+	return &Document{Title: "", Url: "", Freqs: freqs}
 }
 
 // addWord add a word to the model, for now freqs are only stored as count actually

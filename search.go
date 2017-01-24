@@ -49,7 +49,7 @@ func NewSearch(filename string) *Search {
 func (s *Search) AddDocument(d *Document) {
 	d.calculFreqs()
 	for w, f := range d.Freqs {
-		s.Index[w] = append(s.Index[w], Ref{d.Id, f})
+		s.Index[w] = append(s.Index[w], Ref{s.Size, f})
 	}
 	s.Size++
 	s.Titles = append(s.Titles, d.Title)

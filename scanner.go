@@ -28,5 +28,5 @@ func tokenMember(ch rune) bool {
 // Scanner is an interface reading words one at a time
 // implemented by CACMscanner and CS276Scanner
 type Scanner interface {
-	Scan() (Character, string)
+	Scan(c chan *Document)
 }
