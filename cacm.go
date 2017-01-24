@@ -128,8 +128,10 @@ func (s *CACMScanner) addToken(lit string) {
 	if s.field == title {
 		s.title.WriteString(lit)
 	}
-	// we store the lowest ID where the word was seen
-	// it's easy since id are seen in order
+	// token are all token seen in document
+	s.doc.addToken(lit)
+
+	// words are only cleaned and not common (used for search)
 	lit = cleanWord(lit)
 	if s.isCommonWord(lit) {
 		return
@@ -159,6 +161,7 @@ func (s *CACMScanner) Scan(c chan *Document) {
 					// Add the previous document
 					s.doc.Title = s.title.String()
 					// Send the document
+					s.doc.calculFreqs()
 					c <- s.doc
 				}
 				// Reset the document
@@ -174,6 +177,7 @@ func (s *CACMScanner) Scan(c chan *Document) {
 			// Add the previous document
 			s.doc.Title = s.title.String()
 			// Send the document
+			s.doc.calculFreqs()
 			c <- s.doc
 			close(c)
 			return

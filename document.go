@@ -10,18 +10,24 @@ type Document struct {
 	Freqs map[string]float64
 	// stores the total size
 	Size int
-	Id   int
+	// Tokens is a set of all token
+	Tokens map[string]bool
 }
 
 func newDocument() *Document {
 	freqs := make(map[string]float64)
-	return &Document{Title: "", Url: "", Freqs: freqs}
+	tokens := make(map[string]bool)
+	return &Document{Title: "", Url: "", Freqs: freqs, Tokens: tokens}
 }
 
 // addWord add a word to the model, for now freqs are only stored as count actually
 func (d *Document) addWord(w string) {
 	d.Freqs[w] += 1
 	d.Size += 1
+}
+
+func (d *Document) addToken(w string) {
+	d.Tokens[w] = true
 }
 
 // calculFreqs really calculate the frequenciez

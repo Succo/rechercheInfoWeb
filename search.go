@@ -47,9 +47,14 @@ func NewSearch(filename string) *Search {
 
 // AddDocument adds a parsed document to it's indexes
 func (s *Search) AddDocument(d *Document) {
-	d.calculFreqs()
 	for w, f := range d.Freqs {
 		s.Index[w] = append(s.Index[w], Ref{s.Size, f})
+	}
+	for t := range d.Tokens {
+		_, found := s.Token[t]
+		if !found {
+			s.Token[t] = s.Size
+		}
 	}
 	s.Size++
 	s.Titles = append(s.Titles, d.Title)

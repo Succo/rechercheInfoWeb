@@ -54,7 +54,7 @@ func NewCS276Scanner(root string) *CS276Scanner {
 func (s *CS276Scanner) scan(c chan *Document) {
 	for filename := range s.toScan {
 		doc := newDocument()
-		doc.Title = s.root + "/" + filename
+		doc.Title = filename
 
 		file, err := os.Open(s.root + "/" + filename)
 		defer file.Close()
@@ -70,15 +70,24 @@ func (s *CS276Scanner) scan(c chan *Document) {
 			}
 			if tokenMember(ch) {
 				scanner.UnreadRune()
-				doc.addWord(scanToken(scanner))
+				w := scanToken(scanner)
+				// all lexeme are compted as "seen"
+				doc.addToken(w)
+				// we only add cleaned word to the index
+				w = cleanWord(w)
+				if len(w) > 3 {
+					doc.addWord(w)
+				}
 			}
 		}
+		doc.calculFreqs()
 		c <- doc
 		file.Close()
 	}
 	s.wg.Done()
 }
 
+// Scan will send scanned doc to the channel using multiple goroutine to parse them
 func (s *CS276Scanner) Scan(c chan *Document) {
 	dirs, err := ioutil.ReadDir(s.root)
 	if err != nil {
