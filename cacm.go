@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"unicode"
 )
@@ -166,6 +167,7 @@ func (s *CACMScanner) Scan(c chan *Document) {
 				}
 				// Reset the document
 				s.doc = newDocument()
+				s.doc.Url = fmt.Sprintf("/cacm/%d", s.id)
 				s.title.Reset()
 				s.id++
 			}

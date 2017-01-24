@@ -21,6 +21,8 @@ type Search struct {
 	Size int
 	// Titles stores document title
 	Titles []string
+	// Url stores url to document
+	Urls []string
 }
 
 func emptySearch() *Search {
@@ -58,6 +60,7 @@ func (s *Search) AddDocument(d *Document) {
 	}
 	s.Size++
 	s.Titles = append(s.Titles, d.Title)
+	s.Urls = append(s.Titles, d.Url)
 }
 
 // IndexSize returns the term -> Document index size
