@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"io"
 	"os"
 	"strings"
@@ -39,22 +38,8 @@ func cleanWord(word string) string {
 	return word
 }
 
-// Parser is the struct that will parse using a Scanner
-// and hold the parsed data
-type Parser struct {
-	// Those are the field used while parsing
-	s          Scanner
-	field      field
-	id         int
-	commonWord map[string]bool
-	title      bytes.Buffer
-	doc        *Document
-	// search only stores result from the indexing
-	search *Search
-}
-
-// NewCACMParser creates a parser struct from an io reader and a common word list
-func NewCACMParser(r io.Reader, commonWordFile string) *Parser {
+// ParseCACM creates a cacm scanner, a search struct and connects them
+func ParseCACM(r io.Reader, commonWordFile string) *Search {
 	commonWord, err := os.Open(commonWordFile)
 	if err != nil {
 		panic(err)
@@ -67,31 +52,23 @@ func NewCACMParser(r io.Reader, commonWordFile string) *Parser {
 		cw[scanner.Text()] = true
 	}
 
-	search := emptySearch()
-	return &Parser{s: NewCACMScanner(r, cw), commonWord: cw, search: search}
+	cacm := NewCACMScanner(r, cw)
+	return Parse(cacm)
 }
 
-// NewCS276Parser creates a parser struct from an io reader and a common word list
-func NewCS276Parser(root string) *Parser {
-	// construct the common word set
-	// It's empty since CS276 doesn't provide a common word list
-	cw := make(map[string]bool)
-
-	search := emptySearch()
-	return &Parser{s: NewCS276Scanner(root), commonWord: cw, search: search}
+// ParseCS276 creates a parser struct from an io reader and a common word list
+func ParseCS276(root string) *Search {
+	cs276 := NewCS276Scanner(root)
+	return Parse(cs276)
 }
 
-// addWord adds the token to the index
-func (p *Parser) addWord(lit string) {
-	p.doc.addWord(lit)
-}
-
-// Parse will parse the whole buffer
-func (p *Parser) Parse() *Search {
+// Parse creates a search and populate it with result from a scanner
+func Parse(scan Scanner) *Search {
 	c := make(chan *Document)
-	go p.s.Scan(c)
+	go scan.Scan(c)
+	search := emptySearch()
 	for doc := range c {
-		p.search.AddDocument(doc)
+		search.AddDocument(doc)
 	}
-	return p.search
+	return search
 }

@@ -42,8 +42,7 @@ func main() {
 			panic(err)
 		}
 		defer cacm.Close()
-		cacmParser := NewCACMParser(cacm, commonWordFile)
-		cacmSearch = cacmParser.Parse()
+		cacmSearch = ParseCACM(cacm, commonWordFile)
 		cacm.Close()
 	} else {
 		log.Println("Loading cacm index from file")
@@ -60,8 +59,7 @@ func main() {
 	if cs276Enc == "" {
 		log.Println("Building cs276 index from scratch")
 		now := time.Now()
-		cs276Parser := NewCS276Parser(cs276File)
-		cs276Search = cs276Parser.Parse()
+		cs276Search = ParseCS276(cs276File)
 		log.Printf("cs276 index built in  %s \n", time.Since(now).String())
 	} else {
 		log.Println("Loading cs276 index from file")
