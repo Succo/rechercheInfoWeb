@@ -31,19 +31,12 @@ func scanToken(s *bufio.Reader) string {
 	return buf.String()
 }
 
-// a token is a scanned word as returned by worker
-type token struct {
-	word string
-	ch   Character
-}
-
 // CS276Scanner will walk the buffer and return characters
 type CS276Scanner struct {
-	root      string
-	dirs      []string
-	toScan    chan string
-	inProcess []token
-	wg        sync.WaitGroup
+	root   string
+	dirs   []string
+	toScan chan string
+	wg     sync.WaitGroup
 }
 
 // NewCS276Scanner create a CS276Scanner from a root dir string

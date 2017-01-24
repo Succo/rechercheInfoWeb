@@ -7,6 +7,32 @@ import (
 	"unicode"
 )
 
+// field serves to identify the different field
+type field int
+
+const (
+	id field = iota
+	title
+	summary
+	keyWords
+	other
+)
+
+func identToField(ident string) field {
+	switch ident {
+	case ".I":
+		return id
+	case ".T":
+		return title
+	case ".W":
+		return summary
+	case ".K":
+		return keyWords
+	}
+	// This correspond to all untreated field
+	return other
+}
+
 // CACMScanner will walk the buffer and return document one by one
 type CACMScanner struct {
 	r          *bufio.Reader
@@ -44,10 +70,7 @@ func (s *CACMScanner) peek() rune {
 }
 
 // scanWhitespace scans the next whitespace
-func (s *CACMScanner) scanWhitespace() token {
-	// buffer to store contigous whitespace character
-	var buf bytes.Buffer
-	buf.WriteRune(s.read())
+func (s *CACMScanner) scanWhitespace() {
 	for {
 		ch := s.read()
 		if ch == eof {
@@ -56,25 +79,24 @@ func (s *CACMScanner) scanWhitespace() token {
 			s.unread()
 			break
 		}
-		buf.WriteRune(ch)
 	}
-	return token{buf.String(), WS}
 }
 
-// scanIdentifiant scans the next identifiant, a two runes keyword
-func (s *CACMScanner) scanIdentifiant() token {
+// scanIdentifiant scans the next identifiant
+// it returns "token" false if it's not actually an identifiant
+func (s *CACMScanner) scanIdentifiant() (string, bool) {
 	ch := s.read()
 	tmp := s.peek()
 	// we check it's really an identifiant, only one character and it's a letter
 	if !unicode.IsSpace(tmp) || ch < 'A' || ch > 'Z' {
 		s.unread()
 		s.unread()
-		return s.scanToken()
+		return s.scanToken(), false
 	}
-	return token{"." + string(ch), Identifiant}
+	return "." + string(ch), true
 }
 
-func (s *CACMScanner) scanToken() token {
+func (s *CACMScanner) scanToken() string {
 	// buffer to store the character
 	var buf bytes.Buffer
 	for {
@@ -88,7 +110,7 @@ func (s *CACMScanner) scanToken() token {
 		}
 		buf.WriteRune(ch)
 	}
-	return token{buf.String(), Token}
+	return buf.String()
 }
 
 // isCommonWord returns wether the word is part of the common word list
@@ -128,12 +150,10 @@ func (s *CACMScanner) Scan(c chan *Document) {
 				s.title.WriteRune(' ')
 			}
 		case ch == '.':
-			t := s.scanIdentifiant()
-			if t.ch == Token {
-				s.addToken(t.word)
-				break
+			lit, isIdent := s.scanIdentifiant()
+			if !isIdent {
 			}
-			s.field = identToField(t.word)
+			s.field = identToField(lit)
 			if s.field == id {
 				if s.id != 0 {
 					// Add the previous document
@@ -148,8 +168,8 @@ func (s *CACMScanner) Scan(c chan *Document) {
 			}
 		case tokenMember(ch):
 			s.unread()
-			t := s.scanToken()
-			s.addToken(t.word)
+			lit := s.scanToken()
+			s.addToken(lit)
 		case ch == eof:
 			// Add the previous document
 			s.doc.Title = s.title.String()
