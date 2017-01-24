@@ -32,8 +32,8 @@ func (d *Document) addToken(w string) {
 
 // calculFreqs really calculate the frequenciez
 func (d *Document) calculFreqs() {
-	size := float64(d.Size)
+	factor := 1 / float64(d.Size)
 	for w, freq := range d.Freqs {
-		d.Freqs[w] = freq / size
+		d.Freqs[w] = freq * factor
 	}
 }
