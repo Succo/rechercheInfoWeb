@@ -5,6 +5,12 @@ import (
 	"os"
 )
 
+// Result is a document as returned by a Search
+type Result struct {
+	Name string
+	Url  string
+}
+
 // Ref is a reference to a document
 type Ref struct {
 	Id   int
@@ -60,7 +66,7 @@ func (s *Search) AddDocument(d *Document) {
 	}
 	s.Size++
 	s.Titles = append(s.Titles, d.Title)
-	s.Urls = append(s.Titles, d.Url)
+	s.Urls = append(s.Urls, d.Url)
 }
 
 // IndexSize returns the term -> Document index size
@@ -93,17 +99,17 @@ func (s *Search) CorpusSize() int {
 }
 
 // Search returns  the list of document title that mention a word
-func (s *Search) Search(input string) []string {
+func (s *Search) Search(input string) []Result {
 	q := buildQuery(input)
 	refs := q.execute(s)
-	result := make([]string, 0, len(refs))
+	results := make([]Result, 0, len(refs))
 	for i, ref := range refs {
 		// Because result are ordered this prevent printing twice the same doc
 		if i == 0 || ref.Id != refs[i-1].Id {
-			result = append(result, s.Titles[ref.Id])
+			results = append(results, Result{s.Titles[ref.Id], s.Urls[ref.Id]})
 		}
 	}
-	return result
+	return results
 }
 
 // Serialize a search struct to a file, adding the .gob extension

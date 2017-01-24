@@ -35,7 +35,7 @@
 
 		<ul>
 			{{ range .Results }}
-			<li>{{ . }}</li>
+			<li><a href="{{ .Url }}">{{ .Name }}</a></li>
 			{{end}}
 		</ul>
 

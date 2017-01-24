@@ -8,7 +8,7 @@ import (
 )
 
 type answer struct {
-	Results []string
+	Results []Result
 }
 
 type stat struct {
