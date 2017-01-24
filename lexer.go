@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"io"
 	"os"
-	"strings"
+
+	porterstemmer "github.com/reiver/go-porterstemmer"
 )
 
 func cleanWord(word string) string {
-	word = strings.ToLower(word)
-	return word
+	stem := porterstemmer.StemString(word)
+	return stem
 }
 
 // ParseCACM creates a cacm scanner, a search struct and connects them
