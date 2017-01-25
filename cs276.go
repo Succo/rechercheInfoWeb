@@ -85,11 +85,7 @@ func (s *CS276Scanner) scan(c chan *Document) {
 				w := scanToken(scanner)
 				// all lexeme are compted as "seen"
 				doc.addToken(w)
-				// we only add cleaned word to the index
-				w = cleanWord(w)
-				if len(w) > 3 {
-					doc.addWord(w)
-				}
+				doc.addWord(w)
 			}
 		}
 		doc.calculFreqs()

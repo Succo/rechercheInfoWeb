@@ -132,12 +132,10 @@ func (s *CACMScanner) addToken(lit string) {
 	// token are all token seen in document
 	s.doc.addToken(lit)
 
-	// words are only cleaned and not common (used for search)
-	lit = cleanWord(lit)
+	// cleaned and not common words are used for search
 	if s.isCommonWord(lit) {
 		return
 	}
-	// We add non common word to the token list
 	s.doc.addWord(lit)
 }
 

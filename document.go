@@ -22,6 +22,7 @@ func newDocument() *Document {
 
 // addWord add a word to the model, for now freqs are only stored as count actually
 func (d *Document) addWord(w string) {
+	w = cleanWord(w)
 	d.Freqs[w] += 1
 	d.Size += 1
 }
