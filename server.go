@@ -8,6 +8,9 @@ import (
 )
 
 type answer struct {
+	Query   string
+	CACM    bool
+	CS276   bool
 	Results []Result
 }
 
@@ -73,17 +76,20 @@ func serve(cacm, cs276 *Search) {
 		}
 
 		var search *Search
+		a := answer{Query: input}
 		if corpus == "cacm" {
 			search = cacm
+			a.CACM = true
 		} else if corpus == "cs276" {
 			search = cs276
+			a.CS276 = true
 		} else {
 			index.Execute(w, nil)
 			return
 		}
-		results := search.Search(input)
+		a.Results = search.Search(input)
 
-		index.Execute(w, answer{Results: results})
+		index.Execute(w, a)
 	})
 
 	http.HandleFunc("/stat", func(w http.ResponseWriter, r *http.Request) {

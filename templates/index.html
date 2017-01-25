@@ -22,13 +22,15 @@
 		<p> Les statistiques sur les corpus sont <a href="/stat">ici</a>.<br>
 		    Vous pouvez effectuer des recherches ci-dessous: </p> 
 		<form action="/" method="POST">
-			<div><input type="text" name="search" style="width:98.5%"></input></div>
+			<div><input type="text" name="search" style="width:98.5%" value="{{.Query}}"></input></div>
 			<br>
 			<div>
 				<label for="CACM"> CACM</label>
-				<input type="radio" name="corpus" value="cacm" id="CACM" checked>
+				<input type="radio" name="corpus" value="cacm" 
+				       id="CACM" {{if .CACM }} checked {{end}}>
 				<label for="cs276"> CS276</label>
-				<input type="radio" name="corpus" value="cs276" id="cs276">
+				<input type="radio" name="corpus" value="cs276" 
+				       id="cs276" {{if .CS276 }} checked {{end}}>
 				<input type="submit" value="Search" style="float:right">
 			</div>
 		</form>
