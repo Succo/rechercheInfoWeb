@@ -9,8 +9,8 @@ import (
 )
 
 type answer struct {
-	Query   string
-	CACM    bool
+	Query string
+	// A small "hack" to keep the button checked
 	CS276   bool
 	Results []Result
 }
@@ -85,7 +85,6 @@ func serve(cacm, cs276 *Search) {
 		a := answer{Query: input}
 		if corpus == "cacm" {
 			search = cacm
-			a.CACM = true
 		} else if corpus == "cs276" {
 			search = cs276
 			a.CS276 = true

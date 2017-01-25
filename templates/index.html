@@ -13,7 +13,9 @@
 			color:#141414;
 			padding:0 10px}
 		h1,h2,h3{line-height:1.2}
+		{{if .CS276 }}
 		li{word-break: break-all}
+		{{end}}
 		</style>
 	</head>
 
@@ -27,7 +29,7 @@
 			<div>
 				<label for="CACM"> CACM</label>
 				<input type="radio" name="corpus" value="cacm" 
-				       id="CACM" {{if .CACM }} checked {{end}}>
+				       id="CACM" {{if not .CS276 }} checked {{end}}>
 				<label for="cs276"> CS276</label>
 				<input type="radio" name="corpus" value="cs276" 
 				       id="cs276" {{if .CS276 }} checked {{end}}>
