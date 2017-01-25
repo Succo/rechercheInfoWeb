@@ -100,8 +100,7 @@ func (s *Search) CorpusSize() int {
 
 // Search returns  the list of document title that mention a word
 func (s *Search) Search(input string) []Result {
-	q := buildQuery(input)
-	refs := q.execute(s)
+	refs := query(s, input)
 	results := make([]Result, 0, len(refs))
 	for i, ref := range refs {
 		// Because result are ordered this prevent printing twice the same doc
