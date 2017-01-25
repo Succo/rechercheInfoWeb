@@ -67,6 +67,12 @@ func (s *CS276Scanner) scan(c chan *Document) {
 		doc := newDocument()
 		doc.Title = filename
 		doc.Url = filenameToUrl(filename)
+		// words of the title are added too
+		words := strings.Split(filename, "_")
+		for _, w := range words[1:] {
+			doc.addToken(w)
+			doc.addWord(w)
+		}
 
 		file, err := os.Open(s.root + "/" + filename)
 		defer file.Close()
