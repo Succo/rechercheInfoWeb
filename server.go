@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"strconv"
 )
 
 type answer struct {
@@ -67,6 +68,11 @@ func serve(cacm, cs276 *Search) {
 		stats = append(stats, getStat(search, name))
 	}
 
+	cacmT, err := template.ParseFiles("templates/cacm.html")
+	if err != nil {
+		panic(err.Error())
+	}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		corpus := r.FormValue("corpus")
 		input := r.FormValue("search")
@@ -102,6 +108,21 @@ func serve(cacm, cs276 *Search) {
 
 	http.HandleFunc("/cs276.svg", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "cs276.svg")
+	})
+
+	http.HandleFunc("/cacm/", func(w http.ResponseWriter, r *http.Request) {
+		// len("/cacm/") = 5
+		id, err := strconv.Atoi(r.URL.Path[6:])
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		doc, err := getCacmDoc(id)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		cacmT.Execute(w, doc)
 	})
 
 	log.Println("riw starting to serve traffic")

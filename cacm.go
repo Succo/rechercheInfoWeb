@@ -16,6 +16,8 @@ const (
 	title
 	summary
 	keyWords
+	publication
+	authors
 	other
 )
 
@@ -29,9 +31,13 @@ func identToField(ident string) field {
 		return summary
 	case ".K":
 		return keyWords
+	case ".B":
+		return publication
+	case ".A":
+		return authors
+	default:
+		return other
 	}
-	// This correspond to all untreated field
-	return other
 }
 
 // CACMScanner will walk the buffer and return document one by one
