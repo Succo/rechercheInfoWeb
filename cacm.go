@@ -125,7 +125,6 @@ func (s *CACMScanner) isCommonWord(lit string) bool {
 }
 
 func (s *CACMScanner) addToken(lit string) {
-	// then the only token is the id
 	if s.field == title {
 		s.title.WriteString(lit)
 	}
@@ -172,7 +171,9 @@ func (s *CACMScanner) Scan(c chan *Document) {
 		case tokenMember(ch):
 			s.unread()
 			lit := s.scanToken()
-			s.addToken(lit)
+			if s.field == title || s.field == summary || s.field == keyWords {
+				s.addToken(lit)
+			}
 		case ch == eof:
 			// Add the previous document
 			s.doc.Title = s.title.String()
