@@ -20,6 +20,7 @@ type Ref struct {
 // Search stores information relevant to parsed documents
 type Search struct {
 	Retriever
+	Corpus string
 	// Token stores the id of the first document containing a token for heap law
 	Token map[string]int
 	// Index is a map of token document pointers
@@ -32,11 +33,11 @@ type Search struct {
 	Urls []string
 }
 
-func emptySearch() *Search {
+func emptySearch(corpus string) *Search {
 	token := make(map[string]int)
 	index := make(map[string][]Ref)
 	var titles []string
-	return &Search{Token: token, Index: index, Titles: titles}
+	return &Search{Token: token, Index: index, Titles: titles, Corpus: corpus}
 }
 
 // NewSearch generates a Search loading a serialized file

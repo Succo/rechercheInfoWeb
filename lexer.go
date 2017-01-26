@@ -31,7 +31,7 @@ func ParseCACM(r io.Reader, commonWordFile string) *Search {
 
 	c := make(chan *Document)
 	go cacm.Scan(c)
-	search := emptySearch()
+	search := emptySearch("cacm")
 	ids := make([]int64, 0)
 	for doc := range c {
 		search.AddDocument(doc)
@@ -46,7 +46,7 @@ func ParseCS276(root string) *Search {
 	cs276 := NewCS276Scanner(root)
 	c := make(chan *Document)
 	go cs276.Scan(c)
-	search := emptySearch()
+	search := emptySearch("cs276")
 	for doc := range c {
 		search.AddDocument(doc)
 	}
