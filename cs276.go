@@ -47,7 +47,7 @@ type CS276Scanner struct {
 	root   string
 	dirs   []string
 	toScan chan string
-	wg     sync.WaitGroup
+	wg     *sync.WaitGroup
 }
 
 // NewCS276Scanner create a CS276Scanner from a root dir string
@@ -57,7 +57,8 @@ func NewCS276Scanner(root string) *CS276Scanner {
 	return &CS276Scanner{
 		root:   root,
 		toScan: toScan,
-		wg:     wg}
+		wg:     &wg,
+	}
 }
 
 // scan processes string from the toScan channel

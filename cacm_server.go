@@ -26,8 +26,7 @@ func getCACMDoc(index int) (cacmDoc, error) {
 	for {
 		line, err := buf.ReadString('\n')
 		if err != nil {
-			// end of file, we are returning the last doc
-			break
+			return cacmDoc{}, nil
 		}
 		if line[:3] != ".I " {
 			continue
@@ -42,7 +41,6 @@ func getCACMDoc(index int) (cacmDoc, error) {
 			return ParseCACMDoc(buf)
 		}
 	}
-	return cacmDoc{}, nil
 }
 
 func ParseCACMDoc(buf *bufio.Reader) (cacmDoc, error) {
@@ -52,7 +50,8 @@ func ParseCACMDoc(buf *bufio.Reader) (cacmDoc, error) {
 	for {
 		line, err := buf.ReadString('\n')
 		if err != nil {
-			return cacmDoc{}, err
+			// end of file, we are returning the last doc
+			return doc, nil
 		}
 		if line[0] == '.' {
 			// add to previous state
