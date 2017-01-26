@@ -12,6 +12,9 @@ type Document struct {
 	Size int
 	// Tokens is a set of all token
 	Tokens map[string]bool
+	// pos is the index of the doc in the file
+	// only relevant for cacm
+	pos int64
 }
 
 func newDocument() *Document {

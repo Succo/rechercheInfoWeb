@@ -19,6 +19,7 @@ type Ref struct {
 
 // Search stores information relevant to parsed documents
 type Search struct {
+	Retriever
 	// Token stores the id of the first document containing a token for heap law
 	Token map[string]int
 	// Index is a map of token document pointers
