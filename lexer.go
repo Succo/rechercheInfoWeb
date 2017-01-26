@@ -28,22 +28,28 @@ func ParseCACM(r io.Reader, commonWordFile string) *Search {
 	}
 
 	cacm := NewCACMScanner(r, cw)
-	return Parse(cacm)
+
+	c := make(chan *Document)
+	go cacm.Scan(c)
+	search := emptySearch()
+	ids := make([]int64, 0)
+	for doc := range c {
+		search.AddDocument(doc)
+		ids = append(ids, doc.pos)
+	}
+	search.Retriever = &cacmRetriever{ids: ids}
+	return search
 }
 
-// ParseCS276 creates a parser struct from an io reader and a common word list
+// ParseCS276 creates a parser struct from the root folder of cs216 data
 func ParseCS276(root string) *Search {
 	cs276 := NewCS276Scanner(root)
-	return Parse(cs276)
-}
-
-// Parse creates a search and populate it with result from a scanner
-func Parse(scan Scanner) *Search {
 	c := make(chan *Document)
-	go scan.Scan(c)
+	go cs276.Scan(c)
 	search := emptySearch()
 	for doc := range c {
 		search.AddDocument(doc)
 	}
+	search.Retriever = &cs276Retriever{}
 	return search
 }

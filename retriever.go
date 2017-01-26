@@ -8,18 +8,19 @@ import (
 	"os"
 )
 
-type retriever interface {
+// Retrivier is an interface that can get content of a document by it's index or id
+type Retriever interface {
 	// getDoc returns the content of a document
 	retrieve(string, int) (string, error)
 }
 
 type cacmRetriever struct {
 	// array that point to the document index in cacm.all
-	idMap []int64
+	ids []int64
 }
 
 func (r *cacmRetriever) retrieve(title string, id int) (string, error) {
-	if id > len(r.idMap)-1 {
+	if id > len(r.ids)-1 {
 		return "", errors.New("Undefined document")
 	}
 	file, err := os.Open(cacmFile)
@@ -27,7 +28,7 @@ func (r *cacmRetriever) retrieve(title string, id int) (string, error) {
 		return "", err
 	}
 	defer file.Close()
-	file.Seek(r.idMap[id], 0)
+	file.Seek(r.ids[id], 0)
 
 	var buf bytes.Buffer
 	scanner := bufio.NewScanner(file)

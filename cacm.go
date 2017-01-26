@@ -48,6 +48,7 @@ type CACMScanner struct {
 	commonWord map[string]bool
 	doc        *Document
 	id         int
+	pos        int
 }
 
 // NewCACMScanner create a CACMScanner from an io reader
@@ -56,7 +57,8 @@ func NewCACMScanner(r io.Reader, cw map[string]bool) *CACMScanner {
 }
 
 func (s *CACMScanner) read() rune {
-	ch, _, err := s.r.ReadRune()
+	ch, n, err := s.r.ReadRune()
+	s.pos += n
 	if err != nil {
 		return eof
 	}
@@ -64,15 +66,16 @@ func (s *CACMScanner) read() rune {
 }
 
 func (s *CACMScanner) unread() {
-	_ = s.r.UnreadRune()
+	s.r.UnreadRune()
+	s.pos -= 1
 }
 
 func (s *CACMScanner) peek() rune {
 	ch, _, err := s.r.ReadRune()
+	s.r.UnreadRune()
 	if err != nil {
 		ch = eof
 	}
-	s.r.UnreadRune()
 	return ch
 }
 
@@ -171,6 +174,7 @@ func (s *CACMScanner) Scan(c chan *Document) {
 				// Reset the document
 				s.doc = newDocument()
 				s.doc.Url = fmt.Sprintf("/cacm/%d", s.id)
+				s.doc.pos = int64(s.pos)
 				s.title.Reset()
 				s.id++
 			}
