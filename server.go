@@ -116,7 +116,7 @@ func serve(cacm, cs276 *Search) {
 			http.NotFound(w, r)
 			return
 		}
-		doc, err := getCacmDoc(id)
+		doc, err := getCACMDoc(id)
 		if err != nil {
 			http.NotFound(w, r)
 			return

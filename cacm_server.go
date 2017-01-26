@@ -15,7 +15,7 @@ type cacmDoc struct {
 	K string
 }
 
-func getCacmDoc(index int) (cacmDoc, error) {
+func getCACMDoc(index int) (cacmDoc, error) {
 	file, err := os.Open(cacmFile)
 	if err != nil {
 		return cacmDoc{}, err
@@ -26,7 +26,8 @@ func getCacmDoc(index int) (cacmDoc, error) {
 	for {
 		line, err := buf.ReadString('\n')
 		if err != nil {
-			return cacmDoc{}, err
+			// end of file, we are returning the last doc
+			break
 		}
 		if line[:3] != ".I " {
 			continue
