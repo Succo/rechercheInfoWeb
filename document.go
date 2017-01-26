@@ -30,11 +30,12 @@ func (d *Document) addWord(w string) {
 	d.Size += 1
 }
 
+// addToken add the token to the set
 func (d *Document) addToken(w string) {
 	d.Tokens[w] = true
 }
 
-// calculFreqs really calculate the frequenciez
+// calculFreqs really calculate the frequences
 func (d *Document) calculFreqs() {
 	factor := 1 / float64(d.Size)
 	for w, freq := range d.Freqs {

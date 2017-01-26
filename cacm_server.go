@@ -1,3 +1,4 @@
+// all code here only serve to serve content from cacm to "give sens" to the qquery
 package main
 
 import (
@@ -7,6 +8,7 @@ import (
 	"strconv"
 )
 
+// cacmDoc is content of a document from cacm in a vaguely structured form
 type cacmDoc struct {
 	B string
 	T string
@@ -15,6 +17,7 @@ type cacmDoc struct {
 	K string
 }
 
+// getCACMDoc returns a cacmDoc from parsing the cacm.all file
 func getCACMDoc(index int) (cacmDoc, error) {
 	file, err := os.Open(cacmFile)
 	if err != nil {
@@ -43,6 +46,7 @@ func getCACMDoc(index int) (cacmDoc, error) {
 	}
 }
 
+// parseCACMDoc parses the content of one document in cacm.all
 func ParseCACMDoc(buf *bufio.Reader) (cacmDoc, error) {
 	state := id
 	doc := cacmDoc{}
