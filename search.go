@@ -23,8 +23,8 @@ type Search struct {
 	Corpus string
 	// Token stores the id of the first document containing a token for heap law
 	Token map[string]int
-	// Index is a map of token document pointers
-	Index map[string][]Ref
+	// Index is a trie of token document pointers
+	Index *Node
 	// Size is the total number of documents
 	Size int
 	// Titles stores document title
@@ -35,7 +35,7 @@ type Search struct {
 
 func emptySearch(corpus string) *Search {
 	token := make(map[string]int)
-	index := make(map[string][]Ref)
+	index := NewTrie()
 	var titles []string
 	return &Search{Token: token, Index: index, Titles: titles, Corpus: corpus}
 }
@@ -58,7 +58,9 @@ func NewSearch(filename string) *Search {
 // AddDocument adds a parsed document to it's indexes
 func (s *Search) AddDocument(d *Document) {
 	for w, f := range d.Freqs {
-		s.Index[w] = append(s.Index[w], Ref{s.Size, f})
+		if len(w) != 0 {
+			s.Index.add(w, &Ref{s.Size, f})
+		}
 	}
 	for t := range d.Tokens {
 		_, found := s.Token[t]
@@ -75,12 +77,13 @@ func (s *Search) AddDocument(d *Document) {
 // for document with ID < maxID
 func (s *Search) IndexSize(maxID int) int {
 	var indexSize int
-	for _, documents := range s.Index {
-		if documents[0].Id <= maxID {
-			indexSize++
-		}
-	}
 	return indexSize
+	//for _, documents := range s.Index {
+	//	if documents[0].Id <= maxID {
+	//		indexSize++
+	//	}
+	//}
+	//return indexSize
 }
 
 // TokenSize returns the total number of token in the parsed part of the document

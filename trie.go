@@ -3,9 +3,9 @@ package main
 
 // Node implements a node of the tree
 type Node struct {
-	refs  []*Ref
-	sons  []*Node
-	radix []string
+	Refs  []*Ref
+	Sons  []*Node
+	Radix []string
 }
 
 func NewTrie() *Node {
@@ -13,18 +13,19 @@ func NewTrie() *Node {
 }
 
 func emptyNode(ref *Ref) *Node {
-	return &Node{refs: []*Ref{ref}}
+	return &Node{Refs: []*Ref{ref}}
 }
 
 func (n *Node) add(w string, ref *Ref) {
 	cur := n    // node we are exploring
 	shared := 0 // part of w already matched
 	for {
-		if shared == len(w)-1 {
-			cur.refs = append(cur.refs, ref)
+		if shared == len(w) {
+			cur.Refs = append(cur.Refs, ref)
 			return
 		}
-		for i, rad := range cur.radix {
+		var found bool
+		for i, rad := range cur.Radix {
 			if rad[0] != w[shared] {
 				continue
 			}
@@ -32,35 +33,40 @@ func (n *Node) add(w string, ref *Ref) {
 			// calculate it's size
 			size := 1
 			for size < len(rad) && size < len(w)-shared &&
-				rad[:size+1] == w[shared:size+1] {
+				rad[:size+1] == w[shared:shared+size+1] {
 				size++
 			}
-			// split the vertice
-			new := &Node{
-				refs:  cur.refs,
-				sons:  cur.sons,
-				radix: make([]string, len(cur.radix)),
+			shared += size
+			found = true
+			if size == len(rad) {
+				cur = cur.Sons[i]
+				break
 			}
-			for j := range new.radix {
-				new.radix[j] = cur.radix[j][size:]
+			// split the vertice
+			old := cur.Sons[i]
+			new := &Node{
+				Refs:  make([]*Ref, 0),
+				Sons:  []*Node{old},
+				Radix: []string{rad[size:]},
 			}
 			// insert the new node in place
-			cur.radix[i] = rad[:size]
-			cur.sons[i] = new
+			cur.Radix[i] = rad[:size]
+			cur.Sons[i] = new
 			// keep iterating on the new node
 			cur = new
-			shared += size
-			continue
+			break
 		}
-		// No son share a common prefix
-		cur.sons = append(cur.sons, emptyNode(ref))
-		cur.radix = []string{w[shared:]}
-		// bring the new node to it's place
-		for j := len(cur.radix) - 1; j > 0 && cur.radix[j-1] > cur.radix[j]; j-- {
-			cur.radix[j-1], cur.radix[j] = cur.radix[j], cur.radix[j-1]
-			cur.sons[j-1], cur.sons[j] = cur.sons[j], cur.sons[j-1]
+		if !found {
+			// No son share a common prefix
+			cur.Sons = append(cur.Sons, emptyNode(ref))
+			cur.Radix = append(cur.Radix, w[shared:])
+			// bring the new node to it's place
+			for j := len(cur.Radix) - 1; j > 0 && cur.Radix[j-1] > cur.Radix[j]; j-- {
+				cur.Radix[j-1], cur.Radix[j] = cur.Radix[j], cur.Radix[j-1]
+				cur.Sons[j-1], cur.Sons[j] = cur.Sons[j], cur.Sons[j-1]
+			}
+			break
 		}
-		break
 	}
 }
 
@@ -69,24 +75,28 @@ func (n *Node) get(w string) []*Ref {
 	shared := 0
 	for {
 		if shared == len(w) {
-			return cur.refs
+			return cur.Refs
 		}
-		for i, rad := range cur.radix {
+		var found bool
+		for i, rad := range cur.Radix {
 			if rad[0] != w[shared] {
 				continue
 			}
 			// the two word share a prefix
 			// calculate it's size
 			size := 1
-			for size < len(rad) && size < len(w)-shared {
-				if rad[:size+1] == w[shared:size+1] {
-					size++
-				}
+			for size < len(rad) && size < len(w)-shared &&
+				rad[:size+1] == w[shared:shared+size+1] {
+				size++
 			}
-			cur = cur.sons[i]
+			cur = cur.Sons[i]
 			shared += size
+			found = true
+			break
 		}
-		// No son share a common prefix
-		return []*Ref{}
+		if !found {
+			// No son share a common prefix
+			return []*Ref{}
+		}
 	}
 }

@@ -66,15 +66,16 @@ func TestTrie(t *testing.T) {
 		trie.add(w, ref)
 	}
 	for i, w := range testWords {
-		for _, ref := range trie.get(w) {
-			if ref != testRefs[i] {
-				t.Fail()
-			}
+		resp := trie.get(w)
+		if len(resp) != 1 {
+			t.Fatal("Incorrect result size for inserted word")
+		} else if resp[0] != testRefs[i] {
+			t.Fatal("Incorrect result for inserted word")
 		}
 	}
 	for _, w := range fakeWords {
 		if len(trie.get(w)) != 0 {
-			t.Fail()
+			t.Fatal("Incorrect word found")
 		}
 	}
 

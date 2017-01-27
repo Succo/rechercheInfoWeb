@@ -2,8 +2,8 @@ package main
 
 import "strings"
 
-func intersect(refs1, refs2 []Ref) []Ref {
-	intersection := make([]Ref, 0, len(refs1))
+func intersect(refs1, refs2 []*Ref) []*Ref {
+	intersection := make([]*Ref, 0, len(refs1))
 	for {
 		if len(refs1) == 0 || len(refs2) == 0 {
 			break
@@ -22,8 +22,8 @@ func intersect(refs1, refs2 []Ref) []Ref {
 	return intersection
 }
 
-func union(refs1, refs2 []Ref) []Ref {
-	union := make([]Ref, 0, len(refs1)+len(refs2))
+func union(refs1, refs2 []*Ref) []*Ref {
+	union := make([]*Ref, 0, len(refs1)+len(refs2))
 	for {
 		if len(refs1) == 0 {
 			union = append(union, refs2...)
@@ -49,8 +49,8 @@ func union(refs1, refs2 []Ref) []Ref {
 }
 
 // remove removes element of refs2 from refs1
-func remove(refs1, refs2 []Ref) []Ref {
-	removed := make([]Ref, 0, len(refs1))
+func remove(refs1, refs2 []*Ref) []*Ref {
+	removed := make([]*Ref, 0, len(refs1))
 	for {
 		if len(refs1) == 0 {
 			return removed
@@ -72,9 +72,9 @@ func remove(refs1, refs2 []Ref) []Ref {
 	return removed
 }
 
-func query(s *Search, input string) []Ref {
+func query(s *Search, input string) []*Ref {
 	words := strings.Split(input, " ")
-	var results []Ref
+	var results []*Ref
 	for i := 0; i < len(words); i++ {
 		switch {
 		case i < len(words)-1 && strings.ToUpper(words[i+1]) == "OR":
@@ -83,8 +83,8 @@ func query(s *Search, input string) []Ref {
 			}
 			word1 := cleanWord(words[i])
 			word2 := cleanWord(words[i+2])
-			refs1 := s.Index[word1]
-			refs2 := s.Index[word2]
+			refs1 := s.Index.get(word1)
+			refs2 := s.Index.get(word2)
 			if i == 0 {
 				results = union(refs1, refs2)
 			} else {
@@ -95,11 +95,11 @@ func query(s *Search, input string) []Ref {
 			if i == len(words)-1 {
 				return results
 			}
-			not := s.Index[cleanWord(words[i+1])]
+			not := s.Index.get(cleanWord(words[i+1]))
 			results = remove(results, not)
 			i++
 		default:
-			refs := s.Index[cleanWord(words[i])]
+			refs := s.Index.get(cleanWord(words[i]))
 			if i == 0 {
 				results = refs
 			} else {
