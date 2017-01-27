@@ -6,6 +6,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type answer struct {
@@ -13,6 +14,7 @@ type answer struct {
 	// A small "hack" to keep the button checked
 	CS276   bool
 	Results []Result
+	Time    string
 }
 
 type stat struct {
@@ -92,7 +94,9 @@ func serve(cacm, cs276 *Search) {
 			index.Execute(w, nil)
 			return
 		}
+		now := time.Now()
 		a.Results = search.Search(input)
+		a.Time = time.Since(now).String()
 
 		index.Execute(w, a)
 	})
