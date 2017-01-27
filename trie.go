@@ -3,7 +3,7 @@ package main
 
 // Node implements a node of the tree
 type Node struct {
-	Refs  []*Ref
+	Refs  []Ref
 	Sons  []*Node
 	Radix []string
 }
@@ -12,11 +12,11 @@ func NewTrie() *Node {
 	return &Node{}
 }
 
-func emptyNode(ref *Ref) *Node {
-	return &Node{Refs: []*Ref{ref}}
+func emptyNode(ref Ref) *Node {
+	return &Node{Refs: []Ref{ref}}
 }
 
-func (n *Node) add(w string, ref *Ref) {
+func (n *Node) add(w string, ref Ref) {
 	cur := n    // node we are exploring
 	shared := 0 // part of w already matched
 	for {
@@ -45,7 +45,7 @@ func (n *Node) add(w string, ref *Ref) {
 			// split the vertice
 			old := cur.Sons[i]
 			new := &Node{
-				Refs:  make([]*Ref, 0),
+				Refs:  make([]Ref, 0),
 				Sons:  []*Node{old},
 				Radix: []string{rad[size:]},
 			}
@@ -70,7 +70,7 @@ func (n *Node) add(w string, ref *Ref) {
 	}
 }
 
-func (n *Node) get(w string) []*Ref {
+func (n *Node) get(w string) []Ref {
 	cur := n
 	shared := 0
 	for {
@@ -96,7 +96,7 @@ func (n *Node) get(w string) []*Ref {
 		}
 		if !found {
 			// No son share a common prefix
-			return []*Ref{}
+			return []Ref{}
 		}
 	}
 }

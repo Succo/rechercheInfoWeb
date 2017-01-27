@@ -59,7 +59,7 @@ func NewSearch(filename string) *Search {
 func (s *Search) AddDocument(d *Document) {
 	for w, f := range d.Freqs {
 		if len(w) != 0 {
-			s.Index.add(w, &Ref{s.Size, f})
+			s.Index.add(w, Ref{s.Size, f})
 		}
 	}
 	for t := range d.Tokens {
