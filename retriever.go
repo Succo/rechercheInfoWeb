@@ -16,11 +16,11 @@ type Retriever interface {
 
 type cacmRetriever struct {
 	// array that point to the document index in cacm.all
-	ids []int64
+	Ids []int64
 }
 
 func (r *cacmRetriever) retrieve(title string, id int) (string, error) {
-	if id > len(r.ids)-1 {
+	if id > len(r.Ids)-1 {
 		return "", errors.New("Undefined document")
 	}
 	file, err := os.Open(cacmFile)
@@ -28,7 +28,7 @@ func (r *cacmRetriever) retrieve(title string, id int) (string, error) {
 		return "", err
 	}
 	defer file.Close()
-	file.Seek(r.ids[id], 0)
+	file.Seek(r.Ids[id], 0)
 
 	var buf bytes.Buffer
 	scanner := bufio.NewScanner(file)

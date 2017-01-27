@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"flag"
 	"log"
 	"os"
@@ -42,6 +43,7 @@ func main() {
 		source.Close()
 	} else {
 		log.Println("Loading cacm index from file")
+		gob.RegisterName("cacmR", cacmRetriever{})
 		cacm = NewSearch("cacm")
 	}
 
@@ -49,6 +51,7 @@ func main() {
 		draw(cacm, "cacm")
 	}
 	if buildIndex {
+		gob.RegisterName("cacmR", cacmRetriever{})
 		cacm.Serialize("cacm")
 	}
 
@@ -60,6 +63,7 @@ func main() {
 		log.Printf("cs276 index built in  %s \n", time.Since(now).String())
 	} else {
 		log.Println("Loading cs276 index from file")
+		gob.RegisterName("cs276R", cs276Retriever{})
 		cs276 = NewSearch("cs276")
 	}
 
@@ -67,6 +71,7 @@ func main() {
 		draw(cs276, "cs276")
 	}
 	if buildIndex {
+		gob.RegisterName("cs276R", cs276Retriever{})
 		cs276.Serialize("cs276")
 	}
 	serve(cacm, cs276)

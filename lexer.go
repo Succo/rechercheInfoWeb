@@ -37,7 +37,7 @@ func ParseCACM(r io.Reader, commonWordFile string) *Search {
 		search.AddDocument(doc)
 		ids = append(ids, doc.pos)
 	}
-	search.Retriever = &cacmRetriever{ids: ids}
+	search.Retriever = &cacmRetriever{Ids: ids}
 	return search
 }
 
