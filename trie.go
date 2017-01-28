@@ -100,3 +100,16 @@ func (n *Node) get(w string) []Ref {
 		}
 	}
 }
+
+// get InfIndex walks the tree
+// returns the number of key wich are in a doc with index < maxID
+func (n *Node) getInfIndex(maxID int) int {
+	var indexSize int
+	if len(n.Refs) != 0 && n.Refs[0].Id <= maxID {
+		indexSize++
+	}
+	for _, s := range n.Sons {
+		indexSize += s.getInfIndex(maxID)
+	}
+	return indexSize
+}

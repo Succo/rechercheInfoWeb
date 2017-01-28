@@ -76,14 +76,7 @@ func (s *Search) AddDocument(d *Document) {
 // IndexSize returns the term -> Document index size
 // for document with ID < maxID
 func (s *Search) IndexSize(maxID int) int {
-	var indexSize int
-	return indexSize
-	//for _, documents := range s.Index {
-	//	if documents[0].Id <= maxID {
-	//		indexSize++
-	//	}
-	//}
-	//return indexSize
+	return s.Index.getInfIndex(maxID)
 }
 
 // TokenSize returns the total number of token in the parsed part of the document
