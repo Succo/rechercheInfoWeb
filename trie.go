@@ -31,11 +31,7 @@ func (n *Node) add(w string, ref Ref) {
 			}
 			// the two word share a prefix
 			// calculate it's size
-			size := 1
-			for size < len(rad) && size < len(w)-shared &&
-				rad[:size+1] == w[shared:shared+size+1] {
-				size++
-			}
+			size := longestPrefixSize(rad, w, shared)
 			shared += size
 			found = true
 			if size == len(rad) {
@@ -84,11 +80,7 @@ func (n *Node) get(w string) []Ref {
 			}
 			// the two word share a prefix
 			// calculate it's size
-			size := 1
-			for size < len(rad) && size < len(w)-shared &&
-				rad[:size+1] == w[shared:shared+size+1] {
-				size++
-			}
+			size := longestPrefixSize(rad, w, shared)
 			cur = cur.Sons[i]
 			shared += size
 			found = true
@@ -112,4 +104,16 @@ func (n *Node) getInfIndex(maxID int) int {
 		indexSize += s.getInfIndex(maxID)
 	}
 	return indexSize
+}
+
+// longestPrefixSize returns the longest prefix of rad and w
+// with shared being the already matched part of w
+// and assuming rad[0] == w[shared]
+func longestPrefixSize(rad, w string, shared int) int {
+	size := 1
+	for size < len(rad) && size < len(w)-shared &&
+		rad[:size+1] == w[shared:shared+size+1] {
+		size++
+	}
+	return size
 }

@@ -58,10 +58,10 @@ var fakeWords = []string{
 }
 
 func TestTrie(t *testing.T) {
-	testRefs := make([]*Ref, len(testWords))
+	testRefs := make([]Ref, len(testWords))
 	trie := NewTrie()
 	for i, w := range testWords {
-		ref := &Ref{}
+		ref := Ref{}
 		testRefs[i] = ref
 		trie.add(w, ref)
 	}
