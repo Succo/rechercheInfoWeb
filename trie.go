@@ -1,11 +1,13 @@
 // A trie implementation for the index
 package main
 
+import "bytes"
+
 // Node implements a node of the tree
 type Node struct {
 	Refs  []Ref
 	Sons  []*Node
-	Radix []string
+	Radix [][]byte
 }
 
 func NewTrie() *Node {
@@ -16,7 +18,7 @@ func emptyNode(ref Ref) *Node {
 	return &Node{Refs: []Ref{ref}}
 }
 
-func (n *Node) add(w string, ref Ref) {
+func (n *Node) add(w []byte, ref Ref) {
 	cur := n    // node we are exploring
 	shared := 0 // part of w already matched
 	for {
@@ -43,7 +45,7 @@ func (n *Node) add(w string, ref Ref) {
 			new := &Node{
 				Refs:  make([]Ref, 0),
 				Sons:  []*Node{old},
-				Radix: []string{rad[size:]},
+				Radix: [][]byte{rad[size:]},
 			}
 			// insert the new node in place
 			cur.Radix[i] = rad[:size]
@@ -57,7 +59,8 @@ func (n *Node) add(w string, ref Ref) {
 			cur.Sons = append(cur.Sons, emptyNode(ref))
 			cur.Radix = append(cur.Radix, w[shared:])
 			// bring the new node to it's place
-			for j := len(cur.Radix) - 1; j > 0 && cur.Radix[j-1] > cur.Radix[j]; j-- {
+			for j := len(cur.Radix) - 1; j > 0 &&
+				bytes.Compare(cur.Radix[j-1], cur.Radix[j]) > 0; j-- {
 				cur.Radix[j-1], cur.Radix[j] = cur.Radix[j], cur.Radix[j-1]
 				cur.Sons[j-1], cur.Sons[j] = cur.Sons[j], cur.Sons[j-1]
 			}
@@ -66,7 +69,7 @@ func (n *Node) add(w string, ref Ref) {
 	}
 }
 
-func (n *Node) get(w string) []Ref {
+func (n *Node) get(w []byte) []Ref {
 	cur := n
 	shared := 0
 	for {
@@ -109,11 +112,16 @@ func (n *Node) getInfIndex(maxID int) int {
 // longestPrefixSize returns the longest prefix of rad and w
 // with shared being the already matched part of w
 // and assuming rad[0] == w[shared]
-func longestPrefixSize(rad, w string, shared int) int {
-	size := 1
-	for size < len(rad) && size < len(w)-shared &&
-		rad[:size+1] == w[shared:shared+size+1] {
-		size++
+func longestPrefixSize(rad, w []byte, shared int) int {
+	length := len(rad)
+	if l := len(w) - shared; l < length {
+		length = l
 	}
-	return size
+	var i int
+	for i = 1; i < length; i++ {
+		if rad[i] != w[shared+i] {
+			break
+		}
+	}
+	return i
 }

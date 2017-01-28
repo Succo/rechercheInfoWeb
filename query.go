@@ -83,8 +83,8 @@ func query(s *Search, input string) []Ref {
 			}
 			word1 := cleanWord(words[i])
 			word2 := cleanWord(words[i+2])
-			refs1 := s.Index.get(word1)
-			refs2 := s.Index.get(word2)
+			refs1 := s.Index.get([]byte(word1))
+			refs2 := s.Index.get([]byte(word2))
 			if i == 0 {
 				results = union(refs1, refs2)
 			} else {
@@ -95,11 +95,13 @@ func query(s *Search, input string) []Ref {
 			if i == len(words)-1 {
 				return results
 			}
-			not := s.Index.get(cleanWord(words[i+1]))
+			word := cleanWord(words[i+1])
+			not := s.Index.get([]byte(word))
 			results = remove(results, not)
 			i++
 		default:
-			refs := s.Index.get(cleanWord(words[i]))
+			word := cleanWord(words[i])
+			refs := s.Index.get([]byte(word))
 			if i == 0 {
 				results = refs
 			} else {
