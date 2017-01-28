@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/gob"
 	"flag"
 	"log"
 	"os"
@@ -41,18 +40,15 @@ func main() {
 		defer source.Close()
 		cacm = ParseCACM(source, commonWordFile)
 		source.Close()
+		cacm.Serialize()
 	} else {
 		log.Println("Loading cacm index from file")
-		gob.RegisterName("cacmR", cacmRetriever{})
-		cacm = NewSearch("cacm")
+		cacm = Unserialize("cacm")
+		cacm.Retriever = UnserializeCacmRetriever("cacm")
 	}
 
 	if plotFile != "" {
 		draw(cacm, "cacm")
-	}
-	if buildIndex {
-		gob.RegisterName("cacmR", cacmRetriever{})
-		cacm.Serialize("cacm")
 	}
 
 	// get cs276 and build related tools
@@ -61,18 +57,14 @@ func main() {
 		now := time.Now()
 		cs276 = ParseCS276(cs276File)
 		log.Printf("cs276 index built in  %s \n", time.Since(now).String())
+		cs276.Serialize()
 	} else {
 		log.Println("Loading cs276 index from file")
-		gob.RegisterName("cs276R", cs276Retriever{})
-		cs276 = NewSearch("cs276")
+		cs276 = Unserialize("cs276")
 	}
 
 	if plotFile != "" {
 		draw(cs276, "cs276")
-	}
-	if buildIndex {
-		gob.RegisterName("cs276R", cs276Retriever{})
-		cs276.Serialize("cs276")
 	}
 	serve(cacm, cs276)
 }

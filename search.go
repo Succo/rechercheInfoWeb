@@ -40,21 +40,6 @@ func emptySearch(corpus string) *Search {
 	return &Search{Token: token, Index: index, Titles: titles, Corpus: corpus}
 }
 
-// NewSearch generates a Search loading a serialized file
-func NewSearch(filename string) *Search {
-	file, err := os.Open(filename + ".gob")
-	if err != nil {
-		panic(err)
-	}
-	dec := gob.NewDecoder(file)
-	var s Search
-	err = dec.Decode(&s)
-	if err != nil {
-		panic(err)
-	}
-	return &s
-}
-
 // AddDocument adds a parsed document to it's indexes
 func (s *Search) AddDocument(d *Document) {
 	for w, f := range d.Freqs {
@@ -109,16 +94,91 @@ func (s *Search) Search(input string) []Result {
 	return results
 }
 
-// Serialize a search struct to a file, adding the .gob extension
-func (s *Search) Serialize(filename string) {
-	file, err := os.Create(filename + ".gob")
+// Serialize a search struct to a file
+// we only serialize the index, the titles and the urls list
+// no need to consider the tokens since they only serve to calculate HEAP law
+func (s *Search) Serialize() {
+	titles, err := os.Create("indexes/" + s.Corpus + ".titles")
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
-	en := gob.NewEncoder(file)
-	err = en.Encode(s)
+	defer titles.Close()
+	en := gob.NewEncoder(titles)
+	err = en.Encode(s.Titles)
 	if err != nil {
 		panic(err)
 	}
+	titles.Sync()
+	titles.Close()
+
+	urls, err := os.Create("indexes/" + s.Corpus + ".urls")
+	if err != nil {
+		panic(err)
+	}
+	defer urls.Close()
+	en = gob.NewEncoder(urls)
+	err = en.Encode(s.Urls)
+	if err != nil {
+		panic(err)
+	}
+	urls.Sync()
+	urls.Close()
+
+	index, err := os.Create("indexes/" + s.Corpus + ".index")
+	if err != nil {
+		panic(err)
+	}
+	defer index.Close()
+	en = gob.NewEncoder(index)
+	err = en.Encode(s.Index)
+	if err != nil {
+		panic(err)
+	}
+	index.Sync()
+	index.Close()
+
+	s.Retriever.Serialize(s.Corpus)
+}
+
+// Unserialize reloads what's needed from disk
+func Unserialize(name string) *Search {
+	s := &Search{}
+	s.Corpus = name
+	titles, err := os.Open("indexes/" + name + ".titles")
+	if err != nil {
+		panic(err)
+	}
+	defer titles.Close()
+	en := gob.NewDecoder(titles)
+	err = en.Decode(&s.Titles)
+	if err != nil {
+		panic(err)
+	}
+	titles.Close()
+
+	urls, err := os.Open("indexes/" + name + ".urls")
+	if err != nil {
+		panic(err)
+	}
+	defer urls.Close()
+	en = gob.NewDecoder(urls)
+	err = en.Decode(&s.Urls)
+	if err != nil {
+		panic(err)
+	}
+	urls.Close()
+
+	index, err := os.Open("indexes/" + name + ".index")
+	if err != nil {
+		panic(err)
+	}
+	defer index.Close()
+	en = gob.NewDecoder(index)
+	err = en.Decode(&s.Index)
+	if err != nil {
+		panic(err)
+	}
+	index.Close()
+
+	return s
 }
