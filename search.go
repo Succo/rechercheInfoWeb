@@ -20,6 +20,7 @@ type Ref struct {
 // Search stores information relevant to parsed documents
 type Search struct {
 	Retriever
+	Stat   Stat
 	Corpus string
 	// Token stores the id of the first document containing a token for heap law
 	Token map[string]int
@@ -137,6 +138,19 @@ func (s *Search) Serialize() {
 	index.Sync()
 	index.Close()
 
+	stat, err := os.Create("indexes/" + s.Corpus + ".stat")
+	if err != nil {
+		panic(err)
+	}
+	defer stat.Close()
+	en = gob.NewEncoder(stat)
+	err = en.Encode(s.Stat)
+	if err != nil {
+		panic(err)
+	}
+	stat.Sync()
+	stat.Close()
+
 	s.Retriever.Serialize(s.Corpus)
 }
 
@@ -179,6 +193,18 @@ func Unserialize(name string) *Search {
 		panic(err)
 	}
 	index.Close()
+
+	stat, err := os.Open("indexes/" + name + ".stat")
+	if err != nil {
+		panic(err)
+	}
+	defer stat.Close()
+	en = gob.NewDecoder(stat)
+	err = en.Decode(&s.Stat)
+	if err != nil {
+		panic(err)
+	}
+	stat.Close()
 
 	return s
 }

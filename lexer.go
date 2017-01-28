@@ -38,6 +38,7 @@ func ParseCACM(r io.Reader, commonWordFile string) *Search {
 		ids = append(ids, doc.pos)
 	}
 	search.Retriever = &cacmRetriever{Ids: ids}
+	search.Stat = getStat(search, "cacm")
 	return search
 }
 
@@ -51,5 +52,6 @@ func ParseCS276(root string) *Search {
 		search.AddDocument(doc)
 	}
 	search.Retriever = &cs276Retriever{}
+	search.Stat = getStat(search, "cs276")
 	return search
 }
