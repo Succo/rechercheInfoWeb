@@ -44,9 +44,7 @@ func emptySearch(corpus string) *Search {
 // AddDocument adds a parsed document to it's indexes
 func (s *Search) AddDocument(d *Document) {
 	for w, f := range d.Freqs {
-		if len(w) != 0 {
-			s.Index.add([]byte(w), Ref{s.Size, f})
-		}
+		s.Index.add([]byte(w), Ref{s.Size, f})
 	}
 	for t := range d.Tokens {
 		_, found := s.Token[t]
