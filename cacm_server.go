@@ -19,6 +19,7 @@ type cacmDoc struct {
 
 // getCACMDoc returns a cacmDoc from parsing the cacm.all file
 func getCACMDoc(index int) (cacmDoc, error) {
+	index++
 	file, err := os.Open(cacmFile)
 	if err != nil {
 		return cacmDoc{}, err
