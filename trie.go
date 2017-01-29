@@ -72,10 +72,9 @@ func (n *Node) get(w []byte) []Ref {
 			return cur.Refs
 		}
 		i := getMatchingNode(cur.Radix, w[shared])
-		if i != -1 {
-			size := longestPrefixSize(cur.Radix[i], w, shared)
+		if i != -1 && bytes.HasPrefix(w[shared:], cur.Radix[i]) {
+			shared += len(cur.Radix[i])
 			cur = cur.Sons[i]
-			shared += size
 		} else {
 			// No son share a common prefix
 			return []Ref{}
