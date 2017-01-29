@@ -89,14 +89,12 @@ func buildCACM(c chan *Search) {
 		defer source.Close()
 		cacm = ParseCACM(source, commonWordFile)
 		source.Close()
+		draw(cacm, "cacm")
 		cacm.Serialize()
 	} else {
 		log.Println("Loading cacm index from file")
 		cacm = Unserialize("cacm")
 		cacm.Retriever = UnserializeCacmRetriever("cacm")
-	}
-	if plotFile != "" {
-		draw(cacm, "cacm")
 	}
 	c <- cacm
 }
@@ -108,13 +106,11 @@ func buildCS276(c chan *Search) {
 		now := time.Now()
 		cs276 = ParseCS276(cs276File)
 		log.Printf("cs276 index built in  %s \n", time.Since(now).String())
+		draw(cs276, "cs276")
 		cs276.Serialize()
 	} else {
 		log.Println("Loading cs276 index from file")
 		cs276 = Unserialize("cs276")
-	}
-	if plotFile != "" {
-		draw(cs276, "cs276")
 	}
 	c <- cs276
 }
