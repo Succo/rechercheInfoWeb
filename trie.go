@@ -26,19 +26,16 @@ func (n *Node) add(w []byte, ref Ref) {
 			cur.Refs = append(cur.Refs, ref)
 			return
 		}
-		var found bool
-		for i, rad := range cur.Radix {
-			if rad[0] != w[shared] {
-				continue
-			}
+		i := getMatchingNode(cur.Radix, w[shared])
+		if i != -1 {
+			rad := cur.Radix[i]
 			// the two word share a prefix
 			// calculate it's size
 			size := longestPrefixSize(rad, w, shared)
 			shared += size
-			found = true
 			if size == len(rad) {
 				cur = cur.Sons[i]
-				break
+				continue
 			}
 			// split the vertice
 			old := cur.Sons[i]
@@ -52,9 +49,7 @@ func (n *Node) add(w []byte, ref Ref) {
 			cur.Sons[i] = new
 			// keep iterating on the new node
 			cur = new
-			break
-		}
-		if !found {
+		} else {
 			// No son share a common prefix
 			cur.Sons = append(cur.Sons, emptyNode(ref))
 			cur.Radix = append(cur.Radix, w[shared:])
@@ -76,20 +71,12 @@ func (n *Node) get(w []byte) []Ref {
 		if shared == len(w) {
 			return cur.Refs
 		}
-		var found bool
-		for i, rad := range cur.Radix {
-			if rad[0] != w[shared] {
-				continue
-			}
-			// the two word share a prefix
-			// calculate it's size
-			size := longestPrefixSize(rad, w, shared)
+		i := getMatchingNode(cur.Radix, w[shared])
+		if i != -1 {
+			size := longestPrefixSize(cur.Radix[i], w, shared)
 			cur = cur.Sons[i]
 			shared += size
-			found = true
-			break
-		}
-		if !found {
+		} else {
 			// No son share a common prefix
 			return []Ref{}
 		}
@@ -124,4 +111,23 @@ func longestPrefixSize(rad, w []byte, shared int) int {
 		}
 	}
 	return i
+}
+
+// getMatchingNode returns the index of the byte array that starts with a given byte
+// or -1 if no match is found
+func getMatchingNode(sons [][]byte, b byte) int {
+	min := 0
+	max := len(sons) - 1
+	for min <= max {
+		match := (max + min) / 2
+		t := sons[match]
+		if t[0] == b {
+			return match
+		} else if sons[match][0] < b {
+			min = match + 1
+		} else {
+			max = match - 1
+		}
+	}
+	return -1
 }

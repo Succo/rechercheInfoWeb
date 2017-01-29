@@ -78,5 +78,4 @@ func TestTrie(t *testing.T) {
 			t.Fatal("Incorrect word found")
 		}
 	}
-
 }
