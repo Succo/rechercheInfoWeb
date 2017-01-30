@@ -1,11 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+)
+
+const (
+	maxSize = 20
 )
 
 type answer struct {
@@ -15,6 +20,9 @@ type answer struct {
 	Vectorial bool
 	Results   []Result
 	Time      string
+	// Links to other results in the query set
+	Prev string
+	Next string
 }
 
 func serve(cacm, cs276 *Search) {
@@ -40,10 +48,17 @@ func serve(cacm, cs276 *Search) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		corpus := r.FormValue("corpus")
 		input := r.FormValue("search")
-		searchType := r.FormValue("type")
 		if len(corpus) == 0 || len(input) == 0 {
 			index.Execute(w, nil)
 			return
+		}
+
+		searchType := r.FormValue("type")
+
+		var offset int
+		offset, err := strconv.Atoi(r.FormValue("offset"))
+		if err != nil {
+			offset = 0
 		}
 
 		var search *Search
@@ -68,6 +83,20 @@ func serve(cacm, cs276 *Search) {
 			return
 		}
 		a.Time = time.Since(now).String()
+		if offset > 0 && len(a.Results) > offset {
+			a.Results = a.Results[offset:]
+			if offset > 0 {
+				a.Prev = fmt.Sprintf("/?search=%s&offset=%d&corpus=%s&type=%s",
+					input, max(offset-maxSize, 0), corpus, searchType)
+			}
+		} else {
+			offset = 0
+		}
+		if len(a.Results) > maxSize {
+			a.Results = a.Results[:maxSize]
+			a.Next = fmt.Sprintf("/?search=%s&offset=%d&corpus=%s&type=%s",
+				input, offset+maxSize, corpus, searchType)
+		}
 
 		index.Execute(w, a)
 	})
@@ -101,4 +130,11 @@ func serve(cacm, cs276 *Search) {
 
 	log.Println("riw starting to serve traffic")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }

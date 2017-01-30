@@ -25,6 +25,7 @@
 		    Vous pouvez effectuer des recherches ci-dessous: </p> 
 		<form action="/" method="GET">
 			<div><input type="text" name="search" style="width:98.5%" value="{{.Query}}"></input></div>
+			<input type="hidden" name="offset" value="0">
 			<br>
 			<div>
 				<label for="CACM"> CACM</label>
@@ -43,13 +44,27 @@
 			</div>
 		</form>
 
-		{{ if .Time}}
+		{{ if .Time }}
 		<h3>Résultats trouvés en {{ .Time }}</h3>
 		<ul>
 			{{ range .Results }}
 			<li><a href="{{ .Url }}">{{ .Name }}</a></li>
 			{{end}}
 		</ul>
+		<div>
+			<table width="100%" style="padding:2px">
+			{{ if .Prev }}
+				<tr><td style="padding-right:4px">
+					<a href="{{ .Prev }}"> Previous </a>
+				</td>
+			{{end}}
+			{{ if .Next }}
+				<td style="text-align:right;padding-right:4px;">
+					<a href="{{ .Next }}" style="text-align:right"> Next </a>
+				 </td>
+			{{end}}
+		</tr></table>
+		</div>
 		{{end}}
 
 	</body>
