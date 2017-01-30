@@ -48,7 +48,11 @@ func ParseCACM(r io.Reader, commonWordFile string) *Search {
 		count++
 	}
 	search.Retriever = &cacmRetriever{Ids: ids}
+	// Now that all documents are known, we can fully calculate tf-idf
 	calculateIDF(index, count)
+	// Then we build the *real* index using a prefix tree
+	trie := trieFromIndex(index)
+	search.Index = trie
 	search.Stat = getStat(search, "cacm")
 	return search
 }
@@ -74,7 +78,11 @@ func ParseCS276(root string) *Search {
 		count++
 	}
 	search.Retriever = &cs276Retriever{}
+	// Now that all documents are known, we can fully calculate tf-idf
 	calculateIDF(index, count)
+	// Then we build the *real* index using a prefix tree
+	trie := trieFromIndex(index)
+	search.Index = trie
 	search.Stat = getStat(search, "cs276")
 	return search
 }

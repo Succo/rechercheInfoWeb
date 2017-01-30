@@ -14,16 +14,24 @@ func NewTrie() *Node {
 	return &Node{}
 }
 
-func emptyNode(ref Ref) *Node {
-	return &Node{Refs: []Ref{ref}}
+func emptyNode(refs []Ref) *Node {
+	return &Node{Refs: refs}
 }
 
-func (n *Node) add(w []byte, ref Ref) {
+func trieFromIndex(index map[string][]Ref) *Node {
+	n := NewTrie()
+	for w, refs := range index {
+		n.set([]byte(w), refs)
+	}
+	return n
+}
+
+func (n *Node) set(w []byte, refs []Ref) {
 	cur := n    // node we are exploring
 	shared := 0 // part of w already matched
 	for {
 		if shared == len(w) {
-			cur.Refs = append(cur.Refs, ref)
+			cur.Refs = refs
 			return
 		}
 		i := getMatchingNode(cur.Radix, w[shared])
@@ -51,7 +59,7 @@ func (n *Node) add(w []byte, ref Ref) {
 			cur = new
 		} else {
 			// No son share a common prefix
-			cur.Sons = append(cur.Sons, emptyNode(ref))
+			cur.Sons = append(cur.Sons, emptyNode(refs))
 			cur.Radix = append(cur.Radix, w[shared:])
 			// bring the new node to it's place
 			for j := len(cur.Radix) - 1; j > 0 &&
