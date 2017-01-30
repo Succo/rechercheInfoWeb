@@ -37,12 +37,14 @@
 			</div>
 		</form>
 
+		{{ if .Time}}
 		<h3>Résultats trouvé en {{ .Time }}</h3>
 		<ul>
 			{{ range .Results }}
 			<li><a href="{{ .Url }}">{{ .Name }}</a></li>
 			{{end}}
 		</ul>
+		{{end}}
 
 	</body>
 </html>
