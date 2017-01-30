@@ -11,6 +11,12 @@
 			line-height:1.6;
 			font-size:18px;
 			padding:0 10px}
+		a:link{
+			color:#000;
+			text-decoration:none}
+		a:visited{color:#000}
+		.res:link{color:#4B4B4B}
+		.res:visited{color:#4B4B4B}
 		h1,h2,h3{line-height:1.2}
 		{{if .CS276 }}
 		li{word-break: break-all}
@@ -19,9 +25,11 @@
 	</head>
 
 	<body>
-		<h2> Recherche Info Web </h2>
-		<p> Les statistiques sur les corpus sont <a href="/stat">ici</a>.<br>
-		    Vous pouvez effectuer des recherches ci-dessous: </p> 
+		<div style="background:rgb(10, 174, 194);padding:4px 10px">
+			<a href="/">RIW</a> |
+			<a href="/stat">stats</a>
+		</div>
+		<h2> Recherche </h2>
 		<form action="/" method="GET">
 			<div><input type="text" name="search" style="width:98.5%" value="{{.Query}}"></input></div>
 			<input type="hidden" name="offset" value="0">
@@ -47,11 +55,11 @@
 		<h3>Résultats trouvés en {{ .Time }}</h3>
 		<ul>
 			{{ range .Results }}
-			<li><a href="{{ .Url }}">{{ .Name }}</a></li>
+			<li><a class="res" href="{{ .Url }}">{{ .Name }}</a></li>
 			{{end}}
 		</ul>
 		<div>
-		<table width="100%" style="padding:2px"><tr>
+		<table width="100%" style="padding:2px;background:rgb(10, 174, 194)"><tr>
 			{{ if .Prev }}
 				<td style="padding-right:4px">
 					<a href="{{ .Prev }}"> Previous </a>
