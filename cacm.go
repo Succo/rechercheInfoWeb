@@ -168,7 +168,7 @@ func (s *CACMScanner) Scan(c chan *Document) {
 					// Add the previous document
 					s.doc.Title = s.title.String()
 					// Send the document
-					s.doc.calculFreqs()
+					s.doc.calculTf()
 					c <- s.doc
 				}
 				// Reset the document
@@ -188,7 +188,7 @@ func (s *CACMScanner) Scan(c chan *Document) {
 			// Add the previous document
 			s.doc.Title = s.title.String()
 			// Send the document
-			s.doc.calculFreqs()
+			s.doc.calculTf()
 			c <- s.doc
 			close(c)
 			return

@@ -7,7 +7,7 @@ type Document struct {
 	// Used to point to the "real document"
 	Url string
 	// store the frequence of keywoard in the document
-	Freqs map[string]float64
+	Scores map[string]float64
 	// stores the total size
 	Size int
 	// Tokens is a set of all token
@@ -18,15 +18,15 @@ type Document struct {
 }
 
 func newDocument() *Document {
-	freqs := make(map[string]float64)
+	scores := make(map[string]float64)
 	tokens := make(map[string]bool)
-	return &Document{Title: "", Url: "", Freqs: freqs, Tokens: tokens}
+	return &Document{Title: "", Url: "", Scores: scores, Tokens: tokens}
 }
 
 // addWord add a word to the model, for now freqs are only stored as count actually
 func (d *Document) addWord(w string) {
 	w = cleanWord(w)
-	d.Freqs[w] += 1
+	d.Scores[w] += 1
 	d.Size += 1
 }
 
@@ -35,10 +35,10 @@ func (d *Document) addToken(w string) {
 	d.Tokens[w] = true
 }
 
-// calculFreqs really calculate the frequences
-func (d *Document) calculFreqs() {
+// calculTf actually update score to store tf for the term
+func (d *Document) calculTf() {
 	factor := 1 / float64(d.Size)
-	for w, freq := range d.Freqs {
-		d.Freqs[w] = freq * factor
+	for w, s := range d.Scores {
+		d.Scores[w] = s * factor
 	}
 }

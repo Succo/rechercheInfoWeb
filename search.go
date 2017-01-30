@@ -13,8 +13,8 @@ type Result struct {
 
 // Ref is a reference to a document
 type Ref struct {
-	Id   int
-	Freq float64
+	Id    int
+	TfIdf float64
 }
 
 // Search stores information relevant to parsed documents
@@ -41,11 +41,8 @@ func emptySearch(corpus string) *Search {
 	return &Search{Token: token, Index: index, Titles: titles, Corpus: corpus}
 }
 
-// AddDocument adds a parsed document to it's indexes
-func (s *Search) AddDocument(d *Document) {
-	for w, f := range d.Freqs {
-		s.Index.add([]byte(w), Ref{s.Size, f})
-	}
+// AddDocMetaData adds a parsed document metadata
+func (s *Search) AddDocMetaData(d *Document) {
 	for t := range d.Tokens {
 		_, found := s.Token[t]
 		if !found {

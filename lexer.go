@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"io"
+	"math"
 	"os"
 
 	porterstemmer "github.com/reiver/go-porterstemmer"
@@ -32,12 +33,22 @@ func ParseCACM(r io.Reader, commonWordFile string) *Search {
 	c := make(chan *Document)
 	go cacm.Scan(c)
 	search := emptySearch("cacm")
+	// Store doc ID to position in cacm.all pointer
 	ids := make([]int64, 0)
+	// Temporary storage for document
+	index := make(map[string][]Ref)
+	// Number of document
+	var count int
 	for doc := range c {
-		search.AddDocument(doc)
+		search.AddDocMetaData(doc)
+		for w, score := range doc.Scores {
+			index[w] = append(index[w], Ref{count, score})
+		}
 		ids = append(ids, doc.pos)
+		count++
 	}
 	search.Retriever = &cacmRetriever{Ids: ids}
+	calculateIDF(index, count)
 	search.Stat = getStat(search, "cacm")
 	return search
 }
@@ -48,10 +59,33 @@ func ParseCS276(root string) *Search {
 	c := make(chan *Document)
 	go cs276.Scan(c)
 	search := emptySearch("cs276")
+	// Store doc ID to position in cacm.all pointer
+	ids := make([]int64, 0)
+	// Temporary storage for document
+	index := make(map[string][]Ref)
+	// Number of document
+	var count int
 	for doc := range c {
-		search.AddDocument(doc)
+		search.AddDocMetaData(doc)
+		for w, score := range doc.Scores {
+			index[w] = append(index[w], Ref{count, score})
+		}
+		ids = append(ids, doc.pos)
+		count++
 	}
 	search.Retriever = &cs276Retriever{}
+	calculateIDF(index, count)
 	search.Stat = getStat(search, "cs276")
 	return search
+}
+
+func calculateIDF(index map[string][]Ref, size int) {
+	factor := float64(size)
+	for w, refs := range index {
+		wordFactor := math.Log(factor * 1 / float64(len(refs)))
+		for i, ref := range refs {
+			ref.TfIdf = ref.TfIdf * wordFactor
+			index[w][i] = ref
+		}
+	}
 }

@@ -95,7 +95,7 @@ func (s *CS276Scanner) scan(c chan *Document) {
 				doc.addWord(w)
 			}
 		}
-		doc.calculFreqs()
+		doc.calculTf()
 		c <- doc
 		file.Close()
 	}
