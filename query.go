@@ -33,7 +33,7 @@ func union(refs1, refs2 []Ref) []Ref {
 			union = append(union, refs1...)
 			break
 		}
-		if refs1[0] == refs2[0] {
+		if refs1[0].Id == refs2[0].Id {
 			union = append(union, refs1[0])
 			refs1 = refs1[1:]
 			refs2 = refs2[1:]
@@ -59,7 +59,7 @@ func remove(refs1, refs2 []Ref) []Ref {
 			removed = append(removed, refs1...)
 			break
 		}
-		if refs1[0] == refs2[0] {
+		if refs1[0].Id == refs2[0].Id {
 			refs1 = refs1[1:]
 			refs2 = refs2[1:]
 		} else if refs1[0].Id < refs2[0].Id {
