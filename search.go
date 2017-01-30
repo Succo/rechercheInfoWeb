@@ -78,8 +78,8 @@ func (s *Search) CorpusSize() int {
 }
 
 // BooleanSeach performs a Boolean search based on a query
-func (s *Search) Search(input string) []Result {
-	refs := query(s, input)
+func (s *Search) BooleanSearch(input string) []Result {
+	refs := BooleanQuery(s, input)
 	return s.refToResult(refs)
 }
 

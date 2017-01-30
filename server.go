@@ -59,7 +59,7 @@ func serve(cacm, cs276 *Search) {
 		}
 		now := time.Now()
 		if searchType == "boolean" {
-			a.Results = search.Search(input)
+			a.Results = search.BooleanSearch(input)
 		} else if searchType == "vectorial" {
 			a.Results = search.VectorSearch(input)
 			a.Vectorial = true
