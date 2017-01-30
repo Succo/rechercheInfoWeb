@@ -1,0 +1,12 @@
+[Unit]
+Description=Golang riw service
+
+[Service]
+PIDFile=/tmp/riw.pid-4040
+User=riw
+Group=riw
+WorkingDirectory=/var/www/riw
+ExecStart=/bin/bash -c '/opt/rechercheInfoWeb'
+
+[Install]
+WantedBy=multi-user.target
