@@ -90,9 +90,10 @@ func ParseCS276(root string) *Search {
 func calculateIDF(index map[string][]Ref, size int) {
 	factor := float64(size)
 	for w, refs := range index {
-		wordFactor := math.Log(factor * 1 / float64(len(refs)))
+		idf := math.Log(factor * 1 / float64(len(refs)))
 		for i, ref := range refs {
-			ref.TfIdf = ref.TfIdf * wordFactor
+			// At this point ref.TfIdf only contains Tf
+			ref.TfIdf = ref.TfIdf * idf
 			index[w][i] = ref
 		}
 	}
