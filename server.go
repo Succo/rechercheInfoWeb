@@ -23,6 +23,7 @@ type answer struct {
 	// Links to other results in the query set
 	Prev string
 	Next string
+	Size int
 }
 
 func serve(cacm, cs276 *Search) {
@@ -83,6 +84,7 @@ func serve(cacm, cs276 *Search) {
 			return
 		}
 		a.Time = time.Since(now).String()
+		a.Size = len(a.Results)
 		if offset > 0 && len(a.Results) > offset {
 			a.Results = a.Results[offset:]
 			if offset > 0 {
