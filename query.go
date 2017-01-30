@@ -77,6 +77,7 @@ func query(s *Search, input string) []Ref {
 	var results []Ref
 	for i := 0; i < len(words); i++ {
 		switch {
+		case len(words[i]) == 0:
 		case i < len(words)-1 && strings.ToUpper(words[i+1]) == "OR":
 			if i >= len(words)-2 {
 				return results
