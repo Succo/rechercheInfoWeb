@@ -28,11 +28,17 @@
 			<br>
 			<div>
 				<label for="CACM"> CACM</label>
-				<input type="radio" name="corpus" value="cacm" 
+				<input type="radio" name="corpus" value="cacm"
 				       id="CACM" {{if not .CS276 }} checked {{end}}>
 				<label for="cs276"> CS276</label>
-				<input type="radio" name="corpus" value="cs276" 
+				<input type="radio" name="corpus" value="cs276"
 				       id="cs276" {{if .CS276 }} checked {{end}}>
+				<label for="Boolean"> Boolean</label>
+				<input type="radio" name="type" value="boolean"
+				       id="boolean" {{if not .Vectorial }} checked {{end}}>
+				<label for="cectorial"> Vectorial</label>
+				<input type="radio" name="type" value="vectorial"
+				       id="vectorial" {{if .Vectorial }} checked {{end}}>
 				<input type="submit" value="Search" style="float:right">
 			</div>
 		</form>

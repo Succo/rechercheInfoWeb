@@ -111,5 +111,4 @@ func query(s *Search, input string) []Ref {
 		}
 	}
 	return results
-
 }

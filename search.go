@@ -77,9 +77,21 @@ func (s *Search) CorpusSize() int {
 	return s.Size
 }
 
-// Search returns  the list of document title that mention a word
+// BooleanSeach performs a Boolean search based on a query
 func (s *Search) Search(input string) []Result {
 	refs := query(s, input)
+	return s.refToResult(refs)
+}
+
+// VectorSearch performs a Vectorial search using TfIdf scores
+func (s *Search) VectorSearch(input string) []Result {
+	refs := VectorQuery(s, input)
+	return s.refToResult(refs)
+}
+
+// refToResult transform a list of ref in a list of printable result
+// i.e remplace docID by doc metadata
+func (s *Search) refToResult(refs []Ref) []Result {
 	results := make([]Result, 0, len(refs))
 	for i, ref := range refs {
 		// Because result are ordered this prevent printing twice the same doc

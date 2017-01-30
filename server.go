@@ -10,10 +10,11 @@ import (
 
 type answer struct {
 	Query string
-	// A small "hack" to keep the button checked
-	CS276   bool
-	Results []Result
-	Time    string
+	// A small "hack" to keep the same buttons checked
+	CS276     bool
+	Vectorial bool
+	Results   []Result
+	Time      string
 }
 
 func serve(cacm, cs276 *Search) {
@@ -39,6 +40,7 @@ func serve(cacm, cs276 *Search) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		corpus := r.FormValue("corpus")
 		input := r.FormValue("search")
+		searchType := r.FormValue("type")
 		if len(corpus) == 0 || len(input) == 0 {
 			index.Execute(w, nil)
 			return
@@ -56,7 +58,15 @@ func serve(cacm, cs276 *Search) {
 			return
 		}
 		now := time.Now()
-		a.Results = search.Search(input)
+		if searchType == "boolean" {
+			a.Results = search.Search(input)
+		} else if searchType == "vectorial" {
+			a.Results = search.VectorSearch(input)
+			a.Vectorial = true
+		} else {
+			index.Execute(w, nil)
+			return
+		}
 		a.Time = time.Since(now).String()
 
 		index.Execute(w, a)
