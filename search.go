@@ -25,7 +25,7 @@ type Search struct {
 	// Token stores the id of the first document containing a token for heap law
 	Token map[string]int
 	// Index is a trie of token document pointers
-	Index *Node
+	Index *Root
 	// Size is the total number of documents
 	Size int
 	// Titles stores document title

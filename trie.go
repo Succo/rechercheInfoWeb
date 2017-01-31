@@ -3,35 +3,53 @@ package main
 
 import "bytes"
 
+// Root is the root of the prefix tree
+// Refs is a list of all references, nodes store pointer to it
+type Root struct {
+	Refs []Ref
+	Node *Node
+}
+
 // Node implements a node of the tree
 type Node struct {
-	Refs  []Ref
 	Sons  []*Node
 	Radix [][]byte
+	Start int
+	End   int
 }
 
-func NewTrie() *Node {
-	return &Node{}
+func NewTrie() *Root {
+	return &Root{Node: &Node{}}
 }
 
-func emptyNode(refs []Ref) *Node {
-	return &Node{Refs: refs}
+func emptyNode(start, end int) *Node {
+	return &Node{Start: start, End: end}
 }
 
-func trieFromIndex(index map[string][]Ref) *Node {
-	n := NewTrie()
+func trieFromIndex(index map[string][]Ref) *Root {
+	r := NewTrie()
 	for w, refs := range index {
-		n.set([]byte(w), refs)
+		r.set([]byte(w), refs)
 	}
-	return n
+	return r
 }
 
-func (n *Node) set(w []byte, refs []Ref) {
-	cur := n    // node we are exploring
-	shared := 0 // part of w already matched
+func (r *Root) set(w []byte, refs []Ref) {
+	// calculate the start and end pointer for w
+	start := len(r.Refs)
+	end := start + len(refs)
+	// build the new ref array copying previous and new data into it
+	newRefs := make([]Ref, end)
+	copy(newRefs, r.Refs)
+	copy(newRefs[start:], refs)
+	r.Refs = newRefs
+	// descends the tree to find the proper leaf
+	cur := r.Node // node we are exploring
+	shared := 0   // part of w already matched
 	for {
 		if shared == len(w) {
-			cur.Refs = refs
+			cur.Start = start
+			cur.End = end
 			return
 		}
 		i := getMatchingNode(cur.Radix, w[shared])
@@ -48,7 +66,6 @@ func (n *Node) set(w []byte, refs []Ref) {
 			// split the vertice
 			old := cur.Sons[i]
 			new := &Node{
-				Refs:  make([]Ref, 0),
 				Sons:  []*Node{old},
 				Radix: [][]byte{rad[size:]},
 			}
@@ -59,7 +76,7 @@ func (n *Node) set(w []byte, refs []Ref) {
 			cur = new
 		} else {
 			// No son share a common prefix
-			cur.Sons = append(cur.Sons, emptyNode(refs))
+			cur.Sons = append(cur.Sons, emptyNode(start, end))
 			cur.Radix = append(cur.Radix, w[shared:])
 			// bring the new node to it's place
 			for j := len(cur.Radix) - 1; j > 0 &&
@@ -72,12 +89,12 @@ func (n *Node) set(w []byte, refs []Ref) {
 	}
 }
 
-func (n *Node) get(w []byte) []Ref {
-	cur := n
+func (r *Root) get(w []byte) []Ref {
+	cur := r.Node
 	shared := 0
 	for {
 		if shared == len(w) {
-			return cur.Refs
+			return r.Refs[cur.Start:cur.End]
 		}
 		i := getMatchingNode(cur.Radix, w[shared])
 		if i != -1 && bytes.HasPrefix(w[shared:], cur.Radix[i]) {
@@ -90,15 +107,19 @@ func (n *Node) get(w []byte) []Ref {
 	}
 }
 
+func (r *Root) getInfIndex(maxID int) int {
+	return r.Node.getInfIndex(maxID, r.Refs)
+}
+
 // get InfIndex walks the tree
 // returns the number of key wich are in a doc with index < maxID
-func (n *Node) getInfIndex(maxID int) int {
+func (n *Node) getInfIndex(maxID int, refs []Ref) int {
 	var indexSize int
-	if len(n.Refs) != 0 && n.Refs[0].Id <= maxID {
+	if n.Start-n.End != 0 && refs[n.Start].Id <= maxID {
 		indexSize++
 	}
 	for _, s := range n.Sons {
-		indexSize += s.getInfIndex(maxID)
+		indexSize += s.getInfIndex(maxID, refs)
 	}
 	return indexSize
 }
