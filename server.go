@@ -141,6 +141,10 @@ func serve(cacm, cs276 *Search) {
 		cacmT.Execute(w, doc)
 	})
 
+	http.HandleFunc("/percentile", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "templates/percentile.html")
+	})
+
 	log.Println("riw starting to serve traffic")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

@@ -26,31 +26,10 @@
 			<a href="/stat">stats</a> |
 			<a href="/percentile">percentile</a>
 		</div>
-		<h3> Valeurs de la loi de HEAP </h3>
-
-		<table width="100%" cellspacing="0">
-			<tr style="background:#EFEFEF">
-				<th>Corpus</th>
-				<th>Taille du vocabulaire</th>
-				<th>Nombre de tokens</th>
-				<th>B</th>
-				<th>K</th>
-			</tr>
-			{{ range . }}
-			<tr>
-				<td>{{ .Name }}</td>
-				<td>{{ .Vocabulary }}</td>
-				<td>{{ .Tokens }}</td>
-				<td>{{ .B | printf "%.2f" }}</td>
-				<td>{{ .K | printf "%.2f" }}</td>
-			</tr>
-			{{ end }}
-		</table>
-
-		<h3> Graphique de la loi de HEAP </h3>
-		{{ range . }}
-			<img src="{{ .Name }}.svg" style="margin:auto;width:100%"
-			alt="Heap law plot {{ .Name }}">
-		{{ end }}
+		<iframe width="650px" scrolling="no"
+			src="https://p.datadoghq.com/sb/4af0e3f08-15deb57dbb"
+			style="position: absolute; height: 100%; border: none; overflow: hidden;"></iframe>
 	</body>
 </html>
+
+
