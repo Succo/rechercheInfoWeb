@@ -16,6 +16,7 @@ var buildIndex bool
 
 const (
 	plotFile       = ".svg"
+	plotDir        = "graphs/"
 	cacmFile       = "data/CACM/cacm.all"
 	commonWordFile = "data/CACM/common_words"
 	cs276File      = "data/CS276/pa1-data"
@@ -45,8 +46,9 @@ func main() {
 	serve(cacm, cs276)
 }
 
-func draw(search *Search, name string) {
-	if _, err := os.Stat(name + plotFile); err == nil {
+func draw(search *Search) {
+	name := search.Corpus
+	if _, err := os.Stat(plotDir + name + plotFile); err == nil {
 		// the file exist, whe assume it's the plot
 		return
 	}
@@ -73,7 +75,7 @@ func draw(search *Search, name string) {
 		panic(err)
 	}
 
-	if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, name+plotFile); err != nil {
+	if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, plotDir+name+plotFile); err != nil {
 		panic(err)
 	}
 }
@@ -89,7 +91,7 @@ func buildCACM(c chan *Search) {
 		defer source.Close()
 		cacm = ParseCACM(source, commonWordFile)
 		source.Close()
-		draw(cacm, "cacm")
+		draw(cacm)
 		cacm.Serialize()
 	} else {
 		log.Println("Loading cacm index from file")
@@ -106,7 +108,7 @@ func buildCS276(c chan *Search) {
 		now := time.Now()
 		cs276 = ParseCS276(cs276File)
 		log.Printf("cs276 index built in  %s \n", time.Since(now).String())
-		draw(cs276, "cs276")
+		draw(cs276)
 		cs276.Serialize()
 	} else {
 		log.Println("Loading cs276 index from file")
