@@ -10,12 +10,12 @@
 			max-width:650px;
 			line-height:1.6;
 			font-size:18px;
-			color:#141414;
 			padding:0 10px}
 		a:link{
 			color:#000;
 			text-decoration:none}
 		a:visited{color:#000}
+		td{text-align:center}
 		h1,h2,h3{line-height:1.2}
 		</style>
 	</head>
@@ -25,21 +25,31 @@
 			<a href="/">RIW</a> |
 			<a href="/stat">stats</a>
 		</div>
-		<h2> Statistiques et loi de HEAP </h2>
+		<h3> Valeurs de la loi de HEAP </h3>
 
+		<table width="100%" cellspacing="0">
+			<tr style="background:#EFEFEF">
+				<th>Corpus</th>
+				<th>Taille du vocabulaire</th>
+				<th>Nombre de tokens</th>
+				<th>B</th>
+				<th>K</th>
+			</tr>
+			{{ range . }}
+			<tr>
+				<td>{{ .Name }}</td>
+				<td>{{ .Vocabulary }}</td>
+				<td>{{ .Tokens }}</td>
+				<td>{{ .B | printf "%.2f" }}</td>
+				<td>{{ .K | printf "%.2f" }}</td>
+			</tr>
+			{{ end }}
+		</table>
+
+		<h3> Graphique de la loi de HEAP </h3>
 		{{ range . }}
-		<div>
-			<h3> Statistique pour le corpus {{ .Name }}</h3>
-			<p>
-				Le corpus est composé de {{ .Documents }} documents. 
-				La taille du vocabulaire est de {{ .Vocabulary }} lexemes
-				et il y a {{ .Tokens }} tokens. 
-				Ainsi la loi de HEAPS nous donne b = {{ .B | printf "%f" }}
-				et k = {{ .K | printf "%f" }}.
-			</p>
 			<img src="{{ .Name }}.svg" style="margin:auto;width:100%"
 			alt="Heap law plot {{ .Name }}">
-		</div>
 		{{ end }}
 	</body>
 
