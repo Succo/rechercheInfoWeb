@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/go-kit/kit/metrics"
+	"github.com/go-kit/kit/metrics/expvar"
 )
 
 const (
@@ -46,6 +49,10 @@ func serve(cacm, cs276 *Search) {
 		panic(err.Error())
 	}
 
+	// Histogram used for monitoring of search time
+	cacmH := expvar.NewHistogram("cacm", 50)
+	cs276H := expvar.NewHistogram("cs276", 50)
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		corpus := r.FormValue("corpus")
 		input := r.FormValue("search")
@@ -63,11 +70,14 @@ func serve(cacm, cs276 *Search) {
 		}
 
 		var search *Search
+		var hist metrics.Histogram
 		a := answer{Query: input}
 		if corpus == "cacm" {
 			search = cacm
+			hist = cacmH
 		} else if corpus == "cs276" {
 			search = cs276
+			hist = cs276H
 			a.CS276 = true
 		} else {
 			index.Execute(w, nil)
@@ -83,6 +93,7 @@ func serve(cacm, cs276 *Search) {
 			index.Execute(w, nil)
 			return
 		}
+		hist.Observe(float64(time.Since(now)))
 		a.Time = time.Since(now).String()
 		a.Size = len(a.Results)
 		if offset > 0 && len(a.Results) > offset {
