@@ -39,10 +39,7 @@ func (r *Root) set(w []byte, refs []Ref) {
 	start := len(r.Refs)
 	end := start + len(refs)
 	// build the new ref array copying previous and new data into it
-	newRefs := make([]Ref, end)
-	copy(newRefs, r.Refs)
-	copy(newRefs[start:], refs)
-	r.Refs = newRefs
+	r.Refs = append(r.Refs, refs...)
 	// descends the tree to find the proper leaf
 	cur := r.Node // node we are exploring
 	shared := 0   // part of w already matched
