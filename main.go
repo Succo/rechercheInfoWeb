@@ -2,13 +2,13 @@ package main
 
 import (
 	"flag"
+	"image/color"
 	"log"
 	"os"
 	"time"
 
 	"github.com/gonum/plot"
 	"github.com/gonum/plot/plotter"
-	"github.com/gonum/plot/plotutil"
 	"github.com/gonum/plot/vg"
 )
 
@@ -60,8 +60,7 @@ func draw(search *Search) {
 		panic(err)
 	}
 
-	plt.Title.Text = "Heaps law plot for " + name
-	plt.X.Label.Text = "Text size"
+	plt.X.Label.Text = "Index size"
 	plt.Y.Label.Text = "Distinct vocabulary"
 
 	pts := make(plotter.XYs, 100)
@@ -69,11 +68,15 @@ func draw(search *Search) {
 		pts[i].X = float64(search.IndexSize(i * corpusSize / 100))
 		pts[i].Y = float64(search.TokenSize(i * corpusSize / 100))
 	}
-
-	err = plotutil.AddLines(plt, name, pts)
+	line, err := plotter.NewLine(pts)
 	if err != nil {
 		panic(err)
 	}
+	line.Color = color.RGBA{R: 10, G: 174, B: 194, A: 255}
+	line.Width = vg.Points(2)
+
+	plt.Add(line)
+	plt.Legend.Add(name, line)
 
 	if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, plotDir+name+plotFile); err != nil {
 		panic(err)
