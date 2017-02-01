@@ -6,8 +6,9 @@ import "bytes"
 // Root is the root of the prefix tree
 // Refs is a list of all references, nodes store pointer to it
 type Root struct {
-	Refs []Ref
-	Node *Node
+	Delta  []uint
+	TfIdfs []float64
+	Node   *Node
 }
 
 // Node implements a node of the tree
@@ -36,10 +37,13 @@ func trieFromIndex(index map[string][]Ref) *Root {
 
 func (r *Root) set(w []byte, refs []Ref) {
 	// calculate the start and end pointer for w
-	start := len(r.Refs)
+	start := len(r.Delta)
 	end := start + len(refs)
-	// build the new ref array copying previous and new data into it
-	r.Refs = append(r.Refs, refs...)
+	// Append the new deltas to the ref array
+	delta, tfidfs := splitRef(refs)
+	r.Delta = append(r.Delta, delta...)
+	r.TfIdfs = append(r.TfIdfs, tfidfs...)
+
 	// descends the tree to find the proper leaf
 	cur := r.Node // node we are exploring
 	shared := 0   // part of w already matched
@@ -91,7 +95,7 @@ func (r *Root) get(w []byte) []Ref {
 	shared := 0
 	for {
 		if shared == len(w) {
-			return r.Refs[cur.Start:cur.End]
+			return buildRef(r.Delta[cur.Start:cur.End], r.TfIdfs[cur.Start:cur.End])
 		}
 		i := getMatchingNode(cur.Radix, w[shared])
 		if i != -1 && bytes.HasPrefix(w[shared:], cur.Radix[i]) {
@@ -105,18 +109,18 @@ func (r *Root) get(w []byte) []Ref {
 }
 
 func (r *Root) getInfIndex(maxID int) int {
-	return r.Node.getInfIndex(maxID, r.Refs)
+	return r.Node.getInfIndex(maxID, r.Delta)
 }
 
 // get InfIndex walks the tree
 // returns the number of key wich are in a doc with index < maxID
-func (n *Node) getInfIndex(maxID int, refs []Ref) int {
+func (n *Node) getInfIndex(maxID int, delta []uint) int {
 	var indexSize int
-	if n.Start-n.End != 0 && refs[n.Start].Id <= maxID {
+	if n.Start-n.End != 0 && int(delta[n.Start]) <= maxID {
 		indexSize++
 	}
 	for _, s := range n.Sons {
-		indexSize += s.getInfIndex(maxID, refs)
+		indexSize += s.getInfIndex(maxID, delta)
 	}
 	return indexSize
 }
@@ -155,4 +159,29 @@ func getMatchingNode(sons [][]byte, b byte) int {
 		}
 	}
 	return -1
+}
+
+func splitRef(refs []Ref) ([]uint, []float64) {
+	var counter int
+	delta := make([]uint, len(refs))
+	tfidfs := make([]float64, len(refs))
+	for i, ref := range refs {
+		delta[i] = uint(ref.Id - counter)
+		tfidfs[i] = ref.TfIdf
+		counter = ref.Id
+	}
+	return delta, tfidfs
+}
+
+func buildRef(delta []uint, tfidfs []float64) []Ref {
+	var counter int
+	refs := make([]Ref, len(delta))
+	for i, del := range delta {
+		counter += int(del)
+		refs[i] = Ref{
+			Id:    counter,
+			TfIdf: tfidfs[i],
+		}
+	}
+	return refs
 }
