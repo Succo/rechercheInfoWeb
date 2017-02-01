@@ -36,22 +36,34 @@ func ParseCACM(r io.Reader, commonWordFile string) *Search {
 	// Store doc ID to position in cacm.all pointer
 	ids := make([]int64, 0)
 	// Temporary storage for document
-	index := make(map[string][]Ref)
+	// Temporary storage for document id using delta
+	deltas := make(map[string][]uint)
+	tfidfs := make(map[string][]float64)
+
 	// Number of document
-	var count int
+	var count uint
 	for doc := range c {
 		search.AddDocMetaData(doc)
 		for w, score := range doc.Scores {
-			index[w] = append(index[w], Ref{count, score})
+			d, found := deltas[w]
+			if !found {
+				// The first element is actually a counter
+				deltas[w] = []uint{count, count}
+			} else {
+				delta := count - d[0]
+				d[0] = count
+				deltas[w] = append(d, delta)
+			}
+			tfidfs[w] = append(tfidfs[w], score)
 		}
 		ids = append(ids, doc.pos)
 		count++
 	}
 	search.Retriever = &cacmRetriever{Ids: ids}
 	// Now that all documents are known, we can fully calculate tf-idf
-	calculateIDF(index, count)
+	calculateIDF(tfidfs, count)
 	// Then we build the *real* index using a prefix tree
-	trie := trieFromIndex(index)
+	trie := trieFromIndex(deltas, tfidfs)
 	search.Index = trie
 	search.Stat = getStat(search, "cacm")
 	return search
@@ -63,38 +75,45 @@ func ParseCS276(root string) *Search {
 	c := make(chan *Document)
 	go cs276.Scan(c)
 	search := emptySearch("cs276")
-	// Store doc ID to position in cacm.all pointer
-	ids := make([]int64, 0)
-	// Temporary storage for document
-	index := make(map[string][]Ref)
+	// Temporary storage for document id using delta
+	deltas := make(map[string][]uint)
+	tfidfs := make(map[string][]float64)
+
 	// Number of document
-	var count int
+	var count uint
 	for doc := range c {
 		search.AddDocMetaData(doc)
 		for w, score := range doc.Scores {
-			index[w] = append(index[w], Ref{count, score})
+			d, found := deltas[w]
+			if !found {
+				// The first element is actually a counter
+				deltas[w] = []uint{count, count}
+			} else {
+				delta := count - d[0]
+				d[0] = count
+				deltas[w] = append(d, delta)
+			}
+			tfidfs[w] = append(tfidfs[w], score)
 		}
-		ids = append(ids, doc.pos)
 		count++
 	}
 	search.Retriever = &cs276Retriever{}
 	// Now that all documents are known, we can fully calculate tf-idf
-	calculateIDF(index, count)
+	calculateIDF(tfidfs, count)
 	// Then we build the *real* index using a prefix tree
-	trie := trieFromIndex(index)
+	trie := trieFromIndex(deltas, tfidfs)
 	search.Index = trie
 	search.Stat = getStat(search, "cs276")
 	return search
 }
 
-func calculateIDF(index map[string][]Ref, size int) {
+func calculateIDF(tfidfs map[string][]float64, size uint) {
 	factor := float64(size)
-	for w, refs := range index {
-		idf := math.Log(factor * 1 / float64(len(refs)))
-		for i, ref := range refs {
-			// At this point ref.TfIdf only contains Tf
-			ref.TfIdf = ref.TfIdf * idf
-			index[w][i] = ref
+	for w, tfs := range tfidfs {
+		idf := math.Log(factor * 1 / float64(len(tfs)))
+		for i, tf := range tfs {
+			// At this point tfidfs only contains Tf
+			tfidfs[w][i] = tf * idf
 		}
 	}
 }

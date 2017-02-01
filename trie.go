@@ -6,7 +6,7 @@ import "bytes"
 // Root is the root of the prefix tree
 // Refs is a list of all references, nodes store pointer to it
 type Root struct {
-	Delta  []uint
+	Deltas []uint
 	TfIdfs []float64
 	Node   *Node
 }
@@ -27,21 +27,20 @@ func emptyNode(start, end int) *Node {
 	return &Node{Start: start, End: end}
 }
 
-func trieFromIndex(index map[string][]Ref) *Root {
+func trieFromIndex(deltas map[string][]uint, tfidfs map[string][]float64) *Root {
 	r := NewTrie()
-	for w, refs := range index {
-		r.set([]byte(w), refs)
+	for w, delta := range deltas {
+		r.set([]byte(w), delta[1:], tfidfs[w])
 	}
 	return r
 }
 
-func (r *Root) set(w []byte, refs []Ref) {
+func (r *Root) set(w []byte, deltas []uint, tfidfs []float64) {
 	// calculate the start and end pointer for w
-	start := len(r.Delta)
-	end := start + len(refs)
+	start := len(r.Deltas)
+	end := start + len(deltas)
 	// Append the new deltas to the ref array
-	delta, tfidfs := splitRef(refs)
-	r.Delta = append(r.Delta, delta...)
+	r.Deltas = append(r.Deltas, deltas...)
 	r.TfIdfs = append(r.TfIdfs, tfidfs...)
 
 	// descends the tree to find the proper leaf
@@ -95,7 +94,7 @@ func (r *Root) get(w []byte) []Ref {
 	shared := 0
 	for {
 		if shared == len(w) {
-			return buildRef(r.Delta[cur.Start:cur.End], r.TfIdfs[cur.Start:cur.End])
+			return buildRef(r.Deltas[cur.Start:cur.End], r.TfIdfs[cur.Start:cur.End])
 		}
 		i := getMatchingNode(cur.Radix, w[shared])
 		if i != -1 && bytes.HasPrefix(w[shared:], cur.Radix[i]) {
@@ -109,7 +108,7 @@ func (r *Root) get(w []byte) []Ref {
 }
 
 func (r *Root) getInfIndex(maxID int) int {
-	return r.Node.getInfIndex(maxID, r.Delta)
+	return r.Node.getInfIndex(maxID, r.Deltas)
 }
 
 // get InfIndex walks the tree
