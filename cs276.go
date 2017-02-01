@@ -14,9 +14,6 @@ const (
 	goroutineNumber = 20
 )
 
-// Replacer is used to remplace _ by / in filename and get url
-var replacer = strings.NewReplacer("_", "/")
-
 // scanToken reads contiguous letter to read a word
 func scanToken(s *bufio.Reader) string {
 	// buffer to store the character
@@ -33,13 +30,6 @@ func scanToken(s *bufio.Reader) string {
 		buf.WriteRune(ch)
 	}
 	return buf.String()
-}
-
-// filenameToUrl cleans a filename to return the underlying url
-func filenameToUrl(file string) string {
-	file = file[2:] // remove the n/ part of the path
-	url := "https://" + replacer.Replace(file)
-	return url
 }
 
 // CS276Scanner will walk the buffer and return characters
@@ -67,7 +57,6 @@ func (s *CS276Scanner) scan(c chan *Document) {
 	for filename := range s.toScan {
 		doc := newDocument()
 		doc.Title = filename
-		doc.Url = filenameToUrl(filename)
 		// words of the title are added too
 		words := strings.Split(filename, "_")
 		for _, w := range words[1:] {

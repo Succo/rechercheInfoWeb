@@ -53,7 +53,7 @@ func draw(search *Search) {
 		return
 	}
 
-	corpusSize := search.CorpusSize()
+	corpusSize := search.Size
 
 	plt, err := plot.New()
 	if err != nil {
@@ -65,8 +65,8 @@ func draw(search *Search) {
 
 	pts := make(plotter.XYs, 100)
 	for i := 0; i < 100; i++ {
-		pts[i].X = float64(search.IndexSize(i * corpusSize / 100))
-		pts[i].Y = float64(search.TokenSize(i * corpusSize / 100))
+		pts[i].X = float64(search.TokenSize(i * corpusSize / 100))
+		pts[i].Y = float64(search.IndexSize(i * corpusSize / 100))
 	}
 	line, err := plotter.NewLine(pts)
 	if err != nil {
@@ -100,6 +100,7 @@ func buildCACM(c chan *Search) {
 		log.Println("Loading cacm index from file")
 		cacm = Unserialize("cacm")
 		cacm.Retriever = UnserializeCacmRetriever("cacm")
+		cacm.toUrl = cacmToUrl
 	}
 	c <- cacm
 }
@@ -116,6 +117,7 @@ func buildCS276(c chan *Search) {
 	} else {
 		log.Println("Loading cs276 index from file")
 		cs276 = Unserialize("cs276")
+		cs276.toUrl = cs276ToUrl
 	}
 	c <- cs276
 }

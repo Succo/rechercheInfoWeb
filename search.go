@@ -22,36 +22,27 @@ type Search struct {
 	Retriever
 	Stat   Stat
 	Corpus string
-	// Token stores the id of the first document containing a token for heap law
-	Token map[string]int
+	// Tokens stores the number of token for each document
+	// Only used for heaps law so it's no serialized
+	Tokens []int
 	// Index is a trie of token document pointers
 	Index *Root
 	// Size is the total number of documents
 	Size int
 	// Titles stores document title
 	Titles []string
-	// Url stores url to document
-	Urls []string
+	// toUrl generates URL from id and title, the function depends of the corpus
+	toUrl func(int, string) string
 }
 
 func emptySearch(corpus string) *Search {
-	token := make(map[string]int)
-	index := NewTrie()
-	var titles []string
-	return &Search{Token: token, Index: index, Titles: titles, Corpus: corpus}
+	return &Search{Corpus: corpus}
 }
 
 // AddDocMetaData adds a parsed document metadata
 func (s *Search) AddDocMetaData(d *Document) {
-	for t := range d.Tokens {
-		_, found := s.Token[t]
-		if !found {
-			s.Token[t] = s.Size
-		}
-	}
-	s.Size++
+	s.Tokens = append(s.Tokens, d.Tokens)
 	s.Titles = append(s.Titles, d.Title)
-	s.Urls = append(s.Urls, d.Url)
 }
 
 // IndexSize returns the term -> Document index size
@@ -60,21 +51,14 @@ func (s *Search) IndexSize(maxID int) int {
 	return s.Index.getInfIndex(maxID)
 }
 
-// TokenSize returns the total number of token in the parsed part of the document
+// TokenSize returns the total number of token
 // for document with ID < maxID
 func (s *Search) TokenSize(maxID int) int {
-	var tokenSize int
-	for _, document := range s.Token {
-		if document <= maxID {
-			tokenSize++
-		}
+	var size int
+	for _, toks := range s.Tokens[:maxID] {
+		size += toks
 	}
-	return tokenSize
-}
-
-// CorpusSize returns the total number of document
-func (s *Search) CorpusSize() int {
-	return s.Size
+	return size
 }
 
 // BooleanSeach performs a Boolean search based on a query
@@ -96,7 +80,8 @@ func (s *Search) refToResult(refs []Ref) []Result {
 	for i, ref := range refs {
 		// Because result are ordered this prevent printing twice the same doc
 		if i == 0 || ref.Id != refs[i-1].Id {
-			results = append(results, Result{s.Titles[ref.Id], s.Urls[ref.Id]})
+			results = append(results,
+				Result{s.Titles[ref.Id], s.toUrl(ref.Id, s.Titles[ref.Id])})
 		}
 	}
 	return results
@@ -118,19 +103,6 @@ func (s *Search) Serialize() {
 	}
 	titles.Sync()
 	titles.Close()
-
-	urls, err := os.Create("indexes/" + s.Corpus + ".urls")
-	if err != nil {
-		panic(err)
-	}
-	defer urls.Close()
-	en = gob.NewEncoder(urls)
-	err = en.Encode(s.Urls)
-	if err != nil {
-		panic(err)
-	}
-	urls.Sync()
-	urls.Close()
 
 	index, err := os.Create("indexes/" + s.Corpus + ".index")
 	if err != nil {
@@ -176,18 +148,6 @@ func Unserialize(name string) *Search {
 		panic(err)
 	}
 	titles.Close()
-
-	urls, err := os.Open("indexes/" + name + ".urls")
-	if err != nil {
-		panic(err)
-	}
-	defer urls.Close()
-	en = gob.NewDecoder(urls)
-	err = en.Decode(&s.Urls)
-	if err != nil {
-		panic(err)
-	}
-	urls.Close()
 
 	index, err := os.Open("indexes/" + name + ".index")
 	if err != nil {
