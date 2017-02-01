@@ -104,19 +104,6 @@ func (s *Search) Serialize() {
 	titles.Sync()
 	titles.Close()
 
-	index, err := os.Create("indexes/" + s.Corpus + ".index")
-	if err != nil {
-		panic(err)
-	}
-	defer index.Close()
-	en = gob.NewEncoder(index)
-	err = en.Encode(s.Index)
-	if err != nil {
-		panic(err)
-	}
-	index.Sync()
-	index.Close()
-
 	stat, err := os.Create("indexes/" + s.Corpus + ".stat")
 	if err != nil {
 		panic(err)
@@ -130,11 +117,12 @@ func (s *Search) Serialize() {
 	stat.Sync()
 	stat.Close()
 
+	s.Index.Serialize(s.Corpus)
 	s.Retriever.Serialize(s.Corpus)
 }
 
-// Unserialize reloads what's needed from disk
-func Unserialize(name string) *Search {
+// UnserializeSearch reloads what's needed from disk
+func UnserializeSearch(name string) *Search {
 	s := &Search{}
 	s.Corpus = name
 	titles, err := os.Open("indexes/" + name + ".titles")
@@ -149,18 +137,6 @@ func Unserialize(name string) *Search {
 	}
 	titles.Close()
 
-	index, err := os.Open("indexes/" + name + ".index")
-	if err != nil {
-		panic(err)
-	}
-	defer index.Close()
-	en = gob.NewDecoder(index)
-	err = en.Decode(&s.Index)
-	if err != nil {
-		panic(err)
-	}
-	index.Close()
-
 	stat, err := os.Open("indexes/" + name + ".stat")
 	if err != nil {
 		panic(err)
@@ -173,5 +149,6 @@ func Unserialize(name string) *Search {
 	}
 	stat.Close()
 
+	s.Index = UnserializeTrie(name)
 	return s
 }

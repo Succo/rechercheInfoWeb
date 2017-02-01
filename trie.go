@@ -1,7 +1,11 @@
 // A trie implementation for the index
 package main
 
-import "bytes"
+import (
+	"bytes"
+	"encoding/gob"
+	"os"
+)
 
 // Root is the root of the prefix tree
 // Refs is a list of all references, nodes store pointer to it
@@ -108,6 +112,91 @@ func (r *Root) get(w []byte) []Ref {
 	}
 }
 
+// Serialize save to file the trie
+func (r *Root) Serialize(name string) {
+	index, err := os.Create("indexes/" + name + ".index")
+	if err != nil {
+		panic(err)
+	}
+	defer index.Close()
+	en := gob.NewEncoder(index)
+	err = en.Encode(r.Deltas)
+	if err != nil {
+		panic(err)
+	}
+	index.Sync()
+	index.Close()
+
+	tfidf, err := os.Create("indexes/" + name + ".weight")
+	if err != nil {
+		panic(err)
+	}
+	defer tfidf.Close()
+	en = gob.NewEncoder(tfidf)
+	err = en.Encode(r.TfIdfs)
+	if err != nil {
+		panic(err)
+	}
+	tfidf.Sync()
+	tfidf.Close()
+
+	trie, err := os.Create("indexes/" + name + ".trie")
+	if err != nil {
+		panic(err)
+	}
+	defer trie.Close()
+	en = gob.NewEncoder(trie)
+	err = en.Encode(r.Node)
+	if err != nil {
+		panic(err)
+	}
+	trie.Sync()
+	trie.Close()
+}
+
+// UnserializeTrie reloads the trie from files
+func UnserializeTrie(name string) *Root {
+	r := &Root{}
+	index, err := os.Open("indexes/" + name + ".index")
+	if err != nil {
+		panic(err)
+	}
+	defer index.Close()
+	en := gob.NewDecoder(index)
+	err = en.Decode(&r.Deltas)
+	if err != nil {
+		panic(err)
+	}
+	index.Close()
+
+	tfidf, err := os.Open("indexes/" + name + ".weight")
+	if err != nil {
+		panic(err)
+	}
+	defer tfidf.Close()
+	en = gob.NewDecoder(tfidf)
+	err = en.Decode(&r.TfIdfs)
+	if err != nil {
+		panic(err)
+	}
+	tfidf.Close()
+
+	trie, err := os.Open("indexes/" + name + ".trie")
+	if err != nil {
+		panic(err)
+	}
+	defer trie.Close()
+	en = gob.NewDecoder(trie)
+	err = en.Decode(&r.Node)
+	if err != nil {
+		panic(err)
+	}
+	trie.Close()
+	return r
+}
+
+// get InfIndex walks the tree
+// returns the number of key wich are in a doc with index < maxID
 func (r *Root) getInfIndex(maxID int) int {
 	return r.Node.getInfIndex(maxID, r.Deltas)
 }

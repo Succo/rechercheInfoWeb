@@ -98,7 +98,7 @@ func buildCACM(c chan *Search) {
 		cacm.Serialize()
 	} else {
 		log.Println("Loading cacm index from file")
-		cacm = Unserialize("cacm")
+		cacm = UnserializeSearch("cacm")
 		cacm.Retriever = UnserializeCacmRetriever("cacm")
 		cacm.toUrl = cacmToUrl
 	}
@@ -116,7 +116,7 @@ func buildCS276(c chan *Search) {
 		cs276.Serialize()
 	} else {
 		log.Println("Loading cs276 index from file")
-		cs276 = Unserialize("cs276")
+		cs276 = UnserializeSearch("cs276")
 		cs276.toUrl = cs276ToUrl
 	}
 	c <- cs276
