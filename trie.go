@@ -89,12 +89,13 @@ func (r *Root) set(w []byte, deltas []uint, tfidfs []float64) {
 	}
 }
 
+// get returns the reference for a word
 func (r *Root) get(w []byte) []Ref {
 	cur := r.Node
 	shared := 0
 	for {
 		if shared == len(w) {
-			return buildRef(r.Deltas[cur.Start:cur.End], r.TfIdfs[cur.Start:cur.End])
+			return r.buildRef(cur.Start, cur.End)
 		}
 		i := getMatchingNode(cur.Radix, w[shared])
 		if i != -1 && bytes.HasPrefix(w[shared:], cur.Radix[i]) {
@@ -122,6 +123,22 @@ func (n *Node) getInfIndex(maxID int, delta []uint) int {
 		indexSize += s.getInfIndex(maxID, delta)
 	}
 	return indexSize
+}
+
+// buildRed builds a Ref slice from a start and end position
+func (r *Root) buildRef(start, end int) []Ref {
+	deltas := r.Deltas[start:end]
+	tfidfs := r.TfIdfs[start:end]
+	var counter int
+	refs := make([]Ref, len(deltas))
+	for i, del := range deltas {
+		counter += int(del)
+		refs[i] = Ref{
+			Id:    counter,
+			TfIdf: tfidfs[i],
+		}
+	}
+	return refs
 }
 
 // longestPrefixSize returns the longest prefix of rad and w
@@ -158,29 +175,4 @@ func getMatchingNode(sons [][]byte, b byte) int {
 		}
 	}
 	return -1
-}
-
-func splitRef(refs []Ref) ([]uint, []float64) {
-	var counter int
-	delta := make([]uint, len(refs))
-	tfidfs := make([]float64, len(refs))
-	for i, ref := range refs {
-		delta[i] = uint(ref.Id - counter)
-		tfidfs[i] = ref.TfIdf
-		counter = ref.Id
-	}
-	return delta, tfidfs
-}
-
-func buildRef(delta []uint, tfidfs []float64) []Ref {
-	var counter int
-	refs := make([]Ref, len(delta))
-	for i, del := range delta {
-		counter += int(del)
-		refs[i] = Ref{
-			Id:    counter,
-			TfIdf: tfidfs[i],
-		}
-	}
-	return refs
 }
