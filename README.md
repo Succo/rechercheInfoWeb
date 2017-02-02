@@ -1,4 +1,4 @@
 # A repo with exercices for the "Recherche information web" course. 
 
-Uses gonum/plot to draw the required plots and reiver/go-porterstemmer for stemming.
+Uses gonum/plot to draw the required plots and github.com/zhenjl/porter2 for stemming.
 

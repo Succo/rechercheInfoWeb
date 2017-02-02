@@ -48,12 +48,11 @@ type CACMScanner struct {
 	doc        *Document
 	id         int
 	pos        int
-	stemmer    *Stemmer
 }
 
 // NewCACMScanner create a CACMScanner from an io reader
-func NewCACMScanner(r io.Reader, cw map[string]bool, stemmer *Stemmer) *CACMScanner {
-	return &CACMScanner{r: bufio.NewReader(r), commonWord: cw, stemmer: stemmer}
+func NewCACMScanner(r io.Reader, cw map[string]bool) *CACMScanner {
+	return &CACMScanner{r: bufio.NewReader(r), commonWord: cw}
 }
 
 func (s *CACMScanner) read() rune {
@@ -172,7 +171,7 @@ func (s *CACMScanner) Scan(c chan *Document) {
 					c <- s.doc
 				}
 				// Reset the document
-				s.doc = newDocument(s.stemmer)
+				s.doc = newDocument()
 				s.doc.pos = int64(s.pos)
 				s.title.Reset()
 				s.id++

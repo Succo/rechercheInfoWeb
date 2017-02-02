@@ -23,7 +23,7 @@ func cs276ToUrl(id int, title string) string {
 }
 
 // ParseCACM creates a cacm scanner, a search struct and connects them
-func ParseCACM(r io.Reader, commonWordFile string, stemmer *Stemmer) *Search {
+func ParseCACM(r io.Reader, commonWordFile string) *Search {
 	commonWord, err := os.Open(commonWordFile)
 	if err != nil {
 		panic(err)
@@ -36,7 +36,7 @@ func ParseCACM(r io.Reader, commonWordFile string, stemmer *Stemmer) *Search {
 		cw[scanner.Text()] = true
 	}
 
-	cacm := NewCACMScanner(r, cw, stemmer)
+	cacm := NewCACMScanner(r, cw)
 
 	c := make(chan *Document)
 	go cacm.Scan(c)
@@ -80,8 +80,8 @@ func ParseCACM(r io.Reader, commonWordFile string, stemmer *Stemmer) *Search {
 }
 
 // ParseCS276 creates a parser struct from the root folder of cs216 data
-func ParseCS276(root string, stemmer *Stemmer) *Search {
-	cs276 := NewCS276Scanner(root, stemmer)
+func ParseCS276(root string) *Search {
+	cs276 := NewCS276Scanner(root)
 	c := make(chan *Document)
 	go cs276.Scan(c)
 	search := emptySearch("cs276")

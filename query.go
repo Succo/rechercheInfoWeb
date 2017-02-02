@@ -1,6 +1,10 @@
 package main
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/surgebase/porter2"
+)
 
 func intersect(refs1, refs2 []Ref) []Ref {
 	intersection := make([]Ref, 0, len(refs1))
@@ -82,8 +86,8 @@ func BooleanQuery(s *Search, input string) []Ref {
 			if i >= len(words)-2 {
 				return results
 			}
-			word1 := cleanWord(words[i])
-			word2 := cleanWord(words[i+2])
+			word1 := porter2.Stem(words[i])
+			word2 := porter2.Stem(words[i+2])
 			refs1 := s.Index.get([]byte(word1))
 			refs2 := s.Index.get([]byte(word2))
 			if i == 0 {
@@ -96,12 +100,12 @@ func BooleanQuery(s *Search, input string) []Ref {
 			if i == len(words)-1 {
 				return results
 			}
-			word := cleanWord(words[i+1])
+			word := porter2.Stem(words[i+1])
 			not := s.Index.get([]byte(word))
 			results = remove(results, not)
 			i++
 		default:
-			word := cleanWord(words[i])
+			word := porter2.Stem(words[i])
 			refs := s.Index.get([]byte(word))
 			if i == 0 {
 				results = refs

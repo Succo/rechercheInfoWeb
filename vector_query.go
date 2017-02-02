@@ -3,6 +3,8 @@ package main
 import (
 	"sort"
 	"strings"
+
+	"github.com/surgebase/porter2"
 )
 
 // mergeWithTfIdf calculate the intersection of two list of refs
@@ -43,7 +45,7 @@ func VectorQuery(s *Search, input string) []Ref {
 		if len(w) == 0 {
 			continue
 		}
-		w = cleanWord(w)
+		w = porter2.Stem(w)
 		refs := s.Index.get([]byte(w))
 		results = mergeWithTfIdf(results, refs)
 	}
