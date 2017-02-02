@@ -58,18 +58,20 @@ var fakeWords = [][]byte{
 }
 
 func TestTrie(t *testing.T) {
-	testRefs := make([]Ref, len(testWords))
+	testDeltas := make([]int, len(testWords))
+	testTfIds := make([]float64, len(testWords))
 	trie := NewTrie()
 	for i, w := range testWords {
-		ref := Ref{}
-		testRefs[i] = ref
-		trie.add(w, ref)
+		testDeltas[i] = int(i)
+		testTfIds[i] = float64(i)
+		trie.set(w, []uint{uint(i)}, []float64{float64(i)})
 	}
 	for i, w := range testWords {
 		resp := trie.get(w)
 		if len(resp) != 1 {
 			t.Fatal("Incorrect result size for inserted word")
-		} else if resp[0] != testRefs[i] {
+		} else if resp[0].Id != testDeltas[i] ||
+			resp[0].TfIdf != testTfIds[i] {
 			t.Fatal("Incorrect result for inserted word")
 		}
 	}

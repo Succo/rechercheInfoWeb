@@ -7,7 +7,9 @@ import (
 )
 
 type Stemmer struct {
-	lock  sync.Mutex
+	// lock prevents concurrent acces to the map
+	lock sync.Mutex
+	// We use a map to cache stemmed words
 	cache map[string]string
 }
 
