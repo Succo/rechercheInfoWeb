@@ -34,20 +34,22 @@ func scanToken(s *bufio.Reader) string {
 
 // CS276Scanner will walk the buffer and return characters
 type CS276Scanner struct {
-	root   string
-	dirs   []string
-	toScan chan string
-	wg     *sync.WaitGroup
+	root    string
+	dirs    []string
+	toScan  chan string
+	wg      *sync.WaitGroup
+	stemmer *Stemmer
 }
 
 // NewCS276Scanner create a CS276Scanner from a root dir string
-func NewCS276Scanner(root string) *CS276Scanner {
+func NewCS276Scanner(root string, stemmer *Stemmer) *CS276Scanner {
 	var wg sync.WaitGroup
 	toScan := make(chan string, 100)
 	return &CS276Scanner{
-		root:   root,
-		toScan: toScan,
-		wg:     &wg,
+		root:    root,
+		toScan:  toScan,
+		wg:      &wg,
+		stemmer: stemmer,
 	}
 }
 
@@ -55,7 +57,7 @@ func NewCS276Scanner(root string) *CS276Scanner {
 // it sends parsed document to the channel
 func (s *CS276Scanner) scan(c chan *Document) {
 	for filename := range s.toScan {
-		doc := newDocument()
+		doc := newDocument(s.stemmer)
 		doc.Title = filename
 		// words of the title are added too
 		words := strings.Split(filename, "_")

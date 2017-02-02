@@ -12,17 +12,18 @@ type Document struct {
 	Tokens int
 	// pos is the index of the doc in the file
 	// only relevant for cacm
-	pos int64
+	pos     int64
+	stemmer *Stemmer
 }
 
-func newDocument() *Document {
+func newDocument(stemmer *Stemmer) *Document {
 	scores := make(map[string]float64)
-	return &Document{Scores: scores}
+	return &Document{Scores: scores, stemmer: stemmer}
 }
 
 // addWord add a word to the model, for now freqs are only stored as count actually
 func (d *Document) addWord(w string) {
-	w = cleanWord(w)
+	w = d.stemmer.stem(w)
 	d.Scores[w] += 1
 	d.Size += 1
 }

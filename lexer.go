@@ -7,14 +7,7 @@ import (
 	"math"
 	"os"
 	"strings"
-
-	porterstemmer "github.com/reiver/go-porterstemmer"
 )
-
-func cleanWord(word string) string {
-	stem := porterstemmer.StemString(word)
-	return stem
-}
 
 // cacmToUrl generates url from cacm id
 func cacmToUrl(id int, title string) string {
@@ -30,7 +23,7 @@ func cs276ToUrl(id int, title string) string {
 }
 
 // ParseCACM creates a cacm scanner, a search struct and connects them
-func ParseCACM(r io.Reader, commonWordFile string) *Search {
+func ParseCACM(r io.Reader, commonWordFile string, stemmer *Stemmer) *Search {
 	commonWord, err := os.Open(commonWordFile)
 	if err != nil {
 		panic(err)
@@ -43,7 +36,7 @@ func ParseCACM(r io.Reader, commonWordFile string) *Search {
 		cw[scanner.Text()] = true
 	}
 
-	cacm := NewCACMScanner(r, cw)
+	cacm := NewCACMScanner(r, cw, stemmer)
 
 	c := make(chan *Document)
 	go cacm.Scan(c)
@@ -87,8 +80,8 @@ func ParseCACM(r io.Reader, commonWordFile string) *Search {
 }
 
 // ParseCS276 creates a parser struct from the root folder of cs216 data
-func ParseCS276(root string) *Search {
-	cs276 := NewCS276Scanner(root)
+func ParseCS276(root string, stemmer *Stemmer) *Search {
+	cs276 := NewCS276Scanner(root, stemmer)
 	c := make(chan *Document)
 	go cs276.Scan(c)
 	search := emptySearch("cs276")
