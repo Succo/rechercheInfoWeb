@@ -80,7 +80,7 @@
 		<ul>
 			<li>Index: tableau des docID, delta encoded</li>
 			<li>Poids: tableau des valeurs de tfidf</li>
-			<li>Arbre des préfixes: pointeurs dans les 2 tableau précédents</li>
+			<li>Arbre des préfixes: pointeurs dans les 2 tableaux précédents</li>
 		</ul>
 		<table width="100%" cellspacing="0">
 			<tr style="background:#EFEFEF">
@@ -98,6 +98,13 @@
 			</tr>
 			{{ end }}
 		</table>
+		<p align="justify">
+		L'élément le plus impactant est clairement le tableaux contenant tous les poids.
+		En l'état c'est difficile de faire mieux, puisque qu'il stocke des float64 sans aucune compression.
+		Quelques méthodes de compression existe qu'il pourrait être intéressant d'implémenter.
+		Le seul vrais gain imaginable serait de ne pas stocker les float64 mais des résultats intermédiaire sous forme d'entier.
+		Cela aurait un impact au moment de la recherche cependant car tous les poids devrait être calculé.
+		</p>
 
 	</body>
 </html>
