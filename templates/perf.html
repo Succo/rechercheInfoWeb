@@ -64,6 +64,16 @@
 				alt="flammegraph of construction time"/>
 			</object>
 		</p>
+		<p align="justify">
+		On peut s'apercevoir que l'une des opérations les plus couteuses est le stemming.
+		La librairie que j'utilise (<a href="https://github.com/surgebase/porter2">https://github.com/surgebase/porter2</a>) est une des plus rapide que j'ai pus tester.
+		Différentes expérience tels que l'ajout d'un "cache" n'ont pas permis d'améliorer ça.
+		</br>
+		Cependant il serait possible de "tricher" en abusant du caractère pré-traité de CS276.
+		Ainsi pas besoin de séparer les mots en <a href="https://blog.golang.org/strings">rune</a> quand tous les caractère sont en ASCII.
+		De même pas besoin de lowercasé les strings qui le sont déjà.
+		</p>
+
 
 		</br>
 		<h3> Tailles des différents parties de l'index. </h3>
