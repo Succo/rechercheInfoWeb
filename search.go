@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/gob"
 	"os"
+	"time"
 )
 
 // Result is a document as returned by a Search
@@ -20,6 +21,7 @@ type Ref struct {
 // Search stores information relevant to parsed documents
 type Search struct {
 	Stat   Stat
+	Perf   Perf
 	Corpus string
 	// Tokens stores the number of token for each document
 	// Only used for heaps law so it's no serialized
@@ -90,6 +92,7 @@ func (s *Search) refToResult(refs []Ref) []Result {
 // we only serialize the index, the titles and the urls list
 // no need to consider the tokens since they only serve to calculate HEAP law
 func (s *Search) Serialize() {
+	now := time.Now()
 	titles, err := os.Create("indexes/" + s.Corpus + ".titles")
 	if err != nil {
 		panic(err)
@@ -103,20 +106,26 @@ func (s *Search) Serialize() {
 	titles.Sync()
 	titles.Close()
 
-	stat, err := os.Create("indexes/" + s.Corpus + ".stat")
+	s.Index.Serialize(s.Corpus)
+	s.Perf.Serialization = time.Since(now)
+	s.Perf = s.Perf.addSerializedSizes()
+
+	meta, err := os.Create("indexes/" + s.Corpus + ".meta")
 	if err != nil {
 		panic(err)
 	}
-	defer stat.Close()
-	en = gob.NewEncoder(stat)
+	defer meta.Close()
+	en = gob.NewEncoder(meta)
 	err = en.Encode(s.Stat)
 	if err != nil {
 		panic(err)
 	}
-	stat.Sync()
-	stat.Close()
-
-	s.Index.Serialize(s.Corpus)
+	err = en.Encode(s.Perf)
+	if err != nil {
+		panic(err)
+	}
+	meta.Sync()
+	meta.Close()
 }
 
 // UnserializeSearch reloads what's needed from disk
@@ -135,17 +144,21 @@ func UnserializeSearch(name string) *Search {
 	}
 	titles.Close()
 
-	stat, err := os.Open("indexes/" + name + ".stat")
+	meta, err := os.Open("indexes/" + name + ".meta")
 	if err != nil {
 		panic(err)
 	}
-	defer stat.Close()
-	en = gob.NewDecoder(stat)
+	defer meta.Close()
+	en = gob.NewDecoder(meta)
 	err = en.Decode(&s.Stat)
 	if err != nil {
 		panic(err)
 	}
-	stat.Close()
+	err = en.Decode(&s.Perf)
+	if err != nil {
+		panic(err)
+	}
+	meta.Close()
 
 	s.Index = UnserializeTrie(name)
 	return s

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	humanize "github.com/dustin/go-humanize"
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/expvar"
 )
@@ -29,7 +30,15 @@ type answer struct {
 	Size int
 }
 
+func printDuration(dur time.Duration) string {
+	return dur.String()
+}
+
 func serve(cacm, cs276 *Search) {
+	prettyfier := template.FuncMap{
+		"duration": printDuration,
+		"size":     humanize.Bytes,
+	}
 	index, err := template.ParseFiles("templates/index.html")
 	if err != nil {
 		panic(err.Error())
@@ -42,6 +51,15 @@ func serve(cacm, cs276 *Search) {
 	stats := []*Stat{
 		&cacm.Stat,
 		&cs276.Stat,
+	}
+
+	perfT, err := template.New("perf.html").Funcs(prettyfier).ParseFiles("templates/perf.html")
+	if err != nil {
+		panic(err.Error())
+	}
+	perfs := []*Perf{
+		&cacm.Perf,
+		&cs276.Perf,
 	}
 
 	cacmT, err := template.ParseFiles("templates/cacm.html")
@@ -116,6 +134,13 @@ func serve(cacm, cs276 *Search) {
 
 	http.HandleFunc("/stat", func(w http.ResponseWriter, r *http.Request) {
 		statT.Execute(w, stats)
+	})
+
+	http.HandleFunc("/perf", func(w http.ResponseWriter, r *http.Request) {
+		err := perfT.Execute(w, perfs)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
 	})
 
 	http.HandleFunc("/cacm.svg", func(w http.ResponseWriter, r *http.Request) {

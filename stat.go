@@ -12,7 +12,7 @@ type Stat struct {
 	K          float64
 }
 
-func getStat(s *Search, name string) Stat {
+func getStat(s *Search) Stat {
 	length := s.TokenSize(s.Size)
 	halfLength := s.TokenSize(s.Size / 2)
 	distinct := s.IndexSize(s.Size)
@@ -23,7 +23,7 @@ func getStat(s *Search, name string) Stat {
 	k := float64(distinct) / (math.Pow(float64(length), b))
 
 	return Stat{
-		Name:       name,
+		Name:       s.Corpus,
 		Documents:  s.Size,
 		Tokens:     length,
 		Vocabulary: distinct,

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title> RIW </title>
+		<style type="text/css">
+		body{
+			margin:40px auto;
+			max-width:650px;
+			line-height:1.6;
+			font-size:18px;
+			padding:0 10px}
+		a:link{
+			color:#000;
+			text-decoration:none}
+		a:visited{color:#000}
+		td{text-align:center}
+		h1,h2,h3{line-height:1.2}
+		</style>
+	</head>
+
+	<body>
+		<div style="background:rgb(10, 174, 194);padding:4px 10px">
+			<a href="/">RIW</a> |
+			<a href="/stat">stats</a> |
+			<a href="/percentile">percentile</a>
+		</div>
+		<h3> Indicateur de performances </h3>
+
+		Temps pris pour la construction de l'index.
+		<ul>
+			<li>Parsing: découpage des documents en tokens</li>
+			<li>IDF: multiplication des TFs, par les IDFs</li>
+			<li>Indexing: construction de l'arbre des préfixes</li>
+		</ul>
+		<table width="100%" cellspacing="0">
+			<tr style="background:#EFEFEF">
+				<th>Corpus</th>
+				<th>Parsing</th>
+				<th>IDF calculation</th>
+				<th>Serialization</th>
+			</tr>
+			{{ range . }}
+			<tr>
+				<td>{{ .Name }}</td>
+				<td>{{ .Parsing | duration  }}</td>
+				<td>{{ .IDF | duration }}</td>
+				<td>{{ .Indexing | duration }}</td>
+			</tr>
+			{{ end }}
+		</table>
+
+		</br>
+		Tailles des différents parties de l'index.
+		<ul>
+			<li>Index: tableau des docID, delta encoded</li>
+			<li>Poids: tableau des valeurs de tfidf</li>
+			<li>Arbre des préfixes: pointeurs dans les 2 tableau précédents</li>
+		</ul>
+		<table width="100%" cellspacing="0">
+			<tr style="background:#EFEFEF">
+				<th>Corpus</th>
+				<th>Taille de l'index</th>
+				<th>Taille des poids</th>
+				<th>Arbre des préfixes</th>
+			</tr>
+			{{ range . }}
+			<tr>
+				<td>{{ .Name }}</td>
+				<td>{{ .Index | size }}</td>
+				<td>{{ .Weight | size }}</td>
+				<td>{{ .Trie | size }}</td>
+			</tr>
+			{{ end }}
+		</table>
+	</body>
+</html>

@@ -5,7 +5,6 @@ import (
 	"image/color"
 	"log"
 	"os"
-	"time"
 
 	"github.com/gonum/plot"
 	"github.com/gonum/plot/plotter"
@@ -108,9 +107,7 @@ func buildCS276(c chan *Search) {
 	var cs276 *Search
 	if buildIndex {
 		log.Println("Building cs276 index from scratch")
-		now := time.Now()
 		cs276 = ParseCS276(cs276File)
-		log.Printf("cs276 index built in  %s \n", time.Since(now).String())
 		draw(cs276)
 		cs276.Serialize()
 	} else {

@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"os"
 	"strings"
+	"time"
 )
 
 // cacmToUrl generates url from cacm id
@@ -56,6 +58,7 @@ func ParseCS276(root string) *Search {
 }
 
 func buildSearchFromScanner(search *Search, c chan *Document) *Search {
+	now := time.Now()
 	// Temporary storage for document id using delta
 	deltas := make(map[string][]uint)
 	tfidfs := make(map[string][]float64)
@@ -79,12 +82,23 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 		count++
 	}
 	search.Size = int(count)
+	search.Perf.Parsing = time.Since(now)
+	log.Printf("%s parsed in  %s \n", search.Corpus, time.Since(now).String())
+
+	now = time.Now()
 	// Now that all documents are known, we can fully calculate tf-idf
 	calculateIDF(tfidfs, count)
+	search.Perf.IDF = time.Since(now)
+	log.Printf("%s IDF calculated in  %s \n", search.Corpus, time.Since(now).String())
+
 	// Then we build the *real* index using a prefix tree
+	now = time.Now()
 	trie := trieFromIndex(deltas, tfidfs)
+	search.Perf.Indexing = time.Since(now)
+	log.Printf("%s index built in  %s \n", search.Corpus, time.Since(now).String())
 	search.Index = trie
-	search.Stat = getStat(search, "cs276")
+	search.Stat = getStat(search)
+	search.Perf.Name = search.Corpus
 	return search
 }
 
