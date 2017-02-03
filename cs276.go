@@ -70,19 +70,13 @@ func (s *CS276Scanner) scan(c chan *Document) {
 			log.Println(err)
 			break
 		}
-		scanner := bufio.NewReader(file)
-		for {
-			ch, _, err := scanner.ReadRune()
-			if err != nil {
-				break
-			}
-			if tokenMember(ch) {
-				scanner.UnreadRune()
-				w := scanToken(scanner)
-				// all lexeme are compted as "seen"
-				doc.addToken(w)
-				doc.addWord(w)
-			}
+		scanner := bufio.NewScanner(file)
+		scanner.Split(bufio.ScanWords)
+		for scanner.Scan() {
+			w := scanner.Text()
+			// all lexeme are compted as "seen"
+			doc.addToken(w)
+			doc.addWord(w)
 		}
 		doc.calculTf()
 		c <- doc
