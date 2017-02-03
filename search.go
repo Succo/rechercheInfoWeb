@@ -19,7 +19,6 @@ type Ref struct {
 
 // Search stores information relevant to parsed documents
 type Search struct {
-	Retriever
 	Stat   Stat
 	Corpus string
 	// Tokens stores the number of token for each document
@@ -118,7 +117,6 @@ func (s *Search) Serialize() {
 	stat.Close()
 
 	s.Index.Serialize(s.Corpus)
-	s.Retriever.Serialize(s.Corpus)
 }
 
 // UnserializeSearch reloads what's needed from disk

@@ -42,41 +42,7 @@ func ParseCACM(r io.Reader, commonWordFile string) *Search {
 	go cacm.Scan(c)
 	search := emptySearch("cacm")
 	search.toUrl = cacmToUrl
-	// Store doc ID to position in cacm.all pointer
-	ids := make([]int64, 0)
-	// Temporary storage for document
-	// Temporary storage for document id using delta
-	deltas := make(map[string][]uint)
-	tfidfs := make(map[string][]float64)
-
-	// Number of document
-	var count uint
-	for doc := range c {
-		search.AddDocMetaData(doc)
-		for w, score := range doc.Scores {
-			d, found := deltas[w]
-			if !found {
-				// The first element is actually a counter
-				deltas[w] = []uint{count, count}
-			} else {
-				delta := count - d[0]
-				d[0] = count
-				deltas[w] = append(d, delta)
-			}
-			tfidfs[w] = append(tfidfs[w], score)
-		}
-		ids = append(ids, doc.pos)
-		count++
-	}
-	search.Retriever = &cacmRetriever{Ids: ids}
-	search.Size = int(count)
-	// Now that all documents are known, we can fully calculate tf-idf
-	calculateIDF(tfidfs, count)
-	// Then we build the *real* index using a prefix tree
-	trie := trieFromIndex(deltas, tfidfs)
-	search.Index = trie
-	search.Stat = getStat(search, "cacm")
-	return search
+	return buildSearchFromScanner(search, c)
 }
 
 // ParseCS276 creates a parser struct from the root folder of cs216 data
@@ -86,6 +52,10 @@ func ParseCS276(root string) *Search {
 	go cs276.Scan(c)
 	search := emptySearch("cs276")
 	search.toUrl = cs276ToUrl
+	return buildSearchFromScanner(search, c)
+}
+
+func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 	// Temporary storage for document id using delta
 	deltas := make(map[string][]uint)
 	tfidfs := make(map[string][]float64)
@@ -108,7 +78,6 @@ func ParseCS276(root string) *Search {
 		}
 		count++
 	}
-	search.Retriever = &cs276Retriever{}
 	search.Size = int(count)
 	// Now that all documents are known, we can fully calculate tf-idf
 	calculateIDF(tfidfs, count)

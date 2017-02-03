@@ -99,7 +99,6 @@ func buildCACM(c chan *Search) {
 	} else {
 		log.Println("Loading cacm index from file")
 		cacm = UnserializeSearch("cacm")
-		cacm.Retriever = UnserializeCacmRetriever("cacm")
 		cacm.toUrl = cacmToUrl
 	}
 	c <- cacm
