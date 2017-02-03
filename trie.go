@@ -23,17 +23,22 @@ type Node struct {
 	End   int
 }
 
-func NewTrie() *Root {
-	return &Root{Node: &Node{}}
+func NewTrie(size int) *Root {
+	// We fix the slice capacity to avoid further allocation
+	deltas := make([]uint, 0, size)
+	tfidfs := make([]float64, 0, size)
+	return &Root{Node: &Node{}, Deltas: deltas, TfIdfs: tfidfs}
 }
 
 func emptyNode(start, end int) *Node {
 	return &Node{Start: start, End: end}
 }
 
-func trieFromIndex(deltas map[string][]uint, tfidfs map[string][]float64) *Root {
-	r := NewTrie()
+func trieFromIndex(deltas map[string][]uint, tfidfs map[string][]float64, size int) *Root {
+	r := NewTrie(size)
 	for w, delta := range deltas {
+		// That's because the first element is only a counter
+		// Used when caluculating deltas
 		r.set([]byte(w), delta[1:], tfidfs[w])
 	}
 	return r

@@ -65,6 +65,8 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 
 	// Number of document
 	var count uint
+	// Total number of document/word pairs
+	var pairs int
 	for doc := range c {
 		search.AddDocMetaData(doc)
 		for w, score := range doc.Scores {
@@ -78,6 +80,7 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 				deltas[w] = append(d, delta)
 			}
 			tfidfs[w] = append(tfidfs[w], score)
+			pairs++
 		}
 		count++
 	}
@@ -93,7 +96,7 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 
 	// Then we build the *real* index using a prefix tree
 	now = time.Now()
-	trie := trieFromIndex(deltas, tfidfs)
+	trie := trieFromIndex(deltas, tfidfs, pairs)
 	search.Perf.Indexing = time.Since(now)
 	log.Printf("%s index built in  %s \n", search.Corpus, time.Since(now).String())
 	search.Index = trie
