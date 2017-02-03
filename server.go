@@ -144,6 +144,10 @@ func serve(cacm, cs276 *Search) {
 		}
 	})
 
+	http.HandleFunc("/torch.svg", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "torch.svg")
+	})
+
 	http.HandleFunc("/cacm.svg", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "graphs/cacm.svg")
 	})

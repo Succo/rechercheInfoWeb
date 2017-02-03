@@ -53,6 +53,17 @@
 			</tr>
 			{{ end }}
 		</table>
+		<p>
+		Voici un <a href="http://www.brendangregg.com/flamegraphs.html">flamegraph</a>
+		illustrant les performances lors de l'indexage.
+		</p>
+		<p>
+			<object class="p" data="/torch.svg" type="image/svg+xml" 
+				style="margin:auto;width:100%">
+			<img src="/torch.svg" style="margin:auto;width:100%"
+				alt="flammegraph of construction time"/>
+			</object>
+		</p>
 
 		</br>
 		<h3> Tailles des différents parties de l'index. </h3>
@@ -77,5 +88,6 @@
 			</tr>
 			{{ end }}
 		</table>
+
 	</body>
 </html>
