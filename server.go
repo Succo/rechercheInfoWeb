@@ -31,7 +31,8 @@ type answer struct {
 }
 
 func printDuration(dur time.Duration) string {
-	return dur.String()
+	// Round it to a ms first
+	return ((dur / time.Millisecond) * time.Millisecond).String()
 }
 
 func serve(cacm, cs276 *Search) {

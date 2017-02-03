@@ -33,12 +33,14 @@
 			<li>Parsing: découpage des documents en tokens</li>
 			<li>IDF: multiplication des TFs, par les IDFs</li>
 			<li>Indexing: construction de l'arbre des préfixes</li>
+			<li>Serialization: écritures des fichiers</li>
 		</ul>
 		<table width="100%" cellspacing="0">
 			<tr style="background:#EFEFEF">
 				<th>Corpus</th>
 				<th>Parsing</th>
 				<th>IDF calculation</th>
+				<th>Indexing</th>
 				<th>Serialization</th>
 			</tr>
 			{{ range . }}
@@ -47,6 +49,7 @@
 				<td>{{ .Parsing | duration  }}</td>
 				<td>{{ .IDF | duration }}</td>
 				<td>{{ .Indexing | duration }}</td>
+				<td>{{ .Serialization | duration }}</td>
 			</tr>
 			{{ end }}
 		</table>
