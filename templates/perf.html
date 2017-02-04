@@ -39,9 +39,10 @@
 			<tr style="background:#EFEFEF">
 				<th>Corpus</th>
 				<th>Parsing</th>
-				<th>IDF calculation</th>
+				<th>IDF</th>
 				<th>Indexing</th>
 				<th>Serialization</th>
+				<th>Total</th>
 			</tr>
 			{{ range . }}
 			<tr>
@@ -50,6 +51,7 @@
 				<td>{{ .IDF | duration }}</td>
 				<td>{{ .Indexing | duration }}</td>
 				<td>{{ .Serialization | duration }}</td>
+				<td>{{ .TotalTime | duration }}</td>
 			</tr>
 			{{ end }}
 		</table>
@@ -85,9 +87,12 @@
 		<table width="100%" cellspacing="0">
 			<tr style="background:#EFEFEF">
 				<th>Corpus</th>
-				<th>Taille de l'index</th>
-				<th>Taille des poids</th>
-				<th>Arbre des préfixes</th>
+				<th>Index</th>
+				<th>Poids</th>
+				<th>Arbre</th>
+				<th>Total</th>
+				<th>Initial</th>
+				<th>Ratio</th>
 			</tr>
 			{{ range . }}
 			<tr>
@@ -95,6 +100,9 @@
 				<td>{{ .Index | size }}</td>
 				<td>{{ .Weight | size }}</td>
 				<td>{{ .Trie | size }}</td>
+				<td>{{ .TotalSize | size }}</td>
+				<td>{{ .Initial | size }}</td>
+				<td>{{ .Ratio | printf "%.2f" }}</td>
 			</tr>
 			{{ end }}
 		</table>

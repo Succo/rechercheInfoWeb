@@ -108,7 +108,7 @@ func (s *Search) Serialize() {
 
 	s.Index.Serialize(s.Corpus)
 	s.Perf.Serialization = time.Since(now)
-	s.Perf = s.Perf.addSerializedSizes()
+	s.Perf = s.Perf.getFinalValues()
 
 	meta, err := os.Create("indexes/" + s.Corpus + ".meta")
 	if err != nil {

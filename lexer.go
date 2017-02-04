@@ -44,6 +44,7 @@ func ParseCACM(r io.Reader, commonWordFile string) *Search {
 	go cacm.Scan(c)
 	search := emptySearch("cacm")
 	search.toUrl = cacmToUrl
+	search.Perf = newCACMPerf()
 	return buildSearchFromScanner(search, c)
 }
 
@@ -54,6 +55,7 @@ func ParseCS276(root string) *Search {
 	go cs276.Scan(c)
 	search := emptySearch("cs276")
 	search.toUrl = cs276ToUrl
+	search.Perf = newCS276Perf()
 	return buildSearchFromScanner(search, c)
 }
 
