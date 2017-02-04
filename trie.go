@@ -137,8 +137,7 @@ func (r *Root) Serialize(name string) {
 		panic(err)
 	}
 	defer tfidf.Close()
-	en = gob.NewEncoder(tfidf)
-	err = en.Encode(r.TfIdfs)
+	err = Compress(r.TfIdfs, tfidf)
 	if err != nil {
 		panic(err)
 	}
@@ -179,11 +178,7 @@ func UnserializeTrie(name string) *Root {
 		panic(err)
 	}
 	defer tfidf.Close()
-	en = gob.NewDecoder(tfidf)
-	err = en.Decode(&r.TfIdfs)
-	if err != nil {
-		panic(err)
-	}
+	r.TfIdfs = UnCompress(tfidf)
 	tfidf.Close()
 
 	trie, err := os.Open("indexes/" + name + ".trie")
