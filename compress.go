@@ -1,3 +1,4 @@
+// This package provides wrapperfor snappy to compress the weight array
 package main
 
 import (
@@ -10,8 +11,12 @@ import (
 
 func Compress(vals []float64, w io.Writer) error {
 	snap := snappy.NewBufferedWriter(w)
+	// 8 byte for a flaot64
+	buf := make([]byte, 8)
 	for _, v := range vals {
-		_, err := snap.Write(Float64ToBytes(v))
+		bits := math.Float64bits(v)
+		binary.BigEndian.PutUint64(buf, bits)
+		_, err := snap.Write(buf)
 		if err != nil {
 			return err
 		}
@@ -21,13 +26,6 @@ func Compress(vals []float64, w io.Writer) error {
 		return err
 	}
 	return nil
-}
-
-func Float64ToBytes(float float64) []byte {
-	bits := math.Float64bits(float)
-	bytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(bytes, bits)
-	return bytes
 }
 
 func UnCompress(r io.Reader) []float64 {
@@ -40,13 +38,8 @@ func UnCompress(r io.Reader) []float64 {
 		if err != nil {
 			break
 		}
-		vals = append(vals, Float64FromBytes(buf))
+		bits := binary.BigEndian.Uint64(buf)
+		vals = append(vals, math.Float64frombits(bits))
 	}
 	return vals
-}
-
-func Float64FromBytes(bytes []byte) float64 {
-	bits := binary.BigEndian.Uint64(bytes)
-	float := math.Float64frombits(bits)
-	return float
 }
