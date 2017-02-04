@@ -9,6 +9,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/gonum/floats"
 )
 
 // cacmToUrl generates url from cacm id
@@ -111,9 +113,7 @@ func calculateIDF(tfidfs map[string][]float64, size uint) {
 	factor := float64(size)
 	for w, tfs := range tfidfs {
 		idf := math.Log(factor * 1 / float64(len(tfs)))
-		for i, tf := range tfs {
-			// At this point tfidfs only contains Tf
-			tfidfs[w][i] = tf * idf
-		}
+		floats.Scale(idf, tfs)
+		tfidfs[w] = tfs
 	}
 }
