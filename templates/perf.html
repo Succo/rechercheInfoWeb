@@ -83,6 +83,7 @@
 			<li>Index: tableau des docID, delta encoded</li>
 			<li>Poids: tableau des valeurs de tfidf</li>
 			<li>Arbre des préfixes: pointeurs dans les 2 tableaux précédents</li>
+			<li>Titre: liste des titres des documents</li>
 		</ul>
 		<table width="100%" cellspacing="0">
 			<tr style="background:#EFEFEF">
@@ -90,6 +91,7 @@
 				<th>Index</th>
 				<th>Poids</th>
 				<th>Arbre</th>
+				<th>Titre</th>
 				<th>Total</th>
 				<th>Initial</th>
 				<th>Ratio</th>
@@ -100,6 +102,7 @@
 				<td>{{ .Index | size }}</td>
 				<td>{{ .Weight | size }}</td>
 				<td>{{ .Trie | size }}</td>
+				<td>{{ .Titles | size }}</td>
 				<td>{{ .TotalSize | size }}</td>
 				<td>{{ .Initial | size }}</td>
 				<td>{{ .Ratio | printf "%.2f" }}</td>
