@@ -117,6 +117,22 @@ func (r *Root) get(w []byte) []Ref {
 	}
 }
 
+// buildRed builds a Ref slice from a start and end position
+func (r *Root) buildRef(start, end int) []Ref {
+	deltas := r.Deltas[start:end]
+	tfidfs := r.TfIdfs[start:end]
+	var counter int
+	refs := make([]Ref, len(deltas))
+	for i, del := range deltas {
+		counter += int(del)
+		refs[i] = Ref{
+			Id:    counter,
+			TfIdf: tfidfs[i],
+		}
+	}
+	return refs
+}
+
 // Serialize save to file the trie
 func (r *Root) Serialize(name string) {
 	index, err := os.Create("indexes/" + name + ".index")
@@ -212,22 +228,6 @@ func (n *Node) getInfIndex(maxID int, delta []uint) int {
 		indexSize += s.getInfIndex(maxID, delta)
 	}
 	return indexSize
-}
-
-// buildRed builds a Ref slice from a start and end position
-func (r *Root) buildRef(start, end int) []Ref {
-	deltas := r.Deltas[start:end]
-	tfidfs := r.TfIdfs[start:end]
-	var counter int
-	refs := make([]Ref, len(deltas))
-	for i, del := range deltas {
-		counter += int(del)
-		refs[i] = Ref{
-			Id:    counter,
-			TfIdf: tfidfs[i],
-		}
-	}
-	return refs
 }
 
 // longestPrefixSize returns the longest prefix of rad and w
