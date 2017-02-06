@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"io/ioutil"
 	"log"
 	"os"
@@ -13,24 +12,6 @@ import (
 const (
 	goroutineNumber = 20
 )
-
-// scanToken reads contiguous letter to read a word
-func scanToken(s *bufio.Reader) string {
-	// buffer to store the character
-	var buf bytes.Buffer
-	for {
-		ch, _, err := s.ReadRune()
-		if err != nil {
-			break
-		}
-		if !tokenMember(ch) {
-			s.UnreadRune()
-			break
-		}
-		buf.WriteRune(ch)
-	}
-	return buf.String()
-}
 
 // CS276Scanner will walk the buffer and return characters
 type CS276Scanner struct {
