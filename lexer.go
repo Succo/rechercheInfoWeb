@@ -53,7 +53,7 @@ func ParseCACM(r io.Reader, commonWordFile string) *Search {
 // ParseCS276 creates a parser struct from the root folder of cs216 data
 func ParseCS276(root string) *Search {
 	cs276 := NewCS276Scanner(root)
-	c := make(chan *Document)
+	c := make(chan *Document, 100)
 	go cs276.Scan(c)
 	search := emptySearch("cs276")
 	search.toUrl = cs276ToUrl
