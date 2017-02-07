@@ -112,7 +112,7 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 func calculateIDF(tfidfs map[string][]float64, size uint) {
 	factor := float64(size)
 	for w, tfs := range tfidfs {
-		idf := math.Log(factor * 1 / float64(len(tfs)))
+		idf := math.Log(factor / float64(len(tfs)))
 		floats.Scale(idf, tfs)
 		tfidfs[w] = tfs
 	}
