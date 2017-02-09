@@ -50,6 +50,9 @@
 				<label for="vectorial"> Vectorial</label>
 				<input type="radio" name="type" value="vectorial"
 				       id="vectorial" {{if .Vectorial }} checked {{end}}> |
+				<input type="submit" value="Search" style="float:right">
+
+				</br>
 
 				<label for="brute">  Fréquence brute</label>
 				<input type="radio" name="weight" value="brute"
@@ -57,8 +60,6 @@
 				<label for="norm"> Normalisation logarithmique</label>
 				<input type="radio" name="weight" value="norm"
 				       id="norm" {{if .Norm }} checked {{end}}>
-
-				<input type="submit" value="Search" style="float:right">
 			</div>
 		</form>
 

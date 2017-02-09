@@ -100,7 +100,7 @@
 			<tr>
 				<td>{{ .Name }}</td>
 				<td>{{ .Index | size }}</td>
-				<td>{{ .Weight | size }}</td>
+				<td>{{ .RawWeight | size }}</td>
 				<td>{{ .Trie | size }}</td>
 				<td>{{ .Titles | size }}</td>
 				<td>{{ .TotalSize | size }}</td>
@@ -113,6 +113,11 @@
 		L'élément le plus impactant est clairement le tableaux contenant tous les poids.
 		C'est pour cela que j'utilse <a href="https://google.github.io/snappy/">snappy</a>.
 		Cela a permis de gagner près de 30% pour la taille du tableau, sans impact sensible sur le temps de serialisation.
+		</p>
+		<p align="justify">
+		PS: bien que les poids calculé avec différentes fonction de poids sont tous stocké,
+		le tableau ne prend en compte que un d'entre eux, ce qui serait plus proche d'un usage réel.
+		Il semblerait cependant que la taille du tableau varie de près de 15% en fonction du poids.
 		</p>
 
 	</body>
