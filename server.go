@@ -22,6 +22,7 @@ type answer struct {
 	// A small "hack" to keep the same buttons checked
 	CS276     bool
 	Vectorial bool
+	Norm      bool
 	Results   []Result
 	Time      string
 	// Links to other results in the query set
@@ -106,7 +107,13 @@ func serve(cacm, cs276 *Search) {
 		if searchType == "boolean" {
 			a.Results = search.BooleanSearch(input)
 		} else if searchType == "vectorial" {
-			a.Results = search.VectorSearch(input)
+			weightFun := r.FormValue("weight")
+			if weightFun == "norm" {
+				a.Results = search.VectorSearch(input, 1)
+				a.Norm = true
+			} else {
+				a.Results = search.VectorSearch(input, 0)
+			}
 			a.Vectorial = true
 		} else {
 			index.Execute(w, nil)

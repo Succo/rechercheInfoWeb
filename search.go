@@ -70,8 +70,8 @@ func (s *Search) BooleanSearch(input string) []Result {
 }
 
 // VectorSearch performs a Vectorial search using TfIdf scores
-func (s *Search) VectorSearch(input string) []Result {
-	refs := VectorQuery(s, input)
+func (s *Search) VectorSearch(input string, w weight) []Result {
+	refs := VectorQuery(s, input, w)
 	return s.refToResult(refs)
 }
 

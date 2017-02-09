@@ -43,12 +43,21 @@
 				<label for="cs276"> CS276</label>
 				<input type="radio" name="corpus" value="cs276"
 				       id="cs276" {{if .CS276 }} checked {{end}}> |
+
 				<label for="Boolean"> Boolean</label>
 				<input type="radio" name="type" value="boolean"
 				       id="boolean" {{if not .Vectorial }} checked {{end}}>
-				<label for="cectorial"> Vectorial</label>
+				<label for="vectorial"> Vectorial</label>
 				<input type="radio" name="type" value="vectorial"
-				       id="vectorial" {{if .Vectorial }} checked {{end}}>
+				       id="vectorial" {{if .Vectorial }} checked {{end}}> |
+
+				<label for="brute">  Fréquence brute</label>
+				<input type="radio" name="weight" value="brute"
+				       id="brute" {{if not .Norm }} checked {{end}}>
+				<label for="norm"> Normalisation logarithmique</label>
+				<input type="radio" name="weight" value="norm"
+				       id="norm" {{if .Norm }} checked {{end}}>
+
 				<input type="submit" value="Search" style="float:right">
 			</div>
 		</form>
