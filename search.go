@@ -14,8 +14,9 @@ type Result struct {
 
 // Ref is a reference to a document
 type Ref struct {
-	Id    int
-	TfIdf float64
+	Id        int
+	RawTfIdf  float64
+	NormTfIdf float64
 }
 
 // Search stores information relevant to parsed documents

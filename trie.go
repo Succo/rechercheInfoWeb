@@ -10,9 +10,10 @@ import (
 // Root is the root of the prefix tree
 // Refs is a list of all references, nodes store pointer to it
 type Root struct {
-	Deltas []uint
-	TfIdfs []float64
-	Node   *Node
+	Deltas     []uint
+	RawTfIdfs  []float64
+	NormTfIdfs []float64
+	Node       *Node
 }
 
 // Node implements a node of the tree
@@ -26,31 +27,40 @@ type Node struct {
 func NewTrie(size int) *Root {
 	// We fix the slice capacity to avoid further allocation
 	deltas := make([]uint, 0, size)
-	tfidfs := make([]float64, 0, size)
-	return &Root{Node: &Node{}, Deltas: deltas, TfIdfs: tfidfs}
+	rawTfidfs := make([]float64, 0, size)
+	normTfidfs := make([]float64, 0, size)
+	return &Root{Node: &Node{},
+		Deltas:     deltas,
+		RawTfIdfs:  rawTfidfs,
+		NormTfIdfs: normTfidfs,
+	}
 }
 
 func emptyNode(start, end int) *Node {
 	return &Node{Start: start, End: end}
 }
 
-func trieFromIndex(deltas map[string][]uint, tfidfs map[string][]float64, size int) *Root {
+func trieFromIndex(deltas map[string][]uint,
+	rawTfidfs map[string][]float64,
+	normTfidfs map[string][]float64,
+	size int) *Root {
 	r := NewTrie(size)
 	for w, delta := range deltas {
 		// That's because the first element is only a counter
 		// Used when caluculating deltas
-		r.set([]byte(w), delta[1:], tfidfs[w])
+		r.set([]byte(w), delta[1:], rawTfidfs[w], normTfidfs[w])
 	}
 	return r
 }
 
-func (r *Root) set(w []byte, deltas []uint, tfidfs []float64) {
+func (r *Root) set(w []byte, deltas []uint, rawTfidfs []float64, normTfidfs []float64) {
 	// calculate the start and end pointer for w
 	start := len(r.Deltas)
 	end := start + len(deltas)
 	// Append the new deltas to the ref array
 	r.Deltas = append(r.Deltas, deltas...)
-	r.TfIdfs = append(r.TfIdfs, tfidfs...)
+	r.RawTfIdfs = append(r.RawTfIdfs, rawTfidfs...)
+	r.NormTfIdfs = append(r.NormTfIdfs, normTfidfs...)
 
 	// descends the tree to find the proper leaf
 	cur := r.Node // node we are exploring
@@ -120,14 +130,16 @@ func (r *Root) get(w []byte) []Ref {
 // buildRed builds a Ref slice from a start and end position
 func (r *Root) buildRef(start, end int) []Ref {
 	deltas := r.Deltas[start:end]
-	tfidfs := r.TfIdfs[start:end]
+	rawTfidfs := r.RawTfIdfs[start:end]
+	normTfidfs := r.NormTfIdfs[start:end]
 	var counter int
 	refs := make([]Ref, len(deltas))
 	for i, del := range deltas {
 		counter += int(del)
 		refs[i] = Ref{
-			Id:    counter,
-			TfIdf: tfidfs[i],
+			Id:        counter,
+			RawTfIdf:  rawTfidfs[i],
+			NormTfIdf: normTfidfs[i],
 		}
 	}
 	return refs
@@ -148,17 +160,29 @@ func (r *Root) Serialize(name string) {
 	index.Sync()
 	index.Close()
 
-	tfidf, err := os.Create("indexes/" + name + ".weight")
+	rawTfidfs, err := os.Create("indexes/" + name + ".rawweight")
 	if err != nil {
 		panic(err)
 	}
-	defer tfidf.Close()
-	err = Compress(r.TfIdfs, tfidf)
+	defer rawTfidfs.Close()
+	err = Compress(r.RawTfIdfs, rawTfidfs)
 	if err != nil {
 		panic(err)
 	}
-	tfidf.Sync()
-	tfidf.Close()
+	rawTfidfs.Sync()
+	rawTfidfs.Close()
+
+	normTfidfs, err := os.Create("indexes/" + name + ".normweight")
+	if err != nil {
+		panic(err)
+	}
+	defer normTfidfs.Close()
+	err = Compress(r.NormTfIdfs, normTfidfs)
+	if err != nil {
+		panic(err)
+	}
+	normTfidfs.Sync()
+	normTfidfs.Close()
 
 	trie, err := os.Create("indexes/" + name + ".trie")
 	if err != nil {
@@ -189,13 +213,21 @@ func UnserializeTrie(name string) *Root {
 	}
 	index.Close()
 
-	tfidf, err := os.Open("indexes/" + name + ".weight")
+	rawTfidfs, err := os.Open("indexes/" + name + ".rawweight")
 	if err != nil {
 		panic(err)
 	}
-	defer tfidf.Close()
-	r.TfIdfs = UnCompress(tfidf)
-	tfidf.Close()
+	defer rawTfidfs.Close()
+	r.RawTfIdfs = UnCompress(rawTfidfs)
+	rawTfidfs.Close()
+
+	normTfidfs, err := os.Open("indexes/" + name + ".normweight")
+	if err != nil {
+		panic(err)
+	}
+	defer normTfidfs.Close()
+	r.NormTfIdfs = UnCompress(normTfidfs)
+	normTfidfs.Close()
 
 	trie, err := os.Open("indexes/" + name + ".trie")
 	if err != nil {

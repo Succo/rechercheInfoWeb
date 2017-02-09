@@ -22,7 +22,9 @@ func mergeWithTfIdf(refs1, refs2 []Ref) []Ref {
 		}
 
 		if refs1[0].Id == refs2[0].Id {
-			ref := Ref{Id: refs1[0].Id, TfIdf: refs1[0].TfIdf + refs2[0].TfIdf}
+			ref := refs1[0]
+			ref.RawTfIdf += refs2[0].RawTfIdf
+			ref.NormTfIdf += refs2[0].NormTfIdf
 			intersection = append(intersection, ref)
 			refs1 = refs1[1:]
 			refs2 = refs2[1:]
@@ -40,7 +42,7 @@ func mergeWithTfIdf(refs1, refs2 []Ref) []Ref {
 // VectorQuery effects a vector query on a search object
 func VectorQuery(s *Search, input string) []Ref {
 	words := strings.Split(input, " ")
-	var results resultSet
+	var results rawList
 	for _, w := range words {
 		if len(w) == 0 {
 			continue
@@ -54,11 +56,11 @@ func VectorQuery(s *Search, input string) []Ref {
 }
 
 // Define a custom type to add custom method
-type resultSet []Ref
+type rawList []Ref
 
 // Those method satisfy the sort interface
-func (r resultSet) Len() int      { return len(r) }
-func (r resultSet) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
-func (r resultSet) Less(i, j int) bool {
-	return r[i].TfIdf < r[j].TfIdf
+func (r rawList) Len() int      { return len(r) }
+func (r rawList) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
+func (r rawList) Less(i, j int) bool {
+	return r[i].RawTfIdf < r[j].RawTfIdf
 }

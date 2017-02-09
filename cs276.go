@@ -59,7 +59,7 @@ func (s *CS276Scanner) scan(c chan *Document) {
 			doc.addToken(w)
 			doc.addWord(w)
 		}
-		doc.calculTf()
+		doc.calculScore()
 		c <- doc
 		file.Close()
 	}

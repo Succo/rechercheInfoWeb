@@ -25,7 +25,7 @@ type Perf struct {
 	// Trie is the size of the prefix tree
 	Trie uint64
 	// Weight is the size of the the tfidf values
-	Weight uint64
+	RawWeight uint64
 	// Title the size of the list of titles
 	Titles uint64
 	// Total size of the indexes
@@ -58,17 +58,17 @@ func (p Perf) getFinalValues() Perf {
 		panic(err)
 	}
 	p.Trie = uint64(trie.Size())
-	weight, err := os.Lstat("indexes/" + p.Name + ".weight")
+	rawWeight, err := os.Lstat("indexes/" + p.Name + ".rawweight")
 	if err != nil {
 		panic(err)
 	}
-	p.Weight = uint64(weight.Size())
+	p.RawWeight = uint64(rawWeight.Size())
 	titles, err := os.Lstat("indexes/" + p.Name + ".titles")
 	if err != nil {
 		panic(err)
 	}
 	p.Titles = uint64(titles.Size())
-	p.TotalSize = p.Index + p.Trie + p.Weight + p.Titles
+	p.TotalSize = p.Index + p.Trie + p.RawWeight + p.Titles
 	p.TotalTime = p.Parsing + p.IDF + p.Indexing + p.Serialization
 	p.Ratio = float64(p.TotalSize) / float64(p.Initial)
 	return p
