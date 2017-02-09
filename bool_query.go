@@ -90,10 +90,11 @@ func BooleanQuery(s *Search, input string) []Ref {
 			word2 := porter2.Stem(words[i+2])
 			refs1 := s.Index.get([]byte(word1))
 			refs2 := s.Index.get([]byte(word2))
+			res := union(refs1, refs2)
 			if i == 0 {
-				results = union(refs1, refs2)
+				results = res
 			} else {
-				results = intersect(results, union(refs1, refs2))
+				results = intersect(results, res)
 			}
 			i += 2 // Jump two words
 		case strings.ToUpper(words[i]) == "NOT":
