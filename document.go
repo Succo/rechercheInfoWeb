@@ -36,7 +36,9 @@ func scale(w weights, c float64) (newW weights) {
 // It's a temporary structure until frequences are calulated
 type Document struct {
 	Title string
-	// store the frequence of keyword in the document
+	// store the count of each term in the document
+	Count map[string]int
+	// store the different frequence of a term in the document
 	Scores map[string]weights
 	// stores the total size
 	Size int
@@ -49,15 +51,14 @@ type Document struct {
 
 func newDocument() *Document {
 	scores := make(map[string]weights)
-	return &Document{Scores: scores}
+	count := make(map[string]int)
+	return &Document{Scores: scores, Count: count}
 }
 
 // addWord add a word to the model, for now freqs are only stored as count actually
 func (d *Document) addWord(w string) {
 	w = porter2.Stem(w)
-	score := d.Scores[w]
-	score[raw]++
-	d.Scores[w] = score
+	d.Count[w]++
 	d.Size += 1
 }
 
@@ -77,9 +78,9 @@ func (d *Document) calculScore() {
 	}
 	factor := 1 / float64(d.Size)
 	var score weights
-	for w, s := range d.Scores {
+	for w, s := range d.Count {
 		// Until now the first element of each array is the term count
-		tf := s[raw] * factor
+		tf := float64(s) * factor
 		score[raw] = tf
 		score[norm] = 1 + math.Log(tf)
 		score[half] = 0.5 + 0.5*tf/max
