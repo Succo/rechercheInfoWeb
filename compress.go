@@ -9,14 +9,26 @@ import (
 	"github.com/golang/snappy"
 )
 
-func Compress(vals []float64, w io.Writer) error {
+func Compress(vals []weights, w io.Writer) error {
 	snap := snappy.NewBufferedWriter(w)
 	// 8 byte for a flaot64
 	buf := make([]byte, 8)
 	for _, v := range vals {
-		bits := math.Float64bits(v)
+		bits := math.Float64bits(v[raw])
 		binary.BigEndian.PutUint64(buf, bits)
 		_, err := snap.Write(buf)
+		if err != nil {
+			return err
+		}
+		bits = math.Float64bits(v[norm])
+		binary.BigEndian.PutUint64(buf, bits)
+		_, err = snap.Write(buf)
+		if err != nil {
+			return err
+		}
+		bits = math.Float64bits(v[half])
+		binary.BigEndian.PutUint64(buf, bits)
+		_, err = snap.Write(buf)
 		if err != nil {
 			return err
 		}
@@ -28,18 +40,32 @@ func Compress(vals []float64, w io.Writer) error {
 	return nil
 }
 
-func UnCompress(r io.Reader) []float64 {
+func UnCompress(r io.Reader) []weights {
 	snap := snappy.NewReader(r)
 	// 8 bytes for a float64
 	buf := make([]byte, 8)
-	vals := make([]float64, 0)
+	vals := make([]weights, 0)
+	var val weights
 	for {
 		_, err := snap.Read(buf)
 		if err != nil {
 			break
 		}
 		bits := binary.BigEndian.Uint64(buf)
-		vals = append(vals, math.Float64frombits(bits))
+		val[raw] = math.Float64frombits(bits)
+		_, err = snap.Read(buf)
+		if err != nil {
+			break
+		}
+		bits = binary.BigEndian.Uint64(buf)
+		val[norm] = math.Float64frombits(bits)
+		_, err = snap.Read(buf)
+		if err != nil {
+			break
+		}
+		bits = binary.BigEndian.Uint64(buf)
+		val[half] = math.Float64frombits(bits)
+		vals = append(vals, val)
 	}
 	return vals
 }

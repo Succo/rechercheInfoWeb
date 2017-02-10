@@ -7,14 +7,6 @@ import (
 	"github.com/surgebase/porter2"
 )
 
-// weight serves to identify the different weight that can be used
-type weight int
-
-const (
-	raw weight = iota
-	norm
-)
-
 // mergeWithTfIdf calculate the intersection of two list of refs
 // It updates the tfidf score in each item
 func mergeWithTfIdf(refs1, refs2 []Ref) []Ref {
@@ -31,8 +23,7 @@ func mergeWithTfIdf(refs1, refs2 []Ref) []Ref {
 
 		if refs1[0].Id == refs2[0].Id {
 			ref := refs1[0]
-			ref.RawTfIdf += refs2[0].RawTfIdf
-			ref.NormTfIdf += refs2[0].NormTfIdf
+			ref.Weights = zip(ref.Weights, refs2[0].Weights)
 			intersection = append(intersection, ref)
 			refs1 = refs1[1:]
 			refs2 = refs2[1:]
@@ -63,6 +54,8 @@ func VectorQuery(s *Search, input string, w weight) []Ref {
 		sort.Sort(rawList(results))
 	} else if w == norm {
 		sort.Sort(normList(results))
+	} else if w == half {
+		sort.Sort(halfList(results))
 	}
 	return results
 }
@@ -74,7 +67,7 @@ type rawList []Ref
 func (r rawList) Len() int      { return len(r) }
 func (r rawList) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
 func (r rawList) Less(i, j int) bool {
-	return r[i].RawTfIdf < r[j].RawTfIdf
+	return r[i].Weights[raw] < r[j].Weights[raw]
 }
 
 // Define a custom type to add custom method
@@ -84,5 +77,15 @@ type normList []Ref
 func (r normList) Len() int      { return len(r) }
 func (r normList) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
 func (r normList) Less(i, j int) bool {
-	return r[i].NormTfIdf < r[j].RawTfIdf
+	return r[i].Weights[norm] < r[j].Weights[norm]
+}
+
+// Define a custom type to add custom method
+type halfList []Ref
+
+// Those method satisfy the sort interface
+func (r halfList) Len() int      { return len(r) }
+func (r halfList) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
+func (r halfList) Less(i, j int) bool {
+	return r[i].Weights[half] < r[j].Weights[half]
 }

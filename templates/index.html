@@ -37,6 +37,7 @@
 			<div><input type="text" name="search" style="width:98.5%" value="{{.Query}}"></input></div>
 			<input type="hidden" name="offset" value="0">
 			<br>
+			{{.Weight}} weight
 			<div>
 				<label for="CACM"> CACM</label>
 				<input type="radio" name="corpus" value="cacm"
@@ -52,11 +53,16 @@
 				<input type="radio" name="type" value="vectorial"
 				       id="vectorial" {{if .Vectorial }} checked {{end}}> |
 
-				<select name="weigth">
-						<option value="brute"
-							{{if not .Norm }}selected{{end}}>Fréquence brute</option>
-						<option value="norm" selected
-							{{if .Norm }} checked {{end}}>Normalisation logarithmique</option>
+				<select name="weight">
+						<option value="brute" {{if eq (.Weight) ("raw") }} selected {{end}} >
+							Fréquence brute
+						</option>
+						<option value="norm" {{if eq (.Weight) ("norm") }} selected {{end}} >
+							Normalisation logarithmique
+						</option>
+						<option value="half" {{if eq (.Weight)  ("half") }} selected {{end}} >
+							Normalisation par 0.5 et le max
+						</option>
 				</select>
 				<input type="submit" value="Search 🚀" style="float:right">
 			</div>

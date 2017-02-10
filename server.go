@@ -22,7 +22,7 @@ type answer struct {
 	// A small "hack" to keep the same buttons checked
 	CS276     bool
 	Vectorial bool
-	Norm      bool
+	Weight    string
 	Results   []Result
 	Time      string
 	// Links to other results in the query set
@@ -82,12 +82,10 @@ func serve(cacm, cs276 *Search) {
 		}
 
 		searchType := r.FormValue("type")
+		weightFun := r.FormValue("weight")
 
 		var offset int
-		offset, err := strconv.Atoi(r.FormValue("offset"))
-		if err != nil {
-			offset = 0
-		}
+		offset, _ = strconv.Atoi(r.FormValue("offset"))
 
 		var search *Search
 		var hist metrics.Histogram
@@ -107,14 +105,15 @@ func serve(cacm, cs276 *Search) {
 		if searchType == "boolean" {
 			a.Results = search.BooleanSearch(input)
 		} else if searchType == "vectorial" {
-			weightFun := r.FormValue("weight")
 			if weightFun == "norm" {
-				a.Results = search.VectorSearch(input, 1)
-				a.Norm = true
+				a.Results = search.VectorSearch(input, norm)
+			} else if weightFun == "half" {
+				a.Results = search.VectorSearch(input, half)
 			} else {
-				a.Results = search.VectorSearch(input, 0)
+				a.Results = search.VectorSearch(input, raw)
 			}
 			a.Vectorial = true
+			a.Weight = weightFun
 		} else {
 			index.Execute(w, nil)
 			return

@@ -9,8 +9,6 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	"github.com/gonum/floats"
 )
 
 // cacmToUrl generates url from cacm id
@@ -65,8 +63,8 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 	now := time.Now()
 	// Temporary storage for document id using delta
 	deltas := make(map[string][]uint)
-	rawTfidfs := make(map[string][]float64)
-	normTfidfs := make(map[string][]float64)
+	// Temporary storage for the multiples weight
+	tfidfs := make(map[string][]weights)
 
 	// Number of document
 	var count uint
@@ -74,7 +72,7 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 	var pairs int
 	for doc := range c {
 		search.AddDocMetaData(doc)
-		for w, score := range doc.RawScores {
+		for w, score := range doc.Scores {
 			d, found := deltas[w]
 			if !found {
 				// The first element is actually a counter
@@ -84,8 +82,7 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 				d[0] = count
 				deltas[w] = append(d, delta)
 			}
-			rawTfidfs[w] = append(rawTfidfs[w], score)
-			normTfidfs[w] = append(normTfidfs[w], doc.NormScores[w])
+			tfidfs[w] = append(tfidfs[w], score)
 			pairs++
 		}
 		count++
@@ -96,14 +93,13 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 
 	now = time.Now()
 	// Now that all documents are known, we can fully calculate tf-idf
-	calculateIDF(rawTfidfs, count)
-	calculateIDF(normTfidfs, count)
+	calculateIDF(tfidfs, count)
 	search.Perf.IDF = time.Since(now)
 	log.Printf("%s IDF calculated in  %s \n", search.Corpus, time.Since(now).String())
 
 	// Then we build the *real* index using a prefix tree
 	now = time.Now()
-	trie := trieFromIndex(deltas, rawTfidfs, normTfidfs, pairs)
+	trie := trieFromIndex(deltas, tfidfs, pairs)
 	search.Perf.Indexing = time.Since(now)
 	log.Printf("%s index built in  %s \n", search.Corpus, time.Since(now).String())
 	search.Index = trie
@@ -112,11 +108,17 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 	return search
 }
 
-func calculateIDF(tfidfs map[string][]float64, size uint) {
+func calculateIDF(tfidfs map[string][]weights, size uint) {
 	factor := float64(size)
+	var newTf weights
 	for w, tfs := range tfidfs {
 		idf := math.Log(factor / float64(len(tfs)))
-		floats.Scale(idf, tfs)
+		for i, tf := range tfs {
+			newTf[raw] = tf[raw] * idf
+			newTf[norm] = tf[norm] * idf
+			newTf[half] = tf[half] * idf
+			tfs[i] = newTf
+		}
 		tfidfs[w] = tfs
 	}
 }
