@@ -39,7 +39,7 @@ func mergeWithTfIdf(refs1, refs2 []Ref) []Ref {
 }
 
 // VectorQuery effects a vector query on a search object
-func VectorQuery(s *Search, input string, w weight) []Ref {
+func VectorQuery(s *Search, input string, wf weight) []Ref {
 	words := strings.Split(input, " ")
 	var results []Ref
 	for _, w := range words {
@@ -50,11 +50,11 @@ func VectorQuery(s *Search, input string, w weight) []Ref {
 		refs := s.Index.get([]byte(w))
 		results = mergeWithTfIdf(results, refs)
 	}
-	if w == raw {
+	if wf == raw {
 		sort.Sort(rawList(results))
-	} else if w == norm {
+	} else if wf == norm {
 		sort.Sort(normList(results))
-	} else if w == half {
+	} else if wf == half {
 		sort.Sort(halfList(results))
 	}
 	return results

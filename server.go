@@ -89,7 +89,7 @@ func serve(cacm, cs276 *Search) {
 
 		var search *Search
 		var hist metrics.Histogram
-		a := answer{Query: input}
+		a := answer{Query: input, Weight: weightFun}
 		if corpus == "cacm" {
 			search = cacm
 			hist = cacmH
@@ -113,7 +113,6 @@ func serve(cacm, cs276 *Search) {
 				a.Results = search.VectorSearch(input, raw)
 			}
 			a.Vectorial = true
-			a.Weight = weightFun
 		} else {
 			index.Execute(w, a)
 			return

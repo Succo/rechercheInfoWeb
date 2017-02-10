@@ -70,21 +70,20 @@ func (d *Document) addToken(w string) {
 // calculScore actually update score to store tf for the term
 func (d *Document) calculScore() {
 	// Get the maximun tf
-	var max float64
-	for _, s := range d.Scores {
-		if s[raw] > max {
-			max = s[raw]
+	var max int
+	for _, s := range d.Count {
+		if s > max {
+			max = s
 		}
 	}
 	factor := 1 / float64(d.Size)
+	maxF := 1 / float64(max)
 	var score weights
 	for w, s := range d.Count {
-		// Until now the first element of each array is the term count
 		tf := float64(s) * factor
 		score[raw] = tf
 		score[norm] = 1 + math.Log(tf)
-		score[half] = 0.5 + 0.5*tf/max
-		// Go's arrays are values
+		score[half] = 0.5 + 0.5*tf*maxF
 		d.Scores[w] = score
 	}
 }
