@@ -11,12 +11,14 @@ import (
 
 func Compress(vals []weights, w io.Writer) error {
 	snap := snappy.NewBufferedWriter(w)
+	var bits uint64
+	var err error
 	// 8 byte for a flaot64
 	buf := make([]byte, 8)
 	for _, v := range vals {
-		bits := math.Float64bits(v[raw])
+		bits = math.Float64bits(v[raw])
 		binary.BigEndian.PutUint64(buf, bits)
-		_, err := snap.Write(buf)
+		_, err = snap.Write(buf)
 		if err != nil {
 			return err
 		}
@@ -33,7 +35,7 @@ func Compress(vals []weights, w io.Writer) error {
 			return err
 		}
 	}
-	err := snap.Close()
+	err = snap.Close()
 	if err != nil {
 		return err
 	}
@@ -46,12 +48,14 @@ func UnCompress(r io.Reader) []weights {
 	buf := make([]byte, 8)
 	vals := make([]weights, 0)
 	var val weights
+	var err error
+	var bits uint64
 	for {
-		_, err := snap.Read(buf)
+		_, err = snap.Read(buf)
 		if err != nil {
 			break
 		}
-		bits := binary.BigEndian.Uint64(buf)
+		bits = binary.BigEndian.Uint64(buf)
 		val[raw] = math.Float64frombits(bits)
 		_, err = snap.Read(buf)
 		if err != nil {
