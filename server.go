@@ -182,6 +182,10 @@ func serve(cacm, cs276 *Search) {
 		http.ServeFile(w, r, "templates/percentile.html")
 	})
 
+	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "favicon.ico")
+	})
+
 	log.Println("riw starting to serve traffic")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
