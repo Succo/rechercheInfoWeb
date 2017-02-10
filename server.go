@@ -77,7 +77,7 @@ func serve(cacm, cs276 *Search) {
 		corpus := r.FormValue("corpus")
 		input := r.FormValue("search")
 		if len(corpus) == 0 || len(input) == 0 {
-			index.Execute(w, nil)
+			index.Execute(w, answer{})
 			return
 		}
 
@@ -98,7 +98,7 @@ func serve(cacm, cs276 *Search) {
 			hist = cs276H
 			a.CS276 = true
 		} else {
-			index.Execute(w, nil)
+			index.Execute(w, a)
 			return
 		}
 		now := time.Now()
@@ -115,7 +115,7 @@ func serve(cacm, cs276 *Search) {
 			a.Vectorial = true
 			a.Weight = weightFun
 		} else {
-			index.Execute(w, nil)
+			index.Execute(w, a)
 			return
 		}
 		hist.Observe(float64(time.Since(now)))
