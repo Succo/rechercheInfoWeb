@@ -25,6 +25,13 @@ func zip(w1, w2 weights) (w weights) {
 	return w
 }
 
+func scale(w weights, c float64) (newW weights) {
+	newW[raw] = c * w[raw]
+	newW[norm] = c * w[norm]
+	newW[half] = c * w[half]
+	return newW
+}
+
 // Document implement a parsed document
 // It's a temporary structure until frequences are calulated
 type Document struct {

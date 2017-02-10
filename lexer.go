@@ -110,14 +110,10 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 
 func calculateIDF(tfidfs map[string][]weights, size uint) {
 	factor := float64(size)
-	var newTf weights
 	for w, tfs := range tfidfs {
 		idf := math.Log(factor / float64(len(tfs)))
 		for i, tf := range tfs {
-			newTf[raw] = tf[raw] * idf
-			newTf[norm] = tf[norm] * idf
-			newTf[half] = tf[half] * idf
-			tfs[i] = newTf
+			tfs[i] = scale(tf, idf)
 		}
 		tfidfs[w] = tfs
 	}
