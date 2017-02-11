@@ -15,6 +15,14 @@ const (
 	half
 )
 
+// weightName can be used to iterate over the differentes weightFun
+// makes adding new weight function easy
+var weightName = [...]string{
+	"raw frequency",
+	"log normalization",
+	"double normlization 0.5",
+}
+
 // weight is a fixed size array where the different tfidif for one term values can be stored
 type weights [3]float64
 

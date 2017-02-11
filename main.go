@@ -45,6 +45,7 @@ func main() {
 	serve(cacm, cs276)
 }
 
+// draw generates heaps law graph
 func draw(search *Search) {
 	name := search.Corpus
 	if _, err := os.Stat(plotDir + name + plotFile); err == nil {
@@ -100,6 +101,9 @@ func buildCACM(c chan *Search) {
 		cacm = UnserializeSearch("cacm")
 		cacm.toUrl = cacmToUrl
 	}
+	precall := NewPreCallCalculator(cacm)
+	precall.Populate("data/CACM/query.text", "data/CACM/qrels.text")
+	precall.Draw()
 	c <- cacm
 }
 
