@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"log"
 	"math"
-	"os"
 	"strings"
 	"time"
 )
@@ -25,35 +23,23 @@ func cs276ToUrl(id int, title string) string {
 }
 
 // ParseCACM creates a cacm scanner, a search struct and connects them
-func ParseCACM(r io.Reader, commonWordFile string) *Search {
-	commonWord, err := os.Open(commonWordFile)
-	if err != nil {
-		panic(err)
-	}
-	defer commonWord.Close()
-
-	cw := make(map[string]bool)
-	scanner := bufio.NewScanner(commonWord)
-	for scanner.Scan() {
-		cw[scanner.Text()] = true
-	}
-
+func ParseCACM(r io.Reader, cw map[string]bool) *Search {
 	cacm := NewCACMScanner(r, cw)
 
 	c := make(chan *Document)
 	go cacm.Scan(c)
-	search := emptySearch("cacm")
+	search := emptySearch("cacm", cw)
 	search.toUrl = cacmToUrl
 	search.Perf = newCACMPerf()
 	return buildSearchFromScanner(search, c)
 }
 
 // ParseCS276 creates a parser struct from the root folder of cs216 data
-func ParseCS276(root string) *Search {
+func ParseCS276(root string, cw map[string]bool) *Search {
 	cs276 := NewCS276Scanner(root)
 	c := make(chan *Document, 100)
 	go cs276.Scan(c)
-	search := emptySearch("cs276")
+	search := emptySearch("cs276", cw)
 	search.toUrl = cs276ToUrl
 	search.Perf = newCS276Perf()
 	return buildSearchFromScanner(search, c)

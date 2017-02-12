@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"image/color"
 	"log"
@@ -29,8 +30,21 @@ func main() {
 	log.Println("Starting riw server")
 	flag.Parse()
 	c := make(chan *Search)
-	go buildCACM(c)
-	go buildCS276(c)
+	// Build a set of common words
+	commonWord, err := os.Open(commonWordFile)
+	if err != nil {
+		panic(err)
+	}
+	defer commonWord.Close()
+
+	cw := make(map[string]bool)
+	scanner := bufio.NewScanner(commonWord)
+	for scanner.Scan() {
+		cw[scanner.Text()] = true
+	}
+
+	go buildCACM(c, cw)
+	go buildCS276(c, cw)
 	var cacm *Search
 	var cs276 *Search
 	var s *Search
@@ -83,7 +97,7 @@ func draw(search *Search) {
 	}
 }
 
-func buildCACM(c chan *Search) {
+func buildCACM(c chan *Search, cw map[string]bool) {
 	var cacm *Search
 	if buildIndex {
 		log.Println("Building cacm index from scratch")
@@ -92,7 +106,7 @@ func buildCACM(c chan *Search) {
 			panic(err)
 		}
 		defer source.Close()
-		cacm = ParseCACM(source, commonWordFile)
+		cacm = ParseCACM(source, cw)
 		source.Close()
 		draw(cacm)
 		cacm.Serialize()
@@ -107,11 +121,11 @@ func buildCACM(c chan *Search) {
 	c <- cacm
 }
 
-func buildCS276(c chan *Search) {
+func buildCS276(c chan *Search, cw map[string]bool) {
 	var cs276 *Search
 	if buildIndex {
 		log.Println("Building cs276 index from scratch")
-		cs276 = ParseCS276(cs276File)
+		cs276 = ParseCS276(cs276File, cw)
 		draw(cs276)
 		cs276.Serialize()
 	} else {

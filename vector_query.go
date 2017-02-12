@@ -3,9 +3,16 @@ package main
 import (
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/surgebase/porter2"
 )
+
+// Rules by which words are splitted
+// Basically only keep letters and number
+func splitter(c rune) bool {
+	return !unicode.IsLetter(c) && !unicode.IsNumber(c)
+}
 
 // mergeWithTfIdf calculate the intersection of two list of refs
 // It updates the tfidf score in each item
@@ -40,10 +47,10 @@ func mergeWithTfIdf(refs1, refs2 []Ref) []Ref {
 
 // VectorQuery effects a vector query on a search object
 func VectorQuery(s *Search, input string, wf weight) []Ref {
-	words := strings.Split(input, " ")
+	words := strings.FieldsFunc(input, splitter)
 	var results []Ref
 	for _, w := range words {
-		if len(w) == 0 {
+		if s.CW[w] {
 			continue
 		}
 		w = porter2.Stem(w)
