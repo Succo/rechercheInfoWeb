@@ -163,34 +163,6 @@ func (p *PreCallCalculator) Draw() {
 	log.Printf("Precision recall graph generated in %s", time.Since(now).String())
 }
 
-// getAvgPrecision get the Recall for n doc with weight function wf
-func (p *PreCallCalculator) getRecallPrec(n, wf, i int) (recall, precision float64) {
-	var refs []Ref
-	var valid int
-	refs = VectorQuery(p.s, p.queries[i], weight(wf))
-	if len(refs) > n {
-		refs = refs[:n]
-	}
-	valid = getNumberOfValidAns(refs, p.answer[i])
-	recall += float64(valid) / float64(len(p.answer[i]))
-	precision += float64(valid) / float64(n)
-	return recall, precision
-}
-
-func getNumberOfValidAns(refs []Ref, ans []int) int {
-	var count int
-	for _, ref := range refs {
-		if len(ans) == 0 {
-			break
-		} else if ref.Id == ans[0] {
-			count++
-		} else if ref.Id > ans[0] {
-			ans = ans[1:]
-		}
-	}
-	return count
-}
-
 func contains(haystack []int, needle int) bool {
 	for _, hay := range haystack {
 		if hay == needle {
