@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
+	"strconv"
 	"time"
 
 	"github.com/gonum/plot"
@@ -46,17 +48,20 @@ func (p *PreCallCalculator) Populate(query string, answer string) {
 		case bytes.HasPrefix(ln, []byte(".I")):
 			if qid > 0 {
 				p.queries = append(p.queries, buf.String())
+				buf.Reset()
 			}
 			qid++
 		case bytes.HasPrefix(ln, []byte(".W")):
 			inQBloc = true
-		case inQBloc:
-			buf.Write(ln)
 		// Seems to suffice for all block indicator
 		case bytes.HasPrefix(ln, []byte(".")):
 			inQBloc = false
+		case inQBloc:
+			buf.Write(ln)
+			buf.Write([]byte(" "))
 		}
 	}
+	p.queries = append(p.queries, buf.String())
 	A, err := os.Open(answer)
 	if err != nil {
 		panic(err.Error())
@@ -80,75 +85,86 @@ func (p *PreCallCalculator) Populate(query string, answer string) {
 
 // Draw generates the precision/recall graph
 func (p *PreCallCalculator) Draw() {
-	name := plotDir + "precision_recall" + plotFile
+	name := path.Join(plotDir + "precision_recall")
 	if _, err := os.Stat(name); err == nil {
 		// the file exist, whe assume it's the plot
 		log.Println("Not generating precision recall as file already exist")
 		return
 	}
+	os.Mkdir(name, 0777)
 
 	now := time.Now()
-	log.Println("Generating precision recall graph")
-	plt, err := plot.New()
-	if err != nil {
-		panic(err)
-	}
-
-	plt.X.Label.Text = "Recall"
-	plt.Y.Label.Text = "Precision"
-
-	// Generate a semi-random color palette for graphs
-	colors, err := colorful.HappyPalette(len(weightName))
-
-	// Semaphore channel to wait for lines
+	log.Println("Generating precision recall graphs")
+	// Semaphore channel to wait for all graph
 	sem := make(chan bool)
-	// iterate over all weight function in parrallel
-	for i := range weightName {
+
+	for i := range p.queries {
 		go func(i int) {
-			wn := weightName[i]
-			pts := make(plotter.XYs, 10)
-			for j := 0; j < 10; j++ {
-				pts[j].X, pts[j].Y = p.GetAvgRecallPrec((j*2)+1, i)
-			}
-			line, err := plotter.NewLine(pts)
+			file := path.Join(name, strconv.Itoa(i)+plotFile)
+			plt, err := plot.New()
 			if err != nil {
 				panic(err)
 			}
-			line.Color = colors[i]
-			line.Width = vg.Points(2)
-			plt.Add(line)
-			plt.Legend.Add(wn, line)
+
+			plt.X.Label.Text = "Recall"
+			plt.Y.Label.Text = "Precision"
+
+			// Generate a semi-random color palette for graphs
+			colors, err := colorful.HappyPalette(len(weightName))
+
+			// iterate over all weight function in parrallel
+			for wf := range weightName {
+				refs := VectorQuery(p.s, p.queries[i], weight(wf))
+				pts := make(plotter.XYs, len(refs))
+
+				var valid int
+				for count, ref := range refs {
+					if contains(p.answer[i], ref.Id) {
+						valid++
+					}
+					recall := float64(valid) / float64(len(p.answer[i]))
+					precision := float64(valid) / float64(count+1)
+					pts[count].X, pts[count].Y = recall, precision
+				}
+
+				line, err := plotter.NewLine(pts)
+				if err != nil {
+					panic(err)
+				}
+
+				line.Color = colors[wf]
+				line.Width = vg.Points(2)
+				plt.Add(line)
+				wn := weightName[wf]
+				plt.Legend.Add(wn, line)
+			}
+			if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, file); err != nil {
+				panic(err)
+			}
 			sem <- true
 		}(i)
 	}
 
-	// Wait all graphs are generated
-	for i := 0; i < len(weightName); i++ {
+	// Wait for all graphs to be generated
+	for i := 0; i < len(p.queries); i++ {
 		<-sem
 	}
 
 	// Generate and save the graph
-	if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, name); err != nil {
-		panic(err)
-	}
 	log.Printf("Precision recall graph generated in %s", time.Since(now).String())
 }
 
-// GetAvgPrecision get the Recall for n doc with weight function wf
-func (p *PreCallCalculator) GetAvgRecallPrec(n, wf int) (recall, precision float64) {
+// getAvgPrecision get the Recall for n doc with weight function wf
+func (p *PreCallCalculator) getRecallPrec(n, wf, i int) (recall, precision float64) {
 	var refs []Ref
 	var valid int
-	for i, q := range p.queries {
-		refs = VectorQuery(p.s, q, weight(wf))
-		if len(refs) > n {
-			refs = refs[:n]
-		}
-		valid = getNumberOfValidAns(refs, p.answer[i])
-		recall += float64(valid) / float64(len(p.answer[i]))
-		precision += float64(valid) / float64(n)
+	refs = VectorQuery(p.s, p.queries[i], weight(wf))
+	if len(refs) > n {
+		refs = refs[:n]
 	}
-	recall = recall / float64(len(p.queries))
-	precision = precision / float64(len(p.queries))
+	valid = getNumberOfValidAns(refs, p.answer[i])
+	recall += float64(valid) / float64(len(p.answer[i]))
+	precision += float64(valid) / float64(n)
 	return recall, precision
 }
 
@@ -164,4 +180,13 @@ func getNumberOfValidAns(refs []Ref, ans []int) int {
 		}
 	}
 	return count
+}
+
+func contains(haystack []int, needle int) bool {
+	for _, hay := range haystack {
+		if hay == needle {
+			return true
+		}
+	}
+	return false
 }
