@@ -115,16 +115,25 @@ func (p *PreCallCalculator) Draw() {
 			// iterate over all weight function in parrallel
 			for wf := range weightName {
 				refs := VectorQuery(p.s, p.queries[i], weight(wf))
-				pts := make(plotter.XYs, len(refs))
 
 				var valid int
+				pts := make(plotter.XYs, 0)
+				// Temporary array for precision and recalls
+				// So we can *real* length (non zero point)
+				//recalls := make([]float64, 0)
+				//precisions := make([]float64, 0)
 				for count, ref := range refs {
 					if contains(p.answer[i], ref.Id) {
 						valid++
 					}
+					if valid == 0 {
+						continue
+					}
+					//recalls = append(recalls, float64(valid)/float64(len(p.answer[i])))
+					//precisions = append(precisions, float64(valid)/float64(count+1))
 					recall := float64(valid) / float64(len(p.answer[i]))
 					precision := float64(valid) / float64(count+1)
-					pts[count].X, pts[count].Y = recall, precision
+					pts = append(pts, struct{ X, Y float64 }{recall, precision})
 				}
 
 				line, err := plotter.NewLine(pts)
