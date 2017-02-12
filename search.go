@@ -32,12 +32,14 @@ type Search struct {
 	Size int
 	// Titles stores document title
 	Titles []string
+	// CW is a set of common words
+	CW map[string]bool
 	// toUrl generates URL from id and title, the function depends of the corpus
 	toUrl func(int, string) string
 }
 
-func emptySearch(corpus string) *Search {
-	return &Search{Corpus: corpus}
+func emptySearch(corpus string, cw map[string]bool) *Search {
+	return &Search{Corpus: corpus, CW: cw}
 }
 
 // AddDocMetaData adds a parsed document metadata
@@ -106,6 +108,19 @@ func (s *Search) Serialize() {
 	titles.Sync()
 	titles.Close()
 
+	cw, err := os.Create("indexes/" + s.Corpus + ".cw")
+	if err != nil {
+		panic(err)
+	}
+	defer cw.Close()
+	en = gob.NewEncoder(cw)
+	err = en.Encode(s.CW)
+	if err != nil {
+		panic(err)
+	}
+	cw.Sync()
+	cw.Close()
+
 	s.Index.Serialize(s.Corpus)
 	s.Perf.Serialization = time.Since(now)
 	s.Perf = s.Perf.getFinalValues()
@@ -159,6 +174,18 @@ func UnserializeSearch(name string) *Search {
 		panic(err)
 	}
 	meta.Close()
+
+	cw, err := os.Open("indexes/" + name + ".cw")
+	if err != nil {
+		panic(err)
+	}
+	defer cw.Close()
+	en = gob.NewDecoder(cw)
+	err = en.Decode(&s.CW)
+	if err != nil {
+		panic(err)
+	}
+	cw.Close()
 
 	s.Index = UnserializeTrie(name)
 	return s

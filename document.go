@@ -20,7 +20,7 @@ const (
 var weightName = [...]string{
 	"raw frequency",
 	"log normalization",
-	"double normlization 0.5",
+	"double normalization 0.5",
 }
 
 // weight is a fixed size array where the different tfidif for one term values can be stored
