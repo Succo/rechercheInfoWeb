@@ -112,6 +112,9 @@ func (p *PreCallCalculator) Draw() {
 			// Generate a semi-random color palette for graphs
 			colors, err := colorful.HappyPalette(len(weightName))
 
+			// A boolean to check that line are added to the plot
+			// don't draw uselate plot
+			var useful bool
 			// iterate over all weight function in parrallel
 			for wf := range weightName {
 				refs := VectorQuery(p.s, p.queries[i], weight(wf))
@@ -128,17 +131,26 @@ func (p *PreCallCalculator) Draw() {
 						pts = append(pts, struct{ X, Y float64 }{recall, precision})
 					}
 				}
+				if len(pts) == 0 {
+					// No valid point, most likely "invalid query", like on the author
+					break
+				}
 
 				line, err := plotter.NewLine(pts)
 				if err != nil {
 					panic(err)
 				}
 
+				useful = true
 				line.Color = colors[wf]
 				line.Width = vg.Points(2)
 				plt.Add(line)
 				wn := weightName[wf]
 				plt.Legend.Add(wn, line)
+			}
+			if !useful {
+				sem <- true
+				return
 			}
 			if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, file); err != nil {
 				panic(err)
