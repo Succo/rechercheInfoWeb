@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync"
 )
 
 const (
@@ -18,23 +17,20 @@ type CS276Scanner struct {
 	root   string
 	dirs   []string
 	toScan chan string
-	wg     *sync.WaitGroup
 }
 
 // NewCS276Scanner create a CS276Scanner from a root dir string
 func NewCS276Scanner(root string) *CS276Scanner {
-	var wg sync.WaitGroup
 	toScan := make(chan string, 100)
 	return &CS276Scanner{
 		root:   root,
 		toScan: toScan,
-		wg:     &wg,
 	}
 }
 
 // scan processes string from the toScan channel
 // it sends parsed document to the channel
-func (s *CS276Scanner) scan(c chan *Document) {
+func (s *CS276Scanner) scan(c chan *Document, sem chan bool) {
 	for filename := range s.toScan {
 		doc := newDocument()
 		doc.Title = filename
@@ -63,7 +59,7 @@ func (s *CS276Scanner) scan(c chan *Document) {
 		c <- doc
 		file.Close()
 	}
-	s.wg.Done()
+	sem <- true
 }
 
 // Scan will send scanned doc to the channel using multiple goroutine to parse them
@@ -86,15 +82,17 @@ func (s *CS276Scanner) Scan(c chan *Document) {
 		}
 		close(s.toScan)
 	}()
+	// Semaphore to wait for all routine to be done
+	sem := make(chan bool, 2)
 	// goroutine parsing files
 	for i := 0; i < goroutineNumber; i++ {
-		go s.scan(c)
+		go s.scan(c, sem)
 	}
-	// the sync group should be the same size as the number of goroutines
-	s.wg.Add(goroutineNumber)
 	// goroutine to close the chan when all goroutines are done
 	go func() {
-		s.wg.Wait()
+		for i := 0; i < goroutineNumber; i++ {
+			<-sem
+		}
 		close(c)
 	}()
 }
