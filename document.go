@@ -84,11 +84,10 @@ func (d *Document) calculScore() {
 			max = s
 		}
 	}
-	factor := 1 / float64(d.Size)
 	maxF := 1 / float64(max)
 	var score weights
 	for w, s := range d.Count {
-		tf := float64(s) * factor
+		tf := float64(s)
 		score[raw] = tf
 		score[norm] = 1 + math.Log(tf)
 		score[half] = 0.5 + 0.5*tf*maxF
