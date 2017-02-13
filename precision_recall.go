@@ -134,9 +134,9 @@ func (p *PreCallCalculator) Draw() {
 						pts = append(pts, struct{ X, Y float64 }{recall, precision})
 					}
 				}
-				if len(pts) == 0 {
+				if len(pts) < 2 {
 					// No valid point, most likely "invalid query", like on the author
-					break
+					continue
 				}
 
 				line, err := plotter.NewLine(pts)
