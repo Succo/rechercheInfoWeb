@@ -98,6 +98,12 @@ func (p *PreCallCalculator) Draw() {
 	// Semaphore channel to wait for all graph
 	sem := make(chan bool)
 
+	// Generate a semi-random color palette for graphs
+	colors, err := colorful.HappyPalette(len(weightName))
+	if err != nil {
+		panic(err)
+	}
+
 	for i := range p.queries {
 		go func(i int) {
 			file := path.Join(name, strconv.Itoa(i)+plotFile)
@@ -108,9 +114,6 @@ func (p *PreCallCalculator) Draw() {
 
 			plt.X.Label.Text = "Recall"
 			plt.Y.Label.Text = "Precision"
-
-			// Generate a semi-random color palette for graphs
-			colors, err := colorful.HappyPalette(len(weightName))
 
 			// A boolean to check that line are added to the plot
 			// don't draw uselate plot
