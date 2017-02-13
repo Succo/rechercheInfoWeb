@@ -85,13 +85,13 @@ func (p *PreCallCalculator) Populate(query string, answer string) {
 
 // Draw generates the precision/recall graph
 func (p *PreCallCalculator) Draw() {
-	name := path.Join(plotDir + "precision_recall")
-	if _, err := os.Stat(name); err == nil {
+	dir := path.Join(graphs, "precision_recall")
+	if _, err := os.Stat(dir); err == nil {
 		// the file exist, whe assume it's the plot
-		log.Println("Not generating precision recall as file already exist")
+		log.Println("Not generating precision recall as directory already exist")
 		return
 	}
-	os.Mkdir(name, 0777)
+	os.Mkdir(dir, 0777)
 
 	now := time.Now()
 	log.Println("Generating precision recall graphs")
@@ -106,7 +106,7 @@ func (p *PreCallCalculator) Draw() {
 
 	for i := range p.queries {
 		go func(i int) {
-			file := path.Join(name, strconv.Itoa(i)+plotFile)
+			file := path.Join(dir, strconv.Itoa(i)+".svg")
 			plt, err := plot.New()
 			if err != nil {
 				panic(err)

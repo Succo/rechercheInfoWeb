@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"log"
 	"os"
+	"path"
 
 	"github.com/gonum/plot"
 	"github.com/gonum/plot/plotter"
@@ -15,8 +16,7 @@ import (
 var buildIndex bool
 
 const (
-	plotFile       = ".svg"
-	plotDir        = "graphs/"
+	graphs         = "graphs"
 	cacmFile       = "data/CACM/cacm.all"
 	commonWordFile = "data/CACM/common_words"
 	cs276File      = "data/CS276/pa1-data"
@@ -62,7 +62,8 @@ func main() {
 // draw generates heaps law graph
 func draw(search *Search) {
 	name := search.Corpus
-	if _, err := os.Stat(plotDir + name + plotFile); err == nil {
+	file := path.Join(graphs, name+".svg")
+	if _, err := os.Stat(file); err == nil {
 		// the file exist, whe assume it's the plot
 		return
 	}
@@ -92,7 +93,7 @@ func draw(search *Search) {
 	plt.Add(line)
 	plt.Legend.Add(name, line)
 
-	if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, plotDir+name+plotFile); err != nil {
+	if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, file); err != nil {
 		panic(err)
 	}
 }
