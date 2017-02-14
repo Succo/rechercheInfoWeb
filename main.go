@@ -52,9 +52,14 @@ func main() {
 		s = <-c
 		if s.Corpus == "cacm" {
 			cacm = s
-			precall = NewPreCallCalculator()
-			precall.Populate("data/CACM/query.text", "data/CACM/qrels.text")
-			precall.Draw(cacm)
+			if buildIndex {
+				precall = NewPreCallCalculator()
+				precall.Populate("data/CACM/query.text", "data/CACM/qrels.text")
+				precall.Draw(cacm)
+				precall.Serialize()
+			} else {
+				precall = UnserializePreCallCalculator()
+			}
 		} else {
 			cs276 = s
 		}

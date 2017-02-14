@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/gob"
 	"fmt"
 	"log"
 	"os"
@@ -26,6 +27,7 @@ type PreCallCalculator struct {
 	Valids []int
 }
 
+// NewPreCallCalculator returns an empty PreCallCalculator
 func NewPreCallCalculator() *PreCallCalculator {
 	return &PreCallCalculator{}
 }
@@ -186,6 +188,33 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 
 	// Generate and save the graph
 	log.Printf("Precision recall graph generated in %s", time.Since(now).String())
+}
+
+// Serialize saves to file the data in PreCallCalculator
+func (p *PreCallCalculator) Serialize() {
+	precall, err := os.Create(path.Join("indexes", "cacm.precall"))
+	if err != nil {
+		panic(err)
+	}
+	defer precall.Close()
+	en := gob.NewEncoder(precall)
+	err = en.Encode(p)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// UnserializePreCallCalculator loads a serializes PeCallCalculator
+func UnserializePreCallCalculator() *PreCallCalculator {
+	var p *PreCallCalculator
+	precall, err := os.Open(path.Join("indexes", "cacm.precall"))
+	if err != nil {
+		panic(err)
+	}
+	defer precall.Close()
+	en := gob.NewDecoder(precall)
+	err = en.Decode(&p)
+	return p
 }
 
 func contains(haystack []int, needle int) bool {

@@ -105,7 +105,6 @@ func (s *Search) Serialize() {
 	if err != nil {
 		panic(err)
 	}
-	titles.Sync()
 	titles.Close()
 
 	cw, err := os.Create("indexes/" + s.Corpus + ".cw")
@@ -118,7 +117,6 @@ func (s *Search) Serialize() {
 	if err != nil {
 		panic(err)
 	}
-	cw.Sync()
 	cw.Close()
 
 	s.Index.Serialize(s.Corpus)
@@ -139,7 +137,6 @@ func (s *Search) Serialize() {
 	if err != nil {
 		panic(err)
 	}
-	meta.Sync()
 	meta.Close()
 }
 
