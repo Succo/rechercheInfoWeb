@@ -29,34 +29,43 @@
 			<a href="/perf">performances</a>
 		</div>
 
-		<h3> Graphes de précision/rappel pour toutes les query valides <h3>
+		<h3> Graphes de précision/rappel pour toutes les query valides </h3>
 
 		<div>
-			{{ range . }}
-					<img class="slides" src="graphs/precision_recall/{{ . }}.svg" style="width:100%">
+			<div style="display:flex;justify-content:space-between;align-items:center">
+			<input type="button" onclick="plusDivs(-1)" value="&#10094;" style="height:30px;margin-right:10px;">
+			{{ range .Queries }}
+				<p class="query">{{ . }}</p>
+			{{ end }}
+			<input type="button" onclick="plusDivs(1)" value="&#10095;" style="height:30px">
+			</div>
+
+			{{ range .Valids }}
+				<img class="slides" src="graphs/precision_recall/{{ . }}.svg" style="width:100%;margin-left:10px;">
 			{{ end }}
 
-			<a onclick="plusDivs(-1)">&#10094;</a>
-			<a onclick="plusDivs(1)">&#10095;</a>
 		</div>
 
 		<script type="text/javascript">
-			var slideIndex = 1;
-			showDivs(slideIndex);
+			var Index = 1;
+			showDivs(Index);
 
 			function plusDivs(n) {
-				showDivs(slideIndex += n);
+				showDivs(Index += n);
 			}
 
 			function showDivs(n) {
 				var i;
-				var x = document.getElementsByClassName("slides");
-				if (n > x.length) {slideIndex = 1}
-				if (n < 1) {slideIndex = x.length}
-				for (i = 0; i < x.length; i++) {
-					x[i].style.display = "none";
+				var slides = document.getElementsByClassName("slides");
+				var queries = document.getElementsByClassName("query");
+				if (n > slides.length) {Index = 1}
+				if (n < 1) {Index = slides.length}
+				for (i = 0; i < slides.length; i++) {
+					slides[i].style.display = "none";
+					queries[i].style.display = "none";
 				}
-				x[slideIndex-1].style.display = "block";
+				slides[Index-1].style.display = "block";
+				queries[Index-1].style.display = "block";
 			}
 		</script>
 	</body>

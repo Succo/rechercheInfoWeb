@@ -177,7 +177,7 @@ func serve(cacm, cs276 *Search, precall *PreCallCalculator) {
 	})
 
 	http.HandleFunc("/precall", func(w http.ResponseWriter, r *http.Request) {
-		precallallT.Execute(w, precall.valids)
+		precallallT.Execute(w, precall)
 	})
 
 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {

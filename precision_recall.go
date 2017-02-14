@@ -18,12 +18,12 @@ import (
 
 // PreCallCalculator is the struct that caluclate Precision and Recall from queries and answer
 type PreCallCalculator struct {
-	// queries is a list of string corresponding to queries
-	queries []string
-	// answer is a list list fo valid doc ID for each query
-	answer [][]int
-	// list of valid graphs (i.e not empty)
-	valids []int
+	// Queries is a list of string corresponding to queries
+	Queries []string
+	// Answer is a list list fo valid doc ID for each query
+	Answer [][]int
+	// Valid is a list of valid graphs (i.e not empty)
+	Valids []int
 }
 
 func NewPreCallCalculator() *PreCallCalculator {
@@ -48,7 +48,7 @@ func (p *PreCallCalculator) Populate(query string, answer string) {
 		switch {
 		case bytes.HasPrefix(ln, []byte(".I")):
 			if qid > 0 {
-				p.queries = append(p.queries, buf.String())
+				p.Queries = append(p.Queries, buf.String())
 				buf.Reset()
 			}
 			qid++
@@ -62,7 +62,7 @@ func (p *PreCallCalculator) Populate(query string, answer string) {
 			buf.Write([]byte(" "))
 		}
 	}
-	p.queries = append(p.queries, buf.String())
+	p.Queries = append(p.Queries, buf.String())
 	A, err := os.Open(answer)
 	if err != nil {
 		panic(err.Error())
@@ -73,26 +73,24 @@ func (p *PreCallCalculator) Populate(query string, answer string) {
 	for scanner.Scan() {
 		line = scanner.Text()
 		fmt.Sscanf(line, "%d %d", &aid, &ans)
-		length = len(p.answer)
+		length = len(p.Answer)
 		if aid > length {
 			//append a new empty slice
-			p.answer = append(p.answer, []int{})
+			p.Answer = append(p.Answer, []int{})
 			length++
 		}
 		// Substract 1 from ans to compensate search starting from 0
-		p.answer[length-1] = append(p.answer[length-1], ans-1)
+		p.Answer[length-1] = append(p.Answer[length-1], ans-1)
 	}
 }
 
 // Draw generates the precision/recall graph
 func (p *PreCallCalculator) Draw(cacm *Search) {
 	dir := path.Join(graphs, "precision_recall")
-	if _, err := os.Stat(dir); err == nil {
-		// the file exist, whe assume it's the plot
-		log.Println("Not generating precision recall as directory already exist")
-		return
+	if _, err := os.Stat(dir); err != nil {
+		//the dorectory isn't there, generating one
+		os.Mkdir(dir, 0777)
 	}
-	os.Mkdir(dir, 0777)
 
 	now := time.Now()
 	log.Println("Generating precision recall graphs")
@@ -105,12 +103,12 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 		panic(err)
 	}
 
-	valids := make([]int, len(p.queries))
+	valids := make([]int, len(p.Queries))
 	// small hack, valids[i] == i if the graph for query i is valid
 	// array are initialised with 0, so valids[0] mist be != 0
 	valids[0] = -1
 
-	for i := range p.queries {
+	for i := range p.Queries {
 		go func(i int) {
 			file := path.Join(dir, strconv.Itoa(i)+".svg")
 			plt, err := plot.New()
@@ -126,14 +124,14 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 			var useful bool
 			// iterate over all weight function in parrallel
 			for wf := range weightName {
-				refs := VectorQuery(cacm, p.queries[i], weight(wf))
+				refs := VectorQuery(cacm, p.Queries[i], weight(wf))
 
 				// Number of effectively valid answer
 				var effective int
-				valid := float64(len(p.answer[i]))
+				valid := float64(len(p.Answer[i]))
 				pts := make(plotter.XYs, 0)
 				for count, ref := range refs {
-					if contains(p.answer[i], ref.Id) {
+					if contains(p.Answer[i], ref.Id) {
 						effective++
 						recall := float64(effective) / valid
 						precision := float64(effective) / float64(count+1)
@@ -161,23 +159,30 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 				sem <- true
 				return
 			}
-			if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, file); err != nil {
-				panic(err)
-			}
 			valids[i] = i
+
+			if _, err := os.Stat(file); err != nil {
+				// the file isn't present, save the plot
+				if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, file); err != nil {
+					panic(err)
+				}
+			}
 			sem <- true
 		}(i)
 	}
 
 	// Wait for all graphs to be generated
-	for i := 0; i < len(p.queries); i++ {
+	for i := 0; i < len(p.Queries); i++ {
 		<-sem
 	}
+	newQ := make([]string, 0, len(p.Queries))
 	for i, val := range valids {
 		if i == val {
-			p.valids = append(p.valids, val)
+			p.Valids = append(p.Valids, val)
+			newQ = append(newQ, p.Queries[i])
 		}
 	}
+	p.Queries = newQ
 
 	// Generate and save the graph
 	log.Printf("Precision recall graph generated in %s", time.Since(now).String())
