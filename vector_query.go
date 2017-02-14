@@ -83,7 +83,7 @@ type rawList []Ref
 func (r rawList) Len() int      { return len(r) }
 func (r rawList) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
 func (r rawList) Less(i, j int) bool {
-	return r[i].Weights[raw] < r[j].Weights[raw]
+	return r[i].Weights[raw] > r[j].Weights[raw]
 }
 
 // Define a custom type to add custom method
@@ -93,7 +93,7 @@ type normList []Ref
 func (r normList) Len() int      { return len(r) }
 func (r normList) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
 func (r normList) Less(i, j int) bool {
-	return r[i].Weights[norm] < r[j].Weights[norm]
+	return r[i].Weights[norm] > r[j].Weights[norm]
 }
 
 // Define a custom type to add custom method
@@ -103,5 +103,5 @@ type halfList []Ref
 func (r halfList) Len() int      { return len(r) }
 func (r halfList) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
 func (r halfList) Less(i, j int) bool {
-	return r[i].Weights[half] < r[j].Weights[half]
+	return r[i].Weights[half] > r[j].Weights[half]
 }
