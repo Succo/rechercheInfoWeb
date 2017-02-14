@@ -45,9 +45,13 @@
 		La librairie que j'utilise (<a href="https://github.com/surgebase/porter2">https://github.com/surgebase/porter2</a>) est une des plus rapide que j'ai pus tester.
 		Différentes expérience tels que l'ajout d'un "cache" n'ont pas permis d'améliorer ça.
 		</br>
-		Cependant il serait possible de "tricher" en abusant du caractère pré-traité de CS276.
+		Il serait possible de "tricher" en abusant du caractère pré-traité de CS276.
 		Ainsi pas besoin de séparer les mots en <a href="https://blog.golang.org/strings">rune</a> quand tous les caractère sont en ASCII.
 		De même pas besoin de lowercasé les strings qui le sont déjà.
+		</br>
+		Cependant en raison de l'utilisation de goroutine pour le traitement des fichiers,
+		Le vrais point bloquant est l'ajout des documents traité à l'index.
+		Il serait intéressant de chercher à effectuer cette opération de manière concurrente.
 		</p>
 
 
