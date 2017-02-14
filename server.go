@@ -156,8 +156,8 @@ func serve(cacm, cs276 *Search, precall *PreCallCalculator) {
 		}
 	})
 
-	http.HandleFunc("/precall", func(w http.ResponseWriter, r *http.Request) {
-		err := templates.ExecuteTemplate(w, "precall", precall)
+	http.HandleFunc("/qrels", func(w http.ResponseWriter, r *http.Request) {
+		err := templates.ExecuteTemplate(w, "qrels", precall)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
