@@ -77,7 +77,7 @@ func remove(refs1, refs2 []Ref) []Ref {
 }
 
 func BooleanQuery(s *Search, input string) []Ref {
-	words := strings.Split(input, " ")
+	words := strings.FieldsFunc(input, splitter)
 	var results []Ref
 	for i := 0; i < len(words); i++ {
 		switch {
