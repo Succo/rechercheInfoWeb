@@ -26,10 +26,11 @@
 			<a href="/">RIW</a> |
 			<a href="/stat">stats</a> |
 			<a href="/percentile">percentile</a> |
-			<a href="/perf">performances</a>
+			<a href="/perf">performances</a> |
+			<a href="/precall">precision/recall</a>
 		</div>
 
-		<h3> Graphes de précision/rappel pour toutes les query valides </h3>
+		<h3> Graphes de précision/rappel </h3>
 
 		<div>
 			<div style="display:flex;justify-content:space-between;align-items:center">
@@ -53,6 +54,14 @@
 			function plusDivs(n) {
 				showDivs(Index += n);
 			}
+
+			document.addEventListener('keydown', function(event) {
+				if(event.keyCode == 37) {
+					plusDivs(-1);
+				} else if(event.keyCode == 39) {
+					plusDivs(1);
+				}
+			});
 
 			function showDivs(n) {
 				var i;
