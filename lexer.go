@@ -56,9 +56,26 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 	var count uint
 	// Total number of document/word pairs
 	var pairs int
+	// Document coming from the first channel will go there to be processed
+	meta := make(chan *Document, 100)
+	// synchronisation channel
+	sem := make(chan bool, 1)
+
+	// This goroutine gets document from main and process metadata and scores
+	go func() {
+		for doc := range meta {
+			search.AddDocMetaData(doc)
+			for w, score := range doc.Scores {
+				tfidfs[w] = append(tfidfs[w], score)
+			}
+		}
+		sem <- true
+	}()
+
+	// The main loop process doc ID and passes document to the second goroutine
 	for doc := range c {
-		search.AddDocMetaData(doc)
-		for w, score := range doc.Scores {
+		meta <- doc
+		for w := range doc.Scores {
 			d, found := deltas[w]
 			if !found {
 				// The first element is actually a counter
@@ -68,12 +85,14 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 				d[0] = count
 				deltas[w] = append(d, delta)
 			}
-			tfidfs[w] = append(tfidfs[w], score)
 			pairs++
 		}
 		count++
 	}
+	close(meta)
 	search.Size = int(count)
+	// wait for other goroutine
+	<-sem
 	search.Perf.Parsing = time.Since(now)
 	log.Printf("%s parsed in  %s \n", search.Corpus, time.Since(now).String())
 
