@@ -34,11 +34,11 @@
 
 		<div>
 			<div style="display:flex;justify-content:space-between;align-items:center">
-			<input type="button" onclick="plusDivs(-1)" value="&#10094;" style="height:30px;margin-right:10px;">
+			<input type="button" onclick="plus(-1)" value="&#10094;" style="height:30px;margin-right:10px;">
 			{{ range .Queries }}
 				<p class="query">{{ . }}</p>
 			{{ end }}
-			<input type="button" onclick="plusDivs(1)" value="&#10095;" style="height:30px">
+			<input type="button" onclick="plus(1)" value="&#10095;" style="height:30px">
 			</div>
 
 			{{ range .Valids }}
@@ -49,21 +49,21 @@
 
 		<script type="text/javascript">
 			var Index = 1;
-			showDivs(Index);
+			show(Index);
 
-			function plusDivs(n) {
-				showDivs(Index += n);
+			function plus(n) {
+				show(Index += n);
 			}
 
 			document.addEventListener('keydown', function(event) {
 				if(event.keyCode == 37) {
-					plusDivs(-1);
+					plus(-1);
 				} else if(event.keyCode == 39) {
-					plusDivs(1);
+					plus(1);
 				}
 			});
 
-			function showDivs(n) {
+			function show(n) {
 				var i;
 				var slides = document.getElementsByClassName("slides");
 				var queries = document.getElementsByClassName("query");
