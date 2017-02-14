@@ -1,3 +1,4 @@
+{{ define "index" }}
 <!DOCTYPE html>
 <html>
 	<head>
@@ -26,13 +27,7 @@
 	</head>
 
 	<body>
-		<div style="background:rgb(10, 174, 194);padding:4px 10px">
-			<a href="/">RIW</a> |
-			<a href="/stat">stats</a> |
-			<a href="/percentile">percentile</a> |
-			<a href="/perf">performances</a> |
-			<a href="/precall">precision/recall</a>
-		</div>
+		{{ template "topbar" }}
 		<h2> Recherche </h2>
 		<form action="/" method="GET">
 			<div><input type="text" name="search" style="width:98.5%" value="{{.Query}}"></input></div>
@@ -93,3 +88,4 @@
 
 	</body>
 </html>
+{{ end }}

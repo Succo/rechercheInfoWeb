@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"path"
 	"strconv"
 	"time"
 
@@ -41,37 +42,17 @@ func serve(cacm, cs276 *Search, precall *PreCallCalculator) {
 		"duration": printDuration,
 		"size":     humanize.Bytes,
 	}
-	index, err := template.ParseFiles("templates/index.html")
-	if err != nil {
-		panic(err.Error())
-	}
 
-	statT, err := template.ParseFiles("templates/stat.html")
-	if err != nil {
-		panic(err.Error())
-	}
+	pattern := path.Join("templates", "*.html")
+	templates := template.Must(template.New("base").Funcs(prettyfier).ParseGlob(pattern))
+
 	stats := []*Stat{
 		&cacm.Stat,
 		&cs276.Stat,
 	}
-
-	perfT, err := template.New("perf.html").Funcs(prettyfier).ParseFiles("templates/perf.html")
-	if err != nil {
-		panic(err.Error())
-	}
 	perfs := []*Perf{
 		&cacm.Perf,
 		&cs276.Perf,
-	}
-
-	cacmT, err := template.ParseFiles("templates/cacm.html")
-	if err != nil {
-		panic(err.Error())
-	}
-
-	precallallT, err := template.ParseFiles("templates/precision_recall_all.html")
-	if err != nil {
-		panic(err.Error())
 	}
 
 	// Histogram used for monitoring of search time
@@ -82,7 +63,7 @@ func serve(cacm, cs276 *Search, precall *PreCallCalculator) {
 		corpus := r.FormValue("corpus")
 		input := r.FormValue("search")
 		if len(corpus) == 0 || len(input) == 0 {
-			index.Execute(w, answer{})
+			templates.ExecuteTemplate(w, "index", answer{})
 			return
 		}
 
@@ -103,7 +84,7 @@ func serve(cacm, cs276 *Search, precall *PreCallCalculator) {
 			hist = cs276H
 			a.CS276 = true
 		} else {
-			index.Execute(w, a)
+			templates.ExecuteTemplate(w, "index", a)
 			return
 		}
 		now := time.Now()
@@ -119,7 +100,7 @@ func serve(cacm, cs276 *Search, precall *PreCallCalculator) {
 			}
 			a.Vectorial = true
 		} else {
-			index.Execute(w, a)
+			templates.ExecuteTemplate(w, "index", a)
 			return
 		}
 		hist.Observe(float64(time.Since(now)))
@@ -140,22 +121,22 @@ func serve(cacm, cs276 *Search, precall *PreCallCalculator) {
 				input, offset+maxSize, corpus, searchType)
 		}
 
-		index.Execute(w, a)
+		templates.ExecuteTemplate(w, "index", a)
 	})
 
 	http.HandleFunc("/stat", func(w http.ResponseWriter, r *http.Request) {
-		statT.Execute(w, stats)
-	})
-
-	http.HandleFunc("/perf", func(w http.ResponseWriter, r *http.Request) {
-		err := perfT.Execute(w, perfs)
+		err := templates.ExecuteTemplate(w, "stat", stats)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 	})
 
-	fs := http.FileServer(http.Dir("graphs"))
-	http.Handle("/graphs/", http.StripPrefix("/graphs/", fs))
+	http.HandleFunc("/perf", func(w http.ResponseWriter, r *http.Request) {
+		err := templates.ExecuteTemplate(w, "perf", perfs)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+	})
 
 	http.HandleFunc("/cacm/", func(w http.ResponseWriter, r *http.Request) {
 		// len("/cacm/") = 5
@@ -169,15 +150,28 @@ func serve(cacm, cs276 *Search, precall *PreCallCalculator) {
 			http.NotFound(w, r)
 			return
 		}
-		cacmT.Execute(w, doc)
-	})
-
-	http.HandleFunc("/percentile", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "templates/percentile.html")
+		err = templates.ExecuteTemplate(w, "cacm", doc)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
 	})
 
 	http.HandleFunc("/precall", func(w http.ResponseWriter, r *http.Request) {
-		precallallT.Execute(w, precall)
+		err := templates.ExecuteTemplate(w, "precall", precall)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+	})
+
+	// Static content
+	fs := http.FileServer(http.Dir("graphs"))
+	http.Handle("/graphs/", http.StripPrefix("/graphs/", fs))
+
+	http.HandleFunc("/percentile", func(w http.ResponseWriter, r *http.Request) {
+		err := templates.ExecuteTemplate(w, "percentile", nil)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
 	})
 
 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {

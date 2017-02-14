@@ -1,3 +1,4 @@
+{{ define "cacm" }}
 <!DOCTYPE html>
 <html>
 	<head>
@@ -21,13 +22,7 @@
 	</head>
 
 	<body>
-		<div style="background:rgb(10, 174, 194);padding:4px 10px">
-			<a href="/">RIW</a> |
-			<a href="/stat">stats</a> |
-			<a href="/percentile">percentile</a> |
-			<a href="/perf">performances</a> |
-			<a href="/precall">precision/recall</a>
-		</div>
+		{{ template "topbar" }}
 		<h2>{{ .T }}</h2>
 		<p>{{ .W }}</p>
 		<h3>Authors</h3>
@@ -38,3 +33,4 @@
 		<p>{{ .K }}</h3>
 	</body>
 </html>
+{{ end }}

@@ -1,3 +1,4 @@
+{{ define "precall" }}
 <!DOCTYPE html>
 <html>
 	<head>
@@ -20,16 +21,8 @@
 		h1,h2,h3{line-height:1.2}
 		</style>
 	</head>
-
 	<body>
-		<div style="background:rgb(10, 174, 194);padding:4px 10px">
-			<a href="/">RIW</a> |
-			<a href="/stat">stats</a> |
-			<a href="/percentile">percentile</a> |
-			<a href="/perf">performances</a> |
-			<a href="/precall">precision/recall</a>
-		</div>
-
+		{{ template "topbar" }}
 		<h3> Graphes de précision/rappel </h3>
 
 		<div>
@@ -79,3 +72,4 @@
 		</script>
 	</body>
 </html>
+{{ end }}

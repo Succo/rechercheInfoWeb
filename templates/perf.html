@@ -1,3 +1,4 @@
+{{ define "perf" }}
 <!DOCTYPE html>
 <html>
 	<head>
@@ -22,14 +23,7 @@
 	</head>
 
 	<body>
-		<div style="background:rgb(10, 174, 194);padding:4px 10px">
-			<a href="/">RIW</a> |
-			<a href="/stat">stats</a> |
-			<a href="/percentile">percentile</a> |
-			<a href="/perf">performances</a> |
-			<a href="/precall">precision/recall</a>
-		</div>
-
+		{{ template "topbar" }}
 		<h3> Temps pris pour la construction de l'index. </h3>
 		<ul>
 			<li>Parsing: découpage des documents en tokens</li>
@@ -121,3 +115,4 @@
 
 	</body>
 </html>
+{{ end }}

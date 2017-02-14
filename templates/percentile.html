@@ -1,3 +1,4 @@
+{{ define "percentile" }}
 <!DOCTYPE html>
 <html>
 	<head>
@@ -22,18 +23,11 @@
 	</head>
 
 	<body>
-		<div style="background:rgb(10, 174, 194);padding:4px 10px">
-			<a href="/">RIW</a> |
-			<a href="/stat">stats</a> |
-			<a href="/percentile">percentile</a> |
-			<a href="/perf">performances</a> |
-			<a href="/precall">precision/recall</a>
-		</div>
+		{{ template "topbar" }}
 		<iframe width="800px" scrolling="no"
 			src="https://p.datadoghq.com/sb/4af0e3f08-15deb57dbb"
 			style="position: absolute; height: 100%; border: none; overflow: hidden;">
 		</iframe>
 	</body>
 </html>
-
-
+{{ end }}
