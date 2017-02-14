@@ -45,18 +45,21 @@ func main() {
 
 	go buildCACM(c, cw)
 	go buildCS276(c, cw)
-	var cacm *Search
-	var cs276 *Search
+	var cacm, cs276 *Search
+	var precall *PreCallCalculator
 	var s *Search
 	for i := 0; i < 2; i++ {
 		s = <-c
 		if s.Corpus == "cacm" {
 			cacm = s
+			precall = NewPreCallCalculator()
+			precall.Populate("data/CACM/query.text", "data/CACM/qrels.text")
+			precall.Draw(cacm)
 		} else {
 			cs276 = s
 		}
 	}
-	serve(cacm, cs276)
+	serve(cacm, cs276, precall)
 }
 
 // draw generates heaps law graph
@@ -116,9 +119,6 @@ func buildCACM(c chan *Search, cw map[string]bool) {
 		cacm = UnserializeSearch("cacm")
 		cacm.toUrl = cacmToUrl
 	}
-	precall := NewPreCallCalculator(cacm)
-	precall.Populate("data/CACM/query.text", "data/CACM/qrels.text")
-	precall.Draw()
 	c <- cacm
 }
 

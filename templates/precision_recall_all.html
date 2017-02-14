@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon"/>
+		<title> RIW </title>
+		<style type="text/css">
+		body{
+			margin:40px auto;
+			max-width:800px;
+			line-height:1.6;
+			font-size:18px;
+			padding:0 10px}
+		a:link{
+			color:#000;
+			text-decoration:none}
+		a:visited{color:#000}
+		td{text-align:center}
+		h1,h2,h3{line-height:1.2}
+		</style>
+	</head>
+
+	<body>
+		<div style="background:rgb(10, 174, 194);padding:4px 10px">
+			<a href="/">RIW</a> |
+			<a href="/stat">stats</a> |
+			<a href="/percentile">percentile</a> |
+			<a href="/perf">performances</a>
+		</div>
+
+		<h3> Graphes de précision/rappel pour toutes les query valides <h3>
+
+		<div>
+			{{ range . }}
+					<img class="slides" src="graphs/precision_recall/{{ . }}.svg" style="width:100%">
+			{{ end }}
+
+			<a onclick="plusDivs(-1)">&#10094;</a>
+			<a onclick="plusDivs(1)">&#10095;</a>
+		</div>
+
+		<script type="text/javascript">
+			var slideIndex = 1;
+			showDivs(slideIndex);
+
+			function plusDivs(n) {
+				showDivs(slideIndex += n);
+			}
+
+			function showDivs(n) {
+				var i;
+				var x = document.getElementsByClassName("slides");
+				if (n > x.length) {slideIndex = 1}
+				if (n < 1) {slideIndex = x.length}
+				for (i = 0; i < x.length; i++) {
+					x[i].style.display = "none";
+				}
+				x[slideIndex-1].style.display = "block";
+			}
+		</script>
+	</body>
+</html>

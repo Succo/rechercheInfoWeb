@@ -22,11 +22,12 @@ type PreCallCalculator struct {
 	queries []string
 	// answer is a list list fo valid doc ID for each query
 	answer [][]int
-	s      *Search
+	// list of valid graphs (i.e not empty)
+	valids []int
 }
 
-func NewPreCallCalculator(s *Search) *PreCallCalculator {
-	return &PreCallCalculator{s: s}
+func NewPreCallCalculator() *PreCallCalculator {
+	return &PreCallCalculator{}
 }
 
 // Populate adds all the needed values to tue queries and answer list
@@ -84,7 +85,7 @@ func (p *PreCallCalculator) Populate(query string, answer string) {
 }
 
 // Draw generates the precision/recall graph
-func (p *PreCallCalculator) Draw() {
+func (p *PreCallCalculator) Draw(cacm *Search) {
 	dir := path.Join(graphs, "precision_recall")
 	if _, err := os.Stat(dir); err == nil {
 		// the file exist, whe assume it's the plot
@@ -104,6 +105,11 @@ func (p *PreCallCalculator) Draw() {
 		panic(err)
 	}
 
+	valids := make([]int, len(p.queries))
+	// small hack, valids[i] == i if the graph for query i is valid
+	// array are initialised with 0, so valids[0] mist be != 0
+	valids[0] = -1
+
 	for i := range p.queries {
 		go func(i int) {
 			file := path.Join(dir, strconv.Itoa(i)+".svg")
@@ -120,7 +126,7 @@ func (p *PreCallCalculator) Draw() {
 			var useful bool
 			// iterate over all weight function in parrallel
 			for wf := range weightName {
-				refs := VectorQuery(p.s, p.queries[i], weight(wf))
+				refs := VectorQuery(cacm, p.queries[i], weight(wf))
 
 				// Number of effectively valid answer
 				var effective int
@@ -158,6 +164,7 @@ func (p *PreCallCalculator) Draw() {
 			if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, file); err != nil {
 				panic(err)
 			}
+			valids[i] = i
 			sem <- true
 		}(i)
 	}
@@ -165,6 +172,11 @@ func (p *PreCallCalculator) Draw() {
 	// Wait for all graphs to be generated
 	for i := 0; i < len(p.queries); i++ {
 		<-sem
+	}
+	for i, val := range valids {
+		if i == val {
+			p.valids = append(p.valids, val)
+		}
 	}
 
 	// Generate and save the graph

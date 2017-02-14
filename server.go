@@ -36,7 +36,7 @@ func printDuration(dur time.Duration) string {
 	return ((dur / time.Millisecond) * time.Millisecond).String()
 }
 
-func serve(cacm, cs276 *Search) {
+func serve(cacm, cs276 *Search, precall *PreCallCalculator) {
 	prettyfier := template.FuncMap{
 		"duration": printDuration,
 		"size":     humanize.Bytes,
@@ -65,6 +65,11 @@ func serve(cacm, cs276 *Search) {
 	}
 
 	cacmT, err := template.ParseFiles("templates/cacm.html")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	precallallT, err := template.ParseFiles("templates/precision_recall_all.html")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -169,6 +174,10 @@ func serve(cacm, cs276 *Search) {
 
 	http.HandleFunc("/percentile", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "templates/percentile.html")
+	})
+
+	http.HandleFunc("/precall", func(w http.ResponseWriter, r *http.Request) {
+		precallallT.Execute(w, precall.valids)
 	})
 
 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
