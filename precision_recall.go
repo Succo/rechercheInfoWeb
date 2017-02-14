@@ -90,7 +90,7 @@ func (p *PreCallCalculator) Populate(query string, answer string) {
 func (p *PreCallCalculator) Draw(cacm *Search) {
 	dir := path.Join(graphs, "precision_recall")
 	if _, err := os.Stat(dir); err != nil {
-		//the dorectory isn't there, generating one
+		//the directory isn't there, generating one
 		os.Mkdir(dir, 0777)
 	}
 
@@ -163,11 +163,8 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 			}
 			valids[i] = i
 
-			if _, err := os.Stat(file); err != nil {
-				// the file isn't present, save the plot
-				if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, file); err != nil {
-					panic(err)
-				}
+			if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, file); err != nil {
+				panic(err)
 			}
 			sem <- true
 		}(i)

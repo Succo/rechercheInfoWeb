@@ -13,7 +13,7 @@ import (
 	"github.com/gonum/plot/vg"
 )
 
-var buildIndex bool
+var buildIndex, buildPrecall bool
 
 const (
 	graphs         = "graphs"
@@ -23,7 +23,8 @@ const (
 )
 
 func init() {
-	flag.BoolVar(&buildIndex, "index", false, "-index=true to build index from scratch")
+	flag.BoolVar(&buildIndex, "index", false, "-index to build index from scratch")
+	flag.BoolVar(&buildPrecall, "precall", false, "-precall to rebuild precision/recall data")
 }
 
 func main() {
@@ -52,7 +53,7 @@ func main() {
 		s = <-c
 		if s.Corpus == "cacm" {
 			cacm = s
-			if buildIndex {
+			if buildPrecall {
 				precall = NewPreCallCalculator()
 				precall.Populate("data/CACM/query.text", "data/CACM/qrels.text")
 				precall.Draw(cacm)
