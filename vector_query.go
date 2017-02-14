@@ -5,58 +5,65 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/gonum/floats"
 	"github.com/surgebase/porter2"
 )
 
-// Rules by which words are splitted
+// splitter is a rules by which words are splitted
 // Basically only keep letters and number
 func splitter(c rune) bool {
 	return !unicode.IsLetter(c) && !unicode.IsNumber(c)
 }
 
-// mergeWithTfIdf calculate the intersection of two list of refs
-// It updates the tfidf score in each item
-func mergeWithTfIdf(refs1, refs2 []Ref) []Ref {
-	intersection := make([]Ref, 0, len(refs1))
+// mergeWithTfIdf calculate the merge of a sorted list of documents
+// calculating the norm in the sametime
+func mergeWithTfIdf(documents [][]Ref, wf weight) []Ref {
+	merge := make([]Ref, 0, len(documents[0]))
+	// Temporaty slice to store result
+	temps := make([]float64, 0, len(documents))
+	var min int
 	for {
-		if len(refs1) == 0 {
-			intersection = append(intersection, refs2...)
+		temps = temps[:0]
+		// Find the lowest Id
+		min = -1
+		for _, refs := range documents {
+			if len(refs) > 0 {
+				if min == -1 || refs[0].Id < min {
+					min = refs[0].Id
+				}
+			}
+		}
+		// No document anymore
+		if min == -1 {
 			break
 		}
-		if len(refs2) == 0 {
-			intersection = append(intersection, refs1...)
-			break
+		for i, refs := range documents {
+			if len(refs) != 0 && refs[0].Id == min {
+				temps = append(temps, refs[0].Weights[wf])
+				documents[i] = refs[1:]
+			}
 		}
-
-		if refs1[0].Id == refs2[0].Id {
-			ref := refs1[0]
-			ref.Weights = zip(ref.Weights, refs2[0].Weights)
-			intersection = append(intersection, ref)
-			refs1 = refs1[1:]
-			refs2 = refs2[1:]
-		} else if refs1[0].Id < refs2[0].Id {
-			intersection = append(intersection, refs1[0])
-			refs1 = refs1[1:]
-		} else {
-			intersection = append(intersection, refs2[0])
-			refs2 = refs2[1:]
+		ref := Ref{
+			Id: min,
 		}
+		ref.Weights[wf] = floats.Sum(temps) / floats.Norm(temps, 2)
+		merge = append(merge, ref)
 	}
-	return intersection
+	return merge
 }
 
 // VectorQuery effects a vector query on a search object
 func VectorQuery(s *Search, input string, wf weight) []Ref {
 	words := strings.FieldsFunc(input, splitter)
-	var results []Ref
-	for _, w := range words {
+	documents := make([][]Ref, len(words))
+	for i, w := range words {
 		if s.CW[w] {
 			continue
 		}
 		w = porter2.Stem(w)
-		refs := s.Index.get([]byte(w))
-		results = mergeWithTfIdf(results, refs)
+		documents[i] = s.Index.get([]byte(w))
 	}
+	results := mergeWithTfIdf(documents, wf)
 	if wf == raw {
 		sort.Sort(rawList(results))
 	} else if wf == norm {
