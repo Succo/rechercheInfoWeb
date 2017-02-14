@@ -86,8 +86,18 @@ func BooleanQuery(s *Search, input string) []Ref {
 			if i >= len(words)-2 {
 				return results
 			}
-			word1 := porter2.Stem(words[i])
-			word2 := porter2.Stem(words[i+2])
+
+			var word1, word2 string
+			if len(words[i]) > 3 {
+				word1 = porter2.Stem(words[i])
+			} else {
+				word1 = words[i]
+			}
+			if len(words[i+2]) > 3 {
+				word2 = porter2.Stem(words[i+2])
+			} else {
+				word2 = words[i+2]
+			}
 			refs1 := s.Index.get([]byte(word1))
 			refs2 := s.Index.get([]byte(word2))
 			res := union(refs1, refs2)
@@ -101,12 +111,22 @@ func BooleanQuery(s *Search, input string) []Ref {
 			if i == len(words)-1 {
 				return results
 			}
-			word := porter2.Stem(words[i+1])
+			var word string
+			if len(words[i+1]) > 3 {
+				word = porter2.Stem(words[i+1])
+			} else {
+				word = words[i+1]
+			}
 			not := s.Index.get([]byte(word))
 			results = remove(results, not)
 			i++
 		default:
-			word := porter2.Stem(words[i])
+			var word string
+			if len(words[i]) > 3 {
+				word = porter2.Stem(words[i])
+			} else {
+				word = words[i]
+			}
 			refs := s.Index.get([]byte(word))
 			if i == 0 {
 				results = refs

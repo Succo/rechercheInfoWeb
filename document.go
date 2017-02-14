@@ -65,7 +65,9 @@ func newDocument() *Document {
 
 // addWord add a word to the model, for now freqs are only stored as count actually
 func (d *Document) addWord(w string) {
-	w = porter2.Stem(w)
+	if len(w) > 3 {
+		w = porter2.Stem(w)
+	}
 	d.Count[w]++
 	d.Size += 1
 }
