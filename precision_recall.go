@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gonum/plot"
@@ -117,12 +118,14 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 
 	valids := make([]int, len(p.Queries))
 	// small hack, valids[i] == i if the graph for query i is valid
-	// array are initialised with 0, so valids[0] mist be != 0
+	// array are initialised with 0, so valids[0] must be != 0
 	valids[0] = -1
 
 	// Store the average for all valid queries
 	var Average [total][approx]float64
+	// To get average we also count the total number of valid queries for each weight function
 	var Size [total]int
+	var mu sync.Mutex
 
 	for i := range p.Queries {
 		go func(i int) {
@@ -143,7 +146,10 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 				for count, ref := range refs {
 					if contains(p.Answer[i], ref.Id) {
 						effective++
-						pts = append(pts, Point{float64(effective) / valid, float64(effective) / float64(count+1)})
+						// Adds a point with X = recall, Y = precision
+						pts = append(pts,
+							Point{float64(effective) / valid,
+								float64(effective) / float64(count+1)})
 					}
 				}
 				if len(pts) < 2 {
@@ -163,10 +169,13 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 				wn := weightName[wf]
 				plt.Legend.Add(wn, line)
 
+				interpolated := getLinearInterpolation(pts)
+				mu.Lock()
 				for index := 0; index < approx; index++ {
-					Average[wf][index] += getApproxValue(pts, index)
+					Average[wf][index] += interpolated[index]
 				}
 				Size[wf] += 1
+				mu.Unlock()
 
 			}
 			if !useful {
@@ -281,30 +290,28 @@ func contains(haystack []int, needle int) bool {
 	return false
 }
 
-// getApproxValue returns the approximate value in index/approx
-// for the function having pts as its value
-// It uses liners approximation, pts should have at least 2 points
-func getApproxValue(pts plotter.XYs, index int) float64 {
-	x := float64(index) / float64(approx)
-	pos := -1
-	// Get the last point smaller that x
-	for i, pt := range pts {
-		if pt.X > x {
-			pos = i
-			break
+// getLinearInterpolation returns the value approximation the points in pts
+// using linear interpolation
+func getLinearInterpolation(pts plotter.XYs) [approx]float64 {
+	var res [approx]float64
+	// The two points we are using to interpolate
+	p1, p2 := 0, 1
+	a, b := interpolate(pts[p1], pts[p2])
+	for i := 0; i < approx; i++ {
+		x := float64(i) / float64(approx)
+		for p2 != (len(pts)-1) && pts[p2].X < x {
+			p1, p2 = p1+1, p2+1
+			// We might interpolate more than once
+			// but that seems unlikely
+			a, b = interpolate(pts[p1], pts[p2])
 		}
+		res[i] = a*x + b
 	}
-	// get two points for linear interpolation
-	var p1, p2 Point
-	if pos == -1 || pos == len(pts)-1 {
-		// take the two last point as x > pt.x for all pt in pts
-		p1 = pts[len(pts)-2]
-		p2 = pts[len(pts)-1]
-	} else {
-		p1 = pts[pos]
-		p2 = pts[pos+1]
-	}
-	a := (p1.Y - p2.Y) / (p1.X - p2.X)
-	b := p1.Y - a*p1.X
-	return a*x + b
+	return res
+}
+
+func interpolate(p1, p2 Point) (a, b float64) {
+	a = (p1.Y - p2.Y) / (p1.X - p2.X)
+	b = p1.Y - a*p1.X
+	return a, b
 }
