@@ -6,8 +6,10 @@
 		{{ template "topbar" }}
 		<h2>Graphe moyenné pour CACM</h2>
 		<img src="graphs/precision_recall/avg.svg" style="width:100%">
-			<p> La moyenne est faite à rappel constant, sur l'ensmble des courbes de 
-			<a href="/qrels">qrels</a>.
+			<p> La moyenne est faite à rappel constant, sur l'ensemble des courbes de 
+			<a href="/qrels">precision rappel</a>.
+			Il convient de noter que comme la méthode utilisé est une interpolation linéaire assez basique,
+			la valeur de la pertinence quand le rappel tends vers 0 est probablement sur estimé.
 		</p>
 	</body>
 </html>
