@@ -127,13 +127,7 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 	for i := range p.Queries {
 		go func(i int) {
 			file := path.Join(dir, strconv.Itoa(i)+".svg")
-			plt, err := plot.New()
-			if err != nil {
-				panic(err)
-			}
-
-			plt.X.Label.Text = "Recall"
-			plt.Y.Label.Text = "Precision"
+			plt := getPlot()
 
 			// A boolean to check that line are added to the plot
 			// don't draw uselate plot
@@ -149,9 +143,7 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 				for count, ref := range refs {
 					if contains(p.Answer[i], ref.Id) {
 						effective++
-						recall := float64(effective) / valid
-						precision := float64(effective) / float64(count+1)
-						pts = append(pts, Point{recall, precision})
+						pts = append(pts, Point{float64(effective) / valid, float64(effective) / float64(count+1)})
 					}
 				}
 				if len(pts) < 2 {
@@ -213,13 +205,8 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 	}
 	// Graph for the averages
 	file := path.Join(dir, "avg.svg")
-	plt, err := plot.New()
-	if err != nil {
-		panic(err)
-	}
+	plt := getPlot()
 
-	plt.X.Label.Text = "Recall"
-	plt.Y.Label.Text = "Precision"
 	step := 1 / float64(approx)
 	var pos float64
 	for wf := 0; wf < total; wf++ {
@@ -272,6 +259,16 @@ func UnserializePreCallCalculator() *PreCallCalculator {
 	defer precall.Close()
 	en := gob.NewDecoder(precall)
 	err = en.Decode(&p)
+	return p
+}
+
+func getPlot() *plot.Plot {
+	p, err := plot.New()
+	if err != nil {
+		panic(err)
+	}
+	p.X.Label.Text = "Recall"
+	p.Y.Label.Text = "Precision"
 	return p
 }
 
