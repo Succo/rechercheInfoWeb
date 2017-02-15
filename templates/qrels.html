@@ -1,41 +1,24 @@
 {{ define "qrels" }}
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon"/>
-		<title> RIW </title>
-		<style type="text/css">
-		body{
-			margin:40px auto;
-			max-width:800px;
-			line-height:1.6;
-			font-size:18px;
-			padding:0 10px}
-		a:link{
-			color:#000;
-			text-decoration:none}
-		a:visited{color:#000}
-		td{text-align:center}
-		h1,h2,h3{line-height:1.2}
-		</style>
-	</head>
+	{{ template "header" }}
 	<body>
 		{{ template "topbar" }}
 		<h3> Graphes de précision/rappel </h3>
 
 		<div>
 			<div style="display:flex;justify-content:space-between;align-items:center">
-			<input type="button" onclick="plus(-1)" value="&#10094;" style="height:30px;margin-right:10px;">
+			<input type="button" onclick="plus(-1)" value="&#10094;" 
+				style="height:30px;margin-right:10px;">
 			{{ range .Queries }}
 				<p class="query">{{ . }}</p>
 			{{ end }}
-			<input type="button" onclick="plus(1)" value="&#10095;" style="height:30px">
+			<input type="button" onclick="plus(1)" value="&#10095;" 
+				style="height:30px;margin-left:10px;">
 			</div>
 
 			{{ range .Valids }}
-				<img class="slides" src="graphs/precision_recall/{{ . }}.svg" style="width:100%;margin-left:10px;">
+				<img class="slides" src="graphs/precision_recall/{{ . }}.svg" style="width:100%;">
 			{{ end }}
 
 		</div>
