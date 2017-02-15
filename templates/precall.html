@@ -1,0 +1,14 @@
+{{ define "precall" }}
+<!DOCTYPE html>
+<html>
+	{{ template "header" }}
+	<body>
+		{{ template "topbar" }}
+		<h2>Graphe moyenné pour CACM</h2>
+		<img src="graphs/precision_recall/avg.svg" style="width:100%">
+			<p> La moyenne est faite à rappel constant, sur l'ensmble des courbes de 
+			<a href="/qrels">qrels</a>.
+		</p>
+	</body>
+</html>
+{{ end }}
