@@ -1,7 +1,12 @@
+#!/bin/bash
+
 go install
-rsync -avz --progress indexes fabrice@succo.fr:riw/
-rsync -avz --progress templates fabrice@succo.fr:riw/
-rsync -avz --progress graphs fabrice@succo.fr:riw/
+if [ "$1" == "lite" ]
+	then
+		rsync -avz --progress . fabrice@succo.fr:riw/ --exclude ".git" --exclude "data" --exclude "indexes" 
+	else 
+		rsync -avz --progress . fabrice@succo.fr:riw/ --exclude ".git" --exclude "data"
+fi
 # A bit wonky
-rsync $GOPATH/bin/rechercheInfoWeb fabrice@succo.fr:
+rsync -avz --progress $GOPATH/bin/rechercheInfoWeb fabrice@succo.fr:
 echo "Restart the process to finalise the deploy"
