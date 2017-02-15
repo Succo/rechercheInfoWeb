@@ -27,6 +27,11 @@ type PreCallCalculator struct {
 	Valids []int
 }
 
+// Point is a value in a precision/recall graph
+type Point struct {
+	X, Y float64
+}
+
 // NewPreCallCalculator returns an empty PreCallCalculator
 func NewPreCallCalculator() *PreCallCalculator {
 	return &PreCallCalculator{}
@@ -137,7 +142,7 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 						effective++
 						recall := float64(effective) / valid
 						precision := float64(effective) / float64(count+1)
-						pts = append(pts, struct{ X, Y float64 }{recall, precision})
+						pts = append(pts, Point{recall, precision})
 					}
 				}
 				if len(pts) < 2 {
@@ -156,6 +161,7 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 				plt.Add(line)
 				wn := weightName[wf]
 				plt.Legend.Add(wn, line)
+
 			}
 			if !useful {
 				sem <- true
