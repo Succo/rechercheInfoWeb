@@ -13,6 +13,7 @@ const (
 	raw weight = iota
 	norm
 	half
+	total int = iota // serves as a counter
 )
 
 // weightName can be used to iterate over the differentes weightFun
@@ -24,7 +25,7 @@ var weightName = [...]string{
 }
 
 // weight is a fixed size array where the different tfidif for one term values can be stored
-type weights [3]float64
+type weights [total]float64
 
 func zip(w1, w2 weights) (w weights) {
 	w[raw] = w1[raw] + w2[raw]

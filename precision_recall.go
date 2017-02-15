@@ -25,6 +25,8 @@ type PreCallCalculator struct {
 	Answer [][]int
 	// Valid is a list of valid graphs (i.e not empty)
 	Valids []int
+	// Average stores the average of all graphs
+	Average [][]float64
 }
 
 // Point is a value in a precision/recall graph
@@ -130,7 +132,7 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 			// don't draw uselate plot
 			var useful bool
 			// iterate over all weight function in parrallel
-			for wf := range weightName {
+			for wf := 0; wf < total; wf++ {
 				refs := VectorQuery(cacm, p.Queries[i], weight(wf))
 
 				// Number of effectively valid answer
