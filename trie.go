@@ -27,12 +27,7 @@ type Node struct {
 }
 
 func NewTrie() *Root {
-	// We fix the slice capacity to avoid further allocation
 	return &Root{Node: &Node{}}
-}
-
-func emptyNode() *Node {
-	return &Node{}
 }
 
 // add the weights and id to w
@@ -75,7 +70,11 @@ func (r *Root) add(w []byte, id uint, tfidf weights) {
 			cur = new
 		} else {
 			// No son share a common prefix
-			cur.Sons = append(cur.Sons, emptyNode())
+			new := &Node{
+				Deltas: []uint{id},
+				TfIdfs: []weights{tfidf},
+			}
+			cur.Sons = append(cur.Sons, new)
 			cur.Radix = append(cur.Radix, w[shared:])
 			// bring the new node to it's place
 			for j := len(cur.Radix) - 1; j > 0 &&
@@ -115,10 +114,8 @@ func (r *Root) get(w []byte) []Ref {
 
 // buildRed builds a Ref slice from a start and end position
 func (r *Root) buildRef(deltas []uint, tfidfs []weights) []Ref {
-	var counter int
 	refs := make([]Ref, len(deltas))
 	for i, del := range deltas {
-		counter += int(del)
 		refs[i] = Ref{
 			Id:      int(del),
 			Weights: tfidfs[i],

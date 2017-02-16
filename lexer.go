@@ -49,21 +49,18 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 
 	// Number of document
 	var count uint
-	// Total number of document/word pairs
-	var pairs int
 	// index stored in a prefix trie
 	trie := NewTrie()
 
 	// The main loop process doc ID and passes document to the second goroutine
 	for doc := range c {
-		go func(doc *Document) {
-			search.AddDocMetaData(doc)
+		go func(doc *Document, count uint) {
 			for w, score := range doc.Scores {
 				trie.add([]byte(w), count, score)
-				pairs++
 			}
-			count++
-		}(doc)
+		}(doc, count)
+		search.AddDocMetaData(doc)
+		count++
 	}
 	search.Size = int(count)
 	// potentially, the index is not finished so time is innacurate
