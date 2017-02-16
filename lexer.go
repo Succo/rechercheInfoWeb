@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"strings"
 	"time"
 )
@@ -47,79 +46,39 @@ func ParseCS276(root string, cw map[string]bool) *Search {
 
 func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 	now := time.Now()
-	// Temporary storage for document id using delta
-	deltas := make(map[string][]uint)
-	// Temporary storage for the multiples weight
-	tfidfs := make(map[string][]weights)
 
 	// Number of document
 	var count uint
 	// Total number of document/word pairs
 	var pairs int
-	// Document coming from the first channel will go there to be processed
-	meta := make(chan *Document, 100)
-	// synchronisation channel
-	sem := make(chan bool, 1)
-
-	// This goroutine gets document from main and process metadata and scores
-	go func() {
-		for doc := range meta {
-			search.AddDocMetaData(doc)
-			for w, score := range doc.Scores {
-				tfidfs[w] = append(tfidfs[w], score)
-			}
-		}
-		sem <- true
-	}()
+	// index stored in a prefix trie
+	trie := NewTrie()
 
 	// The main loop process doc ID and passes document to the second goroutine
 	for doc := range c {
-		meta <- doc
-		for w := range doc.Scores {
-			d, found := deltas[w]
-			if !found {
-				// The first element is actually a counter
-				deltas[w] = []uint{count, count}
-			} else {
-				delta := count - d[0]
-				d[0] = count
-				deltas[w] = append(d, delta)
+		go func(doc *Document) {
+			search.AddDocMetaData(doc)
+			for w, score := range doc.Scores {
+				trie.add([]byte(w), count, score)
+				pairs++
 			}
-			pairs++
-		}
-		count++
+			count++
+		}(doc)
 	}
-	close(meta)
 	search.Size = int(count)
-	// wait for other goroutine
-	<-sem
+	// potentially, the index is not finished so time is innacurate
+	// the mutex protects from incorrect read though
 	search.Perf.Parsing = time.Since(now)
 	log.Printf("%s parsed in  %s \n", search.Corpus, time.Since(now).String())
 
 	now = time.Now()
 	// Now that all documents are known, we can fully calculate tf-idf
-	calculateIDF(tfidfs, count)
+	trie.calculateIDF(count)
 	search.Perf.IDF = time.Since(now)
 	log.Printf("%s IDF calculated in  %s \n", search.Corpus, time.Since(now).String())
 
-	// Then we build the *real* index using a prefix tree
-	now = time.Now()
-	trie := trieFromIndex(deltas, tfidfs, pairs)
-	search.Perf.Indexing = time.Since(now)
-	log.Printf("%s index built in  %s \n", search.Corpus, time.Since(now).String())
 	search.Index = trie
 	search.Stat = getStat(search)
 	search.Perf.Name = search.Corpus
 	return search
-}
-
-func calculateIDF(tfidfs map[string][]weights, size uint) {
-	factor := float64(size)
-	for w, tfs := range tfidfs {
-		idf := math.Log(factor / float64(len(tfs)))
-		for i, tf := range tfs {
-			tfs[i] = scale(tf, idf)
-		}
-		tfidfs[w] = tfs
-	}
 }
