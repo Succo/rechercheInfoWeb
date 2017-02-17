@@ -23,24 +23,34 @@ func cs276ToUrl(id int, title string) string {
 
 // ParseCACM creates a cacm scanner, a search struct and connects them
 func ParseCACM(r io.Reader, cw map[string]bool) *Search {
-	cacm := NewCACMScanner(r, cw)
+	// index stored in a prefix trie
+	trie := NewTrie()
+	cacm := NewCACMScanner(r, cw, trie)
 
 	c := make(chan *Document)
 	go cacm.Scan(c)
+
 	search := emptySearch("cacm", cw)
 	search.toUrl = cacmToUrl
 	search.Perf = newCACMPerf()
+	search.Index = trie
 	return buildSearchFromScanner(search, c)
 }
 
 // ParseCS276 creates a parser struct from the root folder of cs216 data
 func ParseCS276(root string, cw map[string]bool) *Search {
-	cs276 := NewCS276Scanner(root)
+	// index stored in a prefix trie
+	trie := NewTrie()
+	cs276 := NewCS276Scanner(root, trie)
+	// chan for processed documents
+	// metadata are handled in the main thread
 	c := make(chan *Document, 100)
 	go cs276.Scan(c)
+
 	search := emptySearch("cs276", cw)
 	search.toUrl = cs276ToUrl
 	search.Perf = newCS276Perf()
+	search.Index = trie
 	return buildSearchFromScanner(search, c)
 }
 
@@ -49,16 +59,9 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 
 	// Number of document
 	var count uint
-	// index stored in a prefix trie
-	trie := NewTrie()
 
 	// The main loop process doc ID and passes document to the second goroutine
 	for doc := range c {
-		go func(doc *Document, count uint) {
-			for w, score := range doc.Scores {
-				trie.add([]byte(w), count, score)
-			}
-		}(doc, count)
 		search.AddDocMetaData(doc)
 		count++
 	}
@@ -70,11 +73,10 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 
 	now = time.Now()
 	// Now that all documents are known, we can fully calculate tf-idf
-	trie.calculateIDF(count)
+	search.Index.calculateIDF(count)
 	search.Perf.IDF = time.Since(now)
 	log.Printf("%s IDF calculated in  %s \n", search.Corpus, time.Since(now).String())
 
-	search.Index = trie
 	search.Stat = getStat(search)
 	search.Perf.Name = search.Corpus
 	return search

@@ -12,7 +12,9 @@ import (
 // Root is the root of the prefix tree
 // Refs is a list of all references, nodes store pointer to it
 type Root struct {
-	Node *Node
+	Node  *Node
+	mu    sync.Mutex
+	count uint
 }
 
 // Node implements a node of the tree
@@ -28,6 +30,16 @@ type Node struct {
 
 func NewTrie() *Root {
 	return &Root{Node: &Node{}}
+}
+
+func (r *Root) addDoc(doc *Document) {
+	r.mu.Lock()
+	count := r.count
+	r.count++
+	r.mu.Unlock()
+	for w, score := range doc.Scores {
+		r.add([]byte(w), count, score)
+	}
 }
 
 // add the weights and id to w
