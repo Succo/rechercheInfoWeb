@@ -9,18 +9,12 @@ import (
 	"os"
 	"path"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/gonum/plot"
 	"github.com/gonum/plot/plotter"
 	"github.com/gonum/plot/vg"
 	colorful "github.com/lucasb-eyer/go-colorful"
-)
-
-const (
-	// The number of point used in the averaged graph
-	approx int = 128
 )
 
 // PreCallCalculator is the struct that caluclate Precision and Recall from queries and answer
@@ -121,11 +115,12 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 	// array are initialised with 0, so valids[0] must be != 0
 	valids[0] = -1
 
-	// Store the average for all valid queries
-	var Average [total][approx]float64
-	// To get average we also count the total number of valid queries for each weight function
-	var Size [total]int
-	var mu sync.Mutex
+	// Store all plots used,
+	// It is used to get averages
+	var Average [total][]*plotter.Function
+	for wf := 0; wf < total; wf++ {
+		Average[wf] = make([]*plotter.Function, len(p.Queries))
+	}
 
 	for i := range p.Queries {
 		go func(i int) {
@@ -157,26 +152,14 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 					continue
 				}
 
-				line, err := plotter.NewLine(pts)
-				if err != nil {
-					panic(err)
-				}
-
+				f := funcFromPoints(pts)
 				useful = true
-				line.Color = colors[wf]
-				line.Width = vg.Points(2)
-				plt.Add(line)
+				f.Color = colors[wf]
+				plt.Add(f)
 				wn := weightName[wf]
-				plt.Legend.Add(wn, line)
+				plt.Legend.Add(wn, f)
 
-				interpolated := getLinearInterpolation(pts)
-				mu.Lock()
-				for index := 0; index < approx; index++ {
-					Average[wf][index] += interpolated[index]
-				}
-				Size[wf] += 1
-				mu.Unlock()
-
+				Average[wf][i] = f
 			}
 			if !useful {
 				sem <- true
@@ -207,34 +190,16 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 	}
 	p.Queries = newQ
 
-	for j := 0; j < total; j++ {
-		for x := 0; x < approx; x++ {
-			Average[j][x] /= float64(count)
-		}
-	}
 	// Graph for the averages
 	file := path.Join(dir, "avg.svg")
 	plt := getPlot()
 
-	step := 1 / float64(approx)
-	var pos float64
 	for wf := 0; wf < total; wf++ {
-		pts := make(plotter.XYs, approx)
-		pos = 0
-		for i := 0; i < approx; i++ {
-			pts[i].Y = Average[wf][i]
-			pts[i].X = pos
-			pos += step
-		}
-		line, err := plotter.NewLine(pts)
-		if err != nil {
-			panic(err)
-		}
-		line.Color = colors[wf]
-		line.Width = vg.Points(2)
-		plt.Add(line)
+		f := averageFunction(Average[wf])
+		f.Color = colors[wf]
+		plt.Add(f)
 		wn := weightName[wf]
-		plt.Legend.Add(wn, line)
+		plt.Legend.Add(wn, f)
 	}
 	if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, file); err != nil {
 		panic(err)
@@ -294,28 +259,42 @@ func contains(haystack []int, needle int) bool {
 	return false
 }
 
-// getLinearInterpolation returns the value approximation the points in pts
-// using linear interpolation
-func getLinearInterpolation(pts plotter.XYs) [approx]float64 {
-	var res [approx]float64
-	// The two points we are using to interpolate
-	p1, p2 := 0, 1
-	a, b := interpolate(pts[p1], pts[p2])
-	for i := 0; i < approx; i++ {
-		x := float64(i) / float64(approx)
-		for p2 != (len(pts)-1) && pts[p2].X < x {
-			p1, p2 = p1+1, p2+1
-			// We might interpolate more than once
-			// but that seems unlikely
-			a, b = interpolate(pts[p1], pts[p2])
+// funcFromPoints generate a function for the plotter interface
+// the function respects precision recall graph logic
+func funcFromPoints(pts plotter.XYs) *plotter.Function {
+	f := plotter.NewFunction(func(x float64) float64 {
+		var max float64
+		for _, pt := range pts {
+			if pt.X > x && pt.Y > max {
+				max = pt.Y
+			}
 		}
-		res[i] = a*x + b
-	}
-	return res
+		return max
+	})
+	f.Width = vg.Points(2)
+	f.Samples = 256
+	return f
 }
 
-func interpolate(p1, p2 Point) (a, b float64) {
-	a = (p1.Y - p2.Y) / (p1.X - p2.X)
-	b = p1.Y - a*p1.X
-	return a, b
+// averageFunction returns a function for the plotter interface
+// the function is the average of all non nil function taken in argument
+func averageFunction(funcs []*plotter.Function) *plotter.Function {
+	var nonNil int
+	for _, f := range funcs {
+		if f != nil {
+			nonNil++
+		}
+	}
+	f := plotter.NewFunction(func(x float64) float64 {
+		var avg float64
+		for _, f := range funcs {
+			if f != nil {
+				avg += f.F(x)
+			}
+		}
+		return avg / float64(nonNil)
+	})
+	f.Width = vg.Points(2)
+	f.Samples = 256
+	return f
 }
