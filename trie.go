@@ -37,11 +37,11 @@ func NewTrie() *Root {
 
 func (r *Root) addDoc(doc *Document) {
 	r.mu.Lock()
-	count := r.count
+	doc.Id = r.count
 	r.count++
 	r.mu.Unlock()
 	for w, score := range doc.Scores {
-		r.add([]byte(w), count, score)
+		r.add([]byte(w), doc.Id, score)
 	}
 }
 

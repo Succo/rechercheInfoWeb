@@ -53,9 +53,8 @@ type Document struct {
 	Size int
 	// Tokens counts the number of token
 	Tokens int
-	// pos is the index of the doc in the file
-	// only relevant for cacm
-	pos int64
+	// Id is the id of the document (unique in the search)
+	Id uint
 }
 
 func newDocument() *Document {

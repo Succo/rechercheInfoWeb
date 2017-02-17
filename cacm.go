@@ -47,7 +47,6 @@ type CACMScanner struct {
 	commonWord map[string]bool
 	doc        *Document
 	id         int
-	pos        int
 	trie       *Root
 }
 
@@ -57,8 +56,7 @@ func NewCACMScanner(r io.Reader, cw map[string]bool, trie *Root) *CACMScanner {
 }
 
 func (s *CACMScanner) read() rune {
-	ch, n, err := s.r.ReadRune()
-	s.pos += n
+	ch, _, err := s.r.ReadRune()
 	if err != nil {
 		return eof
 	}
@@ -67,7 +65,6 @@ func (s *CACMScanner) read() rune {
 
 func (s *CACMScanner) unread() {
 	s.r.UnreadRune()
-	s.pos -= 1
 }
 
 func (s *CACMScanner) peek() rune {
@@ -174,7 +171,6 @@ func (s *CACMScanner) Scan(c chan *Document) {
 				}
 				// Reset the document
 				s.doc = newDocument()
-				s.doc.pos = int64(s.pos)
 				s.title.Reset()
 				s.id++
 			}

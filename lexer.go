@@ -57,15 +57,11 @@ func ParseCS276(root string, cw map[string]bool) *Search {
 func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 	now := time.Now()
 
-	// Number of document
-	var count uint
-
 	// The main loop process doc ID and passes document to the second goroutine
 	for doc := range c {
 		search.AddDocMetaData(doc)
-		count++
 	}
-	search.Size = int(count)
+	search.Size = len(search.Tokens)
 	// potentially, the index is not finished so time is innacurate
 	// the mutex protects from incorrect read though
 	search.Perf.Parsing = time.Since(now)
@@ -73,7 +69,7 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 
 	now = time.Now()
 	// Now that all documents are known, we can fully calculate tf-idf
-	search.Index.calculateIDF(count)
+	search.Index.calculateIDF(uint(search.Size))
 	search.Perf.IDF = time.Since(now)
 	log.Printf("%s IDF calculated in  %s \n", search.Corpus, time.Since(now).String())
 
