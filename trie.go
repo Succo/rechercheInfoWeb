@@ -1,4 +1,7 @@
 // A trie implementation for the index
+// It supports concurrent access using mutex on all nodes
+// So it can be built concurrently by all thread
+// RWMutex should have a low impact once the index is built
 package main
 
 import (

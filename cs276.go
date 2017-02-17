@@ -1,3 +1,9 @@
+// CS276 scanner is the struct that will parse CS276 documents
+// It does so concurrently using multiples goroutine to read document
+// A first goroutine list all files available and send filename though a channel
+// multiples worker (goroutineNumber) read this chan and process documents when available
+// Processed documents are indexed concurrently and sent through a chan for metadata (titles...)
+// This chan also serve to see when processing is finished (by closing it)
 package main
 
 import (
