@@ -278,6 +278,10 @@ func getPlot() *plot.Plot {
 	}
 	p.X.Label.Text = "Recall"
 	p.Y.Label.Text = "Precision"
+	p.X.Min = 0.0
+	p.X.Max = 1.0
+	p.Y.Min = 0.0
+	p.Y.Max = 1.0
 	return p
 }
 
