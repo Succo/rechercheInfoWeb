@@ -40,6 +40,11 @@ func (r *Root) add(w []byte, id uint, tfidf weights) {
 		if shared == len(w) {
 			cur.Deltas = append(cur.Deltas, id)
 			cur.TfIdfs = append(cur.TfIdfs, tfidf)
+			for j := len(cur.Deltas) - 1; j > 0 &&
+				cur.Deltas[j-1] > cur.Deltas[j]; j-- {
+				cur.Deltas[j-1], cur.Deltas[j] = cur.Deltas[j], cur.Deltas[j-1]
+				cur.TfIdfs[j-1], cur.TfIdfs[j] = cur.TfIdfs[j], cur.TfIdfs[j-1]
+			}
 			cur.rw.Unlock()
 			return
 		}
