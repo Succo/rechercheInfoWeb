@@ -10,6 +10,8 @@ import (
 	"math"
 	"os"
 	"sync"
+
+	"github.com/golang/snappy"
 )
 
 // Root is the root of the prefix tree
@@ -171,12 +173,16 @@ func (r *Root) Serialize(name string) {
 		panic(err)
 	}
 	defer index.Close()
-	en := gob.NewEncoder(index)
+	snap := snappy.NewBufferedWriter(index)
+	en := gob.NewEncoder(snap)
 	err = en.Encode(r.Node)
 	if err != nil {
 		panic(err)
 	}
-	index.Sync()
+	err = snap.Close()
+	if err != nil {
+		panic(err.Error())
+	}
 	index.Close()
 }
 
@@ -188,7 +194,8 @@ func UnserializeTrie(name string) *Root {
 		panic(err)
 	}
 	defer index.Close()
-	en := gob.NewDecoder(index)
+	snap := snappy.NewReader(index)
+	en := gob.NewDecoder(snap)
 	err = en.Decode(&r.Node)
 	if err != nil {
 		panic(err)
