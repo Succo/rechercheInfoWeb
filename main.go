@@ -11,6 +11,9 @@ import (
 	"github.com/gonum/plot"
 	"github.com/gonum/plot/plotter"
 	"github.com/gonum/plot/vg"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 var buildIndex, buildPrecall bool
@@ -29,6 +32,9 @@ func init() {
 
 func main() {
 	log.Println("Starting riw server")
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 	flag.Parse()
 	c := make(chan *Search)
 	// Build a set of common words

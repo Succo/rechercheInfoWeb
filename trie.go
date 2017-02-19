@@ -58,8 +58,8 @@ func (r *Root) add(w string, id uint, tfidf weights) {
 	cur := r.Node // node we are exploring
 	shared := 0   // part of w already matched
 	for {
-		cur.rw.Lock()
 		if shared == len(w) {
+			cur.rw.Lock()
 			cur.Deltas = append(cur.Deltas, id)
 			cur.TfIdfs = append(cur.TfIdfs, tfidf)
 			for j := len(cur.Deltas) - 1; j > 0 &&
@@ -70,19 +70,31 @@ func (r *Root) add(w string, id uint, tfidf weights) {
 			cur.rw.Unlock()
 			return
 		}
+	MainInsert:
+		cur.rw.RLock()
 		i := getMatchingNode(cur.Radix, w[shared])
 		if i != -1 {
 			rad := cur.Radix[i]
+			// if cur.Radix is a complete prefix go down the trie
+			if strings.HasPrefix(w[shared:], rad) {
+				shared += len(rad)
+				new := cur.Sons[i]
+				cur.rw.RUnlock()
+				cur = new
+				continue
+			}
+			// Unlock reads, lock write
+			cur.rw.RUnlock()
+			cur.rw.Lock()
+			if rad != cur.Radix[i] {
+				// the node has been updated, restart reading
+				cur.rw.Unlock()
+				goto MainInsert
+			}
 			// the two word share a prefix
 			// calculate it's size
 			size := longestPrefixSize(rad, w, shared)
 			shared += size
-			if size == len(rad) {
-				new := cur.Sons[i]
-				cur.rw.Unlock()
-				cur = new
-				continue
-			}
 			// split the vertice
 			old := cur.Sons[i]
 			new := &Node{
@@ -96,6 +108,14 @@ func (r *Root) add(w string, id uint, tfidf weights) {
 			cur.rw.Unlock()
 			cur = new
 		} else {
+			// Unlock reads, lock write
+			cur.rw.RUnlock()
+			cur.rw.Lock()
+			if getMatchingNode(cur.Radix, w[shared]) != -1 {
+				// the node has been updated, restart reading
+				cur.rw.Unlock()
+				goto MainInsert
+			}
 			// No son share a common prefix
 			new := &Node{
 				Deltas: []uint{id},
