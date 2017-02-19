@@ -5,19 +5,20 @@
 package main
 
 import (
-	"bytes"
 	"encoding/gob"
 	"math"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/golang/snappy"
 )
 
 // Root is the root of the prefix tree
-// Refs is a list of all references, nodes store pointer to it
 type Root struct {
-	Node  *Node
+	Node *Node
+	// The Root of the tree counts the total number of documents
+	// the count is protected by a lock
 	mu    sync.Mutex
 	count uint
 }
@@ -26,9 +27,11 @@ type Root struct {
 type Node struct {
 	// rw is a RWMutex, can be hold by either
 	// 1 writer or many reader
-	rw     sync.RWMutex
-	Sons   []*Node
-	Radix  [][]byte
+	rw sync.RWMutex
+	// Sons and Radix holds information
+	Sons  []*Node
+	Radix []string
+	// Deltas and TfIdfs holds information about the word ending at this node
 	Deltas []uint
 	TfIdfs []weights
 }
@@ -37,18 +40,20 @@ func NewTrie() *Root {
 	return &Root{Node: &Node{}}
 }
 
+// addDoc adds all a document references to the trie
+// It also generates the document ID
 func (r *Root) addDoc(doc *Document) {
 	r.mu.Lock()
 	doc.Id = r.count
 	r.count++
 	r.mu.Unlock()
 	for w, score := range doc.Scores {
-		r.add([]byte(w), doc.Id, score)
+		r.add(string(w), doc.Id, score)
 	}
 }
 
 // add the weights and id to w
-func (r *Root) add(w []byte, id uint, tfidf weights) {
+func (r *Root) add(w string, id uint, tfidf weights) {
 	// descends the tree to find the proper leaf
 	cur := r.Node // node we are exploring
 	shared := 0   // part of w already matched
@@ -82,7 +87,7 @@ func (r *Root) add(w []byte, id uint, tfidf weights) {
 			old := cur.Sons[i]
 			new := &Node{
 				Sons:  []*Node{old},
-				Radix: [][]byte{rad[size:]},
+				Radix: []string{rad[size:]},
 			}
 			// insert the new node in place
 			cur.Radix[i] = rad[:size]
@@ -100,7 +105,7 @@ func (r *Root) add(w []byte, id uint, tfidf weights) {
 			cur.Radix = append(cur.Radix, w[shared:])
 			// bring the new node to it's place
 			for j := len(cur.Radix) - 1; j > 0 &&
-				bytes.Compare(cur.Radix[j-1], cur.Radix[j]) > 0; j-- {
+				strings.Compare(cur.Radix[j-1], cur.Radix[j]) > 0; j-- {
 				cur.Radix[j-1], cur.Radix[j] = cur.Radix[j], cur.Radix[j-1]
 				cur.Sons[j-1], cur.Sons[j] = cur.Sons[j], cur.Sons[j-1]
 			}
@@ -111,7 +116,7 @@ func (r *Root) add(w []byte, id uint, tfidf weights) {
 }
 
 // get returns the reference for a word
-func (r *Root) get(w []byte) []Ref {
+func (r *Root) get(w string) []Ref {
 	cur := r.Node
 	shared := 0
 	for {
@@ -122,7 +127,7 @@ func (r *Root) get(w []byte) []Ref {
 			return refs
 		}
 		i := getMatchingNode(cur.Radix, w[shared])
-		if i != -1 && bytes.HasPrefix(w[shared:], cur.Radix[i]) {
+		if i != -1 && strings.HasPrefix(w[shared:], cur.Radix[i]) {
 			shared += len(cur.Radix[i])
 			new := cur.Sons[i]
 			cur.rw.RUnlock()
@@ -146,14 +151,15 @@ func (r *Root) buildRef(deltas []uint, tfidfs []weights) []Ref {
 	return refs
 }
 
+// calculateIDF calculateIDF in a concurrent maner
 func (r *Root) calculateIDF(size uint) {
 	factor := float64(size)
 	for _, son := range r.Node.Sons {
 		go son.calculateIDF(factor)
 	}
-
 }
 
+// calculateIDF walks through the tree calculating IDF for all nodes
 func (n *Node) calculateIDF(factor float64) {
 	n.rw.RLock()
 	idf := math.Log(factor / float64(len(n.TfIdfs)))
@@ -226,7 +232,7 @@ func (n *Node) getInfIndex(maxID uint) int {
 // longestPrefixSize returns the longest prefix of rad and w
 // with shared being the already matched part of w
 // and assuming rad[0] == w[shared]
-func longestPrefixSize(rad, w []byte, shared int) int {
+func longestPrefixSize(rad, w string, shared int) int {
 	length := len(rad)
 	if l := len(w) - shared; l < length {
 		length = l
@@ -242,7 +248,7 @@ func longestPrefixSize(rad, w []byte, shared int) int {
 
 // getMatchingNode returns the index of the byte array that starts with a given byte
 // or -1 if no match is found
-func getMatchingNode(sons [][]byte, b byte) int {
+func getMatchingNode(sons []string, b byte) int {
 	min := 0
 	max := len(sons) - 1
 	for min <= max {
