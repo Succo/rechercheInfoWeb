@@ -55,8 +55,9 @@ func (r *Root) addDoc(doc *Document) {
 // add the weights and id to w
 func (r *Root) add(w string, id uint, tfidf weights) {
 	// descends the tree to find the proper leaf
-	cur := r.Node // node we are exploring
-	shared := 0   // part of w already matched
+	cur := r.Node     // node we are exploring
+	var shared, i int // part of w already matched
+	rad := ""         // buffer for radix
 	for {
 		if shared == len(w) {
 			cur.rw.Lock()
@@ -72,9 +73,9 @@ func (r *Root) add(w string, id uint, tfidf weights) {
 		}
 	MainInsert:
 		cur.rw.RLock()
-		i := getMatchingNode(cur.Radix, w[shared])
+		i = getMatchingNode(cur.Radix, w[shared])
 		if i != -1 {
-			rad := cur.Radix[i]
+			rad = cur.Radix[i]
 			// if cur.Radix is a complete prefix go down the trie
 			if strings.HasPrefix(w[shared:], rad) {
 				shared += len(rad)
