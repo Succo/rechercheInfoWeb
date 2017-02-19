@@ -246,15 +246,15 @@ func longestPrefixSize(rad, w string, shared int) int {
 	return i
 }
 
-// getMatchingNode returns the index of the byte array that starts with a given byte
+// getMatchingNode returns the index of the string that starts with a given byte
 // or -1 if no match is found
 func getMatchingNode(sons []string, b byte) int {
 	min := 0
 	max := len(sons) - 1
+	var match int
 	for min <= max {
-		match := (max + min) / 2
-		t := sons[match]
-		if t[0] == b {
+		match = (max + min) / 2
+		if sons[match][0] == b {
 			return match
 		} else if sons[match][0] < b {
 			min = match + 1
