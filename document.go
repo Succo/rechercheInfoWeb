@@ -54,7 +54,7 @@ type Document struct {
 	// Tokens counts the number of token
 	Tokens int
 	// Id is the id of the document (unique in the search)
-	Id uint
+	Id int
 }
 
 func newDocument() *Document {

@@ -20,7 +20,7 @@ type Root struct {
 	// The Root of the tree counts the total number of documents
 	// the count is protected by a lock
 	mu    sync.Mutex
-	count uint
+	count int
 }
 
 // Node implements a node of the tree
@@ -31,9 +31,8 @@ type Node struct {
 	// Sons and Radix holds information
 	Sons  []*Node
 	Radix []string
-	// Deltas and TfIdfs holds information about the word ending at this node
-	Deltas []uint
-	TfIdfs []weights
+	// Refs hold information about the word ending at this node
+	Refs []Ref
 }
 
 func NewTrie() *Root {
@@ -53,20 +52,19 @@ func (r *Root) addDoc(doc *Document) {
 }
 
 // add the weights and id to w
-func (r *Root) add(w string, id uint, tfidf weights) {
+func (r *Root) add(w string, id int, tfidf weights) {
 	// descends the tree to find the proper leaf
 	cur := r.Node             // node we are exploring
 	var shared, i, length int // shared: part of w already matche,
 	rad := ""                 // buffer for radix
+	ref := Ref{id, tfidf}
 	for {
 		if shared == len(w) {
 			cur.rw.Lock()
-			cur.Deltas = append(cur.Deltas, id)
-			cur.TfIdfs = append(cur.TfIdfs, tfidf)
-			for j := len(cur.Deltas) - 1; j > 0 &&
-				cur.Deltas[j-1] > cur.Deltas[j]; j-- {
-				cur.Deltas[j-1], cur.Deltas[j] = cur.Deltas[j], cur.Deltas[j-1]
-				cur.TfIdfs[j-1], cur.TfIdfs[j] = cur.TfIdfs[j], cur.TfIdfs[j-1]
+			cur.Refs = append(cur.Refs, ref)
+			for j := len(cur.Refs) - 1; j > 0 &&
+				cur.Refs[j-1].Id > cur.Refs[j].Id; j-- {
+				cur.Refs[j-1], cur.Refs[j] = cur.Refs[j], cur.Refs[j-1]
 			}
 			cur.rw.Unlock()
 			return
@@ -114,15 +112,14 @@ func (r *Root) add(w string, id uint, tfidf weights) {
 			cur.rw.RUnlock()
 			cur.rw.Lock()
 			// Assert the node hasn't been updated inbetween
-			if len(cur.Radix) != -1 {
+			if len(cur.Radix) != length {
 				// the node has been updated, restart reading
 				cur.rw.Unlock()
 				goto MainInsert
 			}
 			// No son share a common prefix
 			new := &Node{
-				Deltas: []uint{id},
-				TfIdfs: []weights{tfidf},
+				Refs: []Ref{ref},
 			}
 			cur.Sons = append(cur.Sons, new)
 			cur.Radix = append(cur.Radix, w[shared:])
@@ -145,7 +142,7 @@ func (r *Root) get(w string) []Ref {
 	for {
 		cur.rw.RLock()
 		if shared == len(w) {
-			refs := r.buildRef(cur.Deltas, cur.TfIdfs)
+			refs := r.buildRef(cur.Refs)
 			cur.rw.RUnlock()
 			return refs
 		}
@@ -162,16 +159,12 @@ func (r *Root) get(w string) []Ref {
 	}
 }
 
-// buildRed builds a Ref slice from a start and end position
-func (r *Root) buildRef(deltas []uint, tfidfs []weights) []Ref {
-	refs := make([]Ref, len(deltas))
-	for i, del := range deltas {
-		refs[i] = Ref{
-			Id:      int(del),
-			Weights: tfidfs[i],
-		}
-	}
-	return refs
+// buildRed builds a Ref slice it's needed to make sure we don't update in place
+// the initial slice
+func (r *Root) buildRef(in []Ref) []Ref {
+	out := make([]Ref, len(in))
+	copy(out, in)
+	return out
 }
 
 // calculateIDF calculateIDF in a concurrent maner
@@ -185,9 +178,9 @@ func (r *Root) calculateIDF(size uint) {
 // calculateIDF walks through the tree calculating IDF for all nodes
 func (n *Node) calculateIDF(factor float64) {
 	n.rw.RLock()
-	idf := math.Log(factor / float64(len(n.TfIdfs)))
-	for i, tf := range n.TfIdfs {
-		n.TfIdfs[i] = scale(tf, idf)
+	idf := math.Log(factor / float64(len(n.Refs)))
+	for i, ref := range n.Refs {
+		n.Refs[i].Weights = scale(ref.Weights, idf)
 	}
 	for _, son := range n.Sons {
 		son.calculateIDF(factor)
@@ -236,14 +229,14 @@ func UnserializeTrie(name string) *Root {
 // get InfIndex walks the tree
 // returns the number of key wich are in a doc with index < maxID
 func (r *Root) getInfIndex(maxID int) int {
-	return r.Node.getInfIndex(uint(maxID))
+	return r.Node.getInfIndex(maxID)
 }
 
 // get InfIndex walks the tree
 // returns the number of key wich are in a doc with index < maxID
-func (n *Node) getInfIndex(maxID uint) int {
+func (n *Node) getInfIndex(maxID int) int {
 	var indexSize int
-	if len(n.Deltas) > 0 && n.Deltas[0] < maxID {
+	if len(n.Refs) > 0 && n.Refs[0].Id < maxID {
 		indexSize++
 	}
 	for _, s := range n.Sons {
