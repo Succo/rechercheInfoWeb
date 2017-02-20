@@ -66,7 +66,7 @@ func TestTrie(t *testing.T) {
 		testTfIds[i][0] = float64(i)
 		var wf weights
 		wf[0] = float64(i)
-		trie.add(w, uint(i), wf)
+		trie.add(w, i, wf)
 	}
 	for i, w := range testWords {
 		resp := trie.get(w)

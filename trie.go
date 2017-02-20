@@ -72,7 +72,7 @@ func (r *Root) add(w string, id int, tfidf weights) {
 	MainInsert:
 		cur.rw.RLock()
 		i = getMatchingNode(cur.Radix, w[shared])
-		if i != -1 {
+		if i != len(cur.Radix) && cur.Radix[i][0] == w[shared] {
 			rad = cur.Radix[i]
 			// if cur.Radix is a complete prefix go down the trie
 			if strings.HasPrefix(w[shared:], rad) {
@@ -122,13 +122,12 @@ func (r *Root) add(w string, id int, tfidf weights) {
 				Refs: []Ref{ref},
 			}
 			cur.Sons = append(cur.Sons, new)
-			cur.Radix = append(cur.Radix, w[shared:])
+			cur.Radix = append(cur.Radix, "")
+			copy(cur.Sons[i+1:], cur.Sons[i:])
+			copy(cur.Radix[i+1:], cur.Radix[i:])
+			cur.Sons[i] = new
+			cur.Radix[i] = w[shared:]
 			// bring the new node to it's place
-			for j := len(cur.Radix) - 1; j > 0 &&
-				strings.Compare(cur.Radix[j-1], cur.Radix[j]) > 0; j-- {
-				cur.Radix[j-1], cur.Radix[j] = cur.Radix[j], cur.Radix[j-1]
-				cur.Sons[j-1], cur.Sons[j] = cur.Sons[j], cur.Sons[j-1]
-			}
 			cur.rw.Unlock()
 			break
 		}
@@ -147,7 +146,7 @@ func (r *Root) get(w string) []Ref {
 			return refs
 		}
 		i := getMatchingNode(cur.Radix, w[shared])
-		if i != -1 && strings.HasPrefix(w[shared:], cur.Radix[i]) {
+		if i != len(cur.Radix) && strings.HasPrefix(w[shared:], cur.Radix[i]) {
 			shared += len(cur.Radix[i])
 			new := cur.Sons[i]
 			cur.rw.RUnlock()
@@ -262,21 +261,31 @@ func longestPrefixSize(rad, w string, shared int) int {
 	return i
 }
 
-// getMatchingNode returns the index of the string that starts with a given byte
-// or -1 if no match is found
+// getMatchingNode returns the index of the
+// first string that starts with a byte >= b
+// or len(sons) if no match is found
 func getMatchingNode(sons []string, b byte) int {
+	if len(sons) < 10 {
+		for i, son := range sons {
+			if son[0] >= b {
+				return i
+			}
+		}
+		return len(sons)
+	}
+
+	// If the slice is long use binary search
+	// better tuning needed here
 	min := 0
 	max := len(sons) - 1
 	var match int
-	for min <= max {
-		match = (max + min) / 2
-		if sons[match][0] == b {
-			return match
-		} else if sons[match][0] < b {
+	for min < max {
+		match = min + (max-min)/2
+		if sons[match][0] < b {
 			min = match + 1
 		} else {
-			max = match - 1
+			max = match
 		}
 	}
-	return -1
+	return min
 }
