@@ -55,9 +55,9 @@ func (r *Root) addDoc(doc *Document) {
 // add the weights and id to w
 func (r *Root) add(w string, id uint, tfidf weights) {
 	// descends the tree to find the proper leaf
-	cur := r.Node     // node we are exploring
-	var shared, i int // part of w already matched
-	rad := ""         // buffer for radix
+	cur := r.Node             // node we are exploring
+	var shared, i, length int // shared: part of w already matche,
+	rad := ""                 // buffer for radix
 	for {
 		if shared == len(w) {
 			cur.rw.Lock()
@@ -110,9 +110,11 @@ func (r *Root) add(w string, id uint, tfidf weights) {
 			cur = new
 		} else {
 			// Unlock reads, lock write
+			length = len(cur.Radix)
 			cur.rw.RUnlock()
 			cur.rw.Lock()
-			if getMatchingNode(cur.Radix, w[shared]) != -1 {
+			// Assert the node hasn't been updated inbetween
+			if len(cur.Radix) != -1 {
 				// the node has been updated, restart reading
 				cur.rw.Unlock()
 				goto MainInsert
