@@ -63,7 +63,6 @@ func (s *CS276Scanner) scan(c chan *Document, sem chan bool) {
 			doc.addToken(w)
 			doc.addWord(w)
 		}
-		doc.calculScore()
 		s.trie.addDoc(doc)
 		c <- doc
 		file.Close()

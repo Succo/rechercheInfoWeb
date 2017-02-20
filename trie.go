@@ -46,7 +46,22 @@ func (r *Root) addDoc(doc *Document) {
 	doc.Id = r.count
 	r.count++
 	r.mu.Unlock()
-	for w, score := range doc.Scores {
+
+	// We calculate tf scores just before adding the terms
+	// Get the maximun tf
+	var max int
+	for _, s := range doc.Count {
+		if s > max {
+			max = s
+		}
+	}
+	maxF := 1 / float64(max)
+	var score weights
+	for w, s := range doc.Count {
+		tf := float64(s)
+		score[raw] = tf
+		score[norm] = 1 + math.Log(tf)
+		score[half] = 0.5 + 0.5*tf*maxF
 		r.add(string(w), doc.Id, score)
 	}
 }
@@ -225,13 +240,13 @@ func UnserializeTrie(name string) *Root {
 	return r
 }
 
-// get InfIndex walks the tree
+// getInfIndex walks the tree
 // returns the number of key wich are in a doc with index < maxID
 func (r *Root) getInfIndex(maxID int) int {
 	return r.Node.getInfIndex(maxID)
 }
 
-// get InfIndex walks the tree
+// getInfIndex walks the tree
 // returns the number of key wich are in a doc with index < maxID
 func (n *Node) getInfIndex(maxID int) int {
 	var indexSize int

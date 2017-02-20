@@ -165,7 +165,6 @@ func (s *CACMScanner) Scan(c chan *Document) {
 					// Add the previous document
 					s.doc.Title = s.title.String()
 					// Send the document
-					s.doc.calculScore()
 					s.trie.addDoc(s.doc)
 					c <- s.doc
 				}
@@ -184,7 +183,6 @@ func (s *CACMScanner) Scan(c chan *Document) {
 			// Add the previous document
 			s.doc.Title = s.title.String()
 			// Send the document
-			s.doc.calculScore()
 			s.trie.addDoc(s.doc)
 			c <- s.doc
 			close(c)

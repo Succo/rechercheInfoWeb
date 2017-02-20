@@ -1,10 +1,6 @@
 package main
 
-import (
-	"math"
-
-	"github.com/surgebase/porter2"
-)
+import "github.com/surgebase/porter2"
 
 // weight serves to identify the different weight that can be used
 type weight int
@@ -47,8 +43,6 @@ type Document struct {
 	Title string
 	// store the count of each term in the document
 	Count map[string]int
-	// store the different frequence of a term in the document
-	Scores map[string]weights
 	// stores the total size
 	Size int
 	// Tokens counts the number of token
@@ -58,9 +52,8 @@ type Document struct {
 }
 
 func newDocument() *Document {
-	scores := make(map[string]weights)
 	count := make(map[string]int)
-	return &Document{Scores: scores, Count: count}
+	return &Document{Count: count}
 }
 
 // addWord add a word to the model, for now freqs are only stored as count actually
@@ -75,24 +68,4 @@ func (d *Document) addWord(w string) {
 // addToken add the token to the set
 func (d *Document) addToken(w string) {
 	d.Tokens++
-}
-
-// calculScore actually update score to store tf for the term
-func (d *Document) calculScore() {
-	// Get the maximun tf
-	var max int
-	for _, s := range d.Count {
-		if s > max {
-			max = s
-		}
-	}
-	maxF := 1 / float64(max)
-	var score weights
-	for w, s := range d.Count {
-		tf := float64(s)
-		score[raw] = tf
-		score[norm] = 1 + math.Log(tf)
-		score[half] = 0.5 + 0.5*tf*maxF
-		d.Scores[w] = score
-	}
 }
