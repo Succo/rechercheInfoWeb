@@ -53,7 +53,7 @@ func (s *Search) AddDocMetaData(d *Document) {
 		s.Tokens[id] = d.Tokens
 		s.Titles[id] = d.Title
 	} else {
-		for i := size + 1; i < id; i++ {
+		for i := size; i < id; i++ {
 			s.Tokens = append(s.Tokens, 0)
 			s.Titles = append(s.Titles, "")
 		}
