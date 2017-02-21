@@ -1,118 +1,171 @@
 // A trie implementation for the index
+// It supports concurrent access using mutex on all nodes
+// So it can be built concurrently by all thread
+// RWMutex should have a low impact once the index is built
 package main
 
 import (
-	"bytes"
 	"encoding/gob"
+	"math"
 	"os"
+	"strings"
+	"sync"
+
+	"github.com/golang/snappy"
 )
 
 // Root is the root of the prefix tree
-// Refs is a list of all references, nodes store pointer to it
 type Root struct {
-	Deltas []uint
-	TfIdfs []weights
-	Node   *Node
+	Node *Node
+	// The Root of the tree counts the total number of documents
+	// the count is protected by a lock
+	mu    sync.Mutex
+	count int
 }
 
 // Node implements a node of the tree
 type Node struct {
+	// rw is a RWMutex, can be hold by either
+	// 1 writer or many reader
+	rw sync.RWMutex
+	// Sons and Radix holds information
 	Sons  []*Node
-	Radix [][]byte
-	Start int
-	End   int
+	Radix []string
+	// Refs hold information about the word ending at this node
+	Refs []Ref
 }
 
-func NewTrie(size int) *Root {
-	// We fix the slice capacity to avoid further allocation
-	deltas := make([]uint, 0, size)
-	tfidfs := make([]weights, 0, size)
-	return &Root{Node: &Node{},
-		Deltas: deltas,
-		TfIdfs: tfidfs,
+func NewTrie() *Root {
+	return &Root{Node: &Node{}}
+}
+
+// addDoc adds all a document references to the trie
+// It also generates the document ID
+func (r *Root) addDoc(doc *Document) {
+	r.mu.Lock()
+	doc.Id = r.count
+	r.count++
+	r.mu.Unlock()
+
+	// We calculate tf scores just before adding the terms
+	// Get the maximun tf
+	var max int
+	for _, s := range doc.Count {
+		if s > max {
+			max = s
+		}
+	}
+	maxF := 1 / float64(max)
+	var score weights
+	for w, s := range doc.Count {
+		tf := float64(s)
+		score[raw] = tf
+		score[norm] = 1 + math.Log(tf)
+		score[half] = 0.5 + 0.5*tf*maxF
+		r.add(string(w), doc.Id, score)
 	}
 }
 
-func emptyNode(start, end int) *Node {
-	return &Node{Start: start, End: end}
-}
-
-func trieFromIndex(deltas map[string][]uint, tfidfs map[string][]weights, size int) *Root {
-	r := NewTrie(size)
-	for w, delta := range deltas {
-		// That's because the first element is only a counter
-		// Used when caluculating deltas
-		r.set([]byte(w), delta[1:], tfidfs[w])
-	}
-	return r
-}
-
-func (r *Root) set(w []byte, deltas []uint, tfidfs []weights) {
-	// calculate the start and end pointer for w
-	start := len(r.Deltas)
-	end := start + len(deltas)
-	// Append the new deltas to the ref array
-	r.Deltas = append(r.Deltas, deltas...)
-	r.TfIdfs = append(r.TfIdfs, tfidfs...)
-
+// add the weights and id to w
+func (r *Root) add(w string, id int, tfidf weights) {
 	// descends the tree to find the proper leaf
-	cur := r.Node // node we are exploring
-	shared := 0   // part of w already matched
+	cur := r.Node             // node we are exploring
+	var shared, i, length int // shared: part of w already matched
+	rad := ""                 // buffer for radix
+	ref := Ref{id, tfidf}
 	for {
 		if shared == len(w) {
-			cur.Start = start
-			cur.End = end
+			cur.rw.Lock()
+			cur.Refs = append(cur.Refs, ref)
+			for j := len(cur.Refs) - 1; j > 0 &&
+				cur.Refs[j-1].Id > cur.Refs[j].Id; j-- {
+				cur.Refs[j-1], cur.Refs[j] = cur.Refs[j], cur.Refs[j-1]
+			}
+			cur.rw.Unlock()
 			return
 		}
-		i := getMatchingNode(cur.Radix, w[shared])
-		if i != -1 {
-			rad := cur.Radix[i]
+	MainInsert:
+		cur.rw.RLock()
+		i = getMatchingNode(cur.Radix, w[shared])
+		if i != len(cur.Radix) && cur.Radix[i][0] == w[shared] {
+			rad = cur.Radix[i]
+			// if cur.Radix is a complete prefix go down the trie
+			if strings.HasPrefix(w[shared:], rad) {
+				shared += len(rad)
+				new := cur.Sons[i]
+				cur.rw.RUnlock()
+				cur = new
+				continue
+			}
+			// Unlock reads, lock write
+			cur.rw.RUnlock()
+			cur.rw.Lock()
+			if rad != cur.Radix[i] {
+				// the node has been updated, restart reading
+				cur.rw.Unlock()
+				goto MainInsert
+			}
 			// the two word share a prefix
 			// calculate it's size
 			size := longestPrefixSize(rad, w, shared)
 			shared += size
-			if size == len(rad) {
-				cur = cur.Sons[i]
-				continue
-			}
 			// split the vertice
 			old := cur.Sons[i]
 			new := &Node{
 				Sons:  []*Node{old},
-				Radix: [][]byte{rad[size:]},
+				Radix: []string{rad[size:]},
 			}
 			// insert the new node in place
 			cur.Radix[i] = rad[:size]
 			cur.Sons[i] = new
 			// keep iterating on the new node
+			cur.rw.Unlock()
 			cur = new
 		} else {
-			// No son share a common prefix
-			cur.Sons = append(cur.Sons, emptyNode(start, end))
-			cur.Radix = append(cur.Radix, w[shared:])
-			// bring the new node to it's place
-			for j := len(cur.Radix) - 1; j > 0 &&
-				bytes.Compare(cur.Radix[j-1], cur.Radix[j]) > 0; j-- {
-				cur.Radix[j-1], cur.Radix[j] = cur.Radix[j], cur.Radix[j-1]
-				cur.Sons[j-1], cur.Sons[j] = cur.Sons[j], cur.Sons[j-1]
+			// Unlock reads, lock write
+			length = len(cur.Radix)
+			cur.rw.RUnlock()
+			cur.rw.Lock()
+			// Assert the node hasn't been updated inbetween
+			if len(cur.Radix) != length {
+				// the node has been updated, restart reading
+				cur.rw.Unlock()
+				goto MainInsert
 			}
+			// No son share a common prefix
+			new := &Node{
+				Refs: []Ref{ref},
+			}
+			cur.Sons = append(cur.Sons, new)
+			cur.Radix = append(cur.Radix, "")
+			copy(cur.Sons[i+1:], cur.Sons[i:])
+			copy(cur.Radix[i+1:], cur.Radix[i:])
+			cur.Sons[i] = new
+			cur.Radix[i] = w[shared:]
+			// bring the new node to it's place
+			cur.rw.Unlock()
 			break
 		}
 	}
 }
 
 // get returns the reference for a word
-func (r *Root) get(w []byte) []Ref {
+func (r *Root) get(w string) []Ref {
 	cur := r.Node
 	shared := 0
 	for {
+		cur.rw.RLock()
 		if shared == len(w) {
-			return r.buildRef(cur.Start, cur.End)
+			refs := r.buildRef(cur.Refs)
+			cur.rw.RUnlock()
+			return refs
 		}
 		i := getMatchingNode(cur.Radix, w[shared])
-		if i != -1 && bytes.HasPrefix(w[shared:], cur.Radix[i]) {
+		if i != len(cur.Radix) && strings.HasPrefix(w[shared:], cur.Radix[i]) {
 			shared += len(cur.Radix[i])
-			cur = cur.Sons[i]
+			new := cur.Sons[i]
+			cur.rw.RUnlock()
+			cur = new
 		} else {
 			// No son share a common prefix
 			return []Ref{}
@@ -120,20 +173,33 @@ func (r *Root) get(w []byte) []Ref {
 	}
 }
 
-// buildRed builds a Ref slice from a start and end position
-func (r *Root) buildRef(start, end int) []Ref {
-	deltas := r.Deltas[start:end]
-	tfidfs := r.TfIdfs[start:end]
-	var counter int
-	refs := make([]Ref, len(deltas))
-	for i, del := range deltas {
-		counter += int(del)
-		refs[i] = Ref{
-			Id:      counter,
-			Weights: tfidfs[i],
-		}
+// buildRed builds a Ref slice it's needed to make sure we don't update in place
+// the initial slice
+func (r *Root) buildRef(in []Ref) []Ref {
+	out := make([]Ref, len(in))
+	copy(out, in)
+	return out
+}
+
+// calculateIDF calculateIDF in a concurrent maner
+func (r *Root) calculateIDF(size int) {
+	factor := float64(size)
+	for _, son := range r.Node.Sons {
+		go son.calculateIDF(factor)
 	}
-	return refs
+}
+
+// calculateIDF walks through the tree calculating IDF for all nodes
+func (n *Node) calculateIDF(factor float64) {
+	n.rw.RLock()
+	idf := math.Log(factor / float64(len(n.Refs)))
+	for i := range n.Refs {
+		scale(&n.Refs[i].Weights, idf)
+	}
+	for _, son := range n.Sons {
+		son.calculateIDF(factor)
+	}
+	n.rw.RUnlock()
 }
 
 // Serialize save to file the trie
@@ -143,38 +209,17 @@ func (r *Root) Serialize(name string) {
 		panic(err)
 	}
 	defer index.Close()
-	en := gob.NewEncoder(index)
-	err = en.Encode(r.Deltas)
-	if err != nil {
-		panic(err)
-	}
-	index.Sync()
-	index.Close()
-
-	Tfidfs, err := os.Create("indexes/" + name + ".weight")
-	if err != nil {
-		panic(err)
-	}
-	defer Tfidfs.Close()
-	err = Compress(r.TfIdfs, Tfidfs)
-	if err != nil {
-		panic(err)
-	}
-	Tfidfs.Sync()
-	Tfidfs.Close()
-
-	trie, err := os.Create("indexes/" + name + ".trie")
-	if err != nil {
-		panic(err)
-	}
-	defer trie.Close()
-	en = gob.NewEncoder(trie)
+	snap := snappy.NewBufferedWriter(index)
+	en := gob.NewEncoder(snap)
 	err = en.Encode(r.Node)
 	if err != nil {
 		panic(err)
 	}
-	trie.Sync()
-	trie.Close()
+	err = snap.Close()
+	if err != nil {
+		panic(err.Error())
+	}
+	index.Close()
 }
 
 // UnserializeTrie reloads the trie from files
@@ -185,58 +230,60 @@ func UnserializeTrie(name string) *Root {
 		panic(err)
 	}
 	defer index.Close()
-	en := gob.NewDecoder(index)
-	err = en.Decode(&r.Deltas)
-	if err != nil {
-		panic(err)
-	}
-	index.Close()
-
-	Tfidfs, err := os.Open("indexes/" + name + ".weight")
-	if err != nil {
-		panic(err)
-	}
-	defer Tfidfs.Close()
-	r.TfIdfs = UnCompress(Tfidfs)
-	Tfidfs.Close()
-
-	trie, err := os.Open("indexes/" + name + ".trie")
-	if err != nil {
-		panic(err)
-	}
-	defer trie.Close()
-	en = gob.NewDecoder(trie)
+	snap := snappy.NewReader(index)
+	en := gob.NewDecoder(snap)
 	err = en.Decode(&r.Node)
 	if err != nil {
 		panic(err)
 	}
-	trie.Close()
+	index.Close()
 	return r
 }
 
-// get InfIndex walks the tree
+// getInfIndex walks the tree
 // returns the number of key wich are in a doc with index < maxID
 func (r *Root) getInfIndex(maxID int) int {
-	return r.Node.getInfIndex(maxID, r.Deltas)
+	return r.Node.getInfIndex(maxID)
 }
 
-// get InfIndex walks the tree
+// getInfIndex walks the tree
 // returns the number of key wich are in a doc with index < maxID
-func (n *Node) getInfIndex(maxID int, delta []uint) int {
+func (n *Node) getInfIndex(maxID int) int {
 	var indexSize int
-	if n.Start-n.End != 0 && int(delta[n.Start]) <= maxID {
+	if len(n.Refs) > 0 && n.Refs[0].Id < maxID {
 		indexSize++
 	}
 	for _, s := range n.Sons {
-		indexSize += s.getInfIndex(maxID, delta)
+		indexSize += s.getInfIndex(maxID)
 	}
 	return indexSize
+}
+
+// getAverageSonsCount count the number of average number of sons per node
+func (r *Root) getAverageSonsCount() float64 {
+	total, count := r.Node.getAverageSonsCount()
+	return float64(total) / float64(count)
+}
+
+// getAverageSonsCount returns the total number of sons and the total number of Node
+// Doesn't count leaf, or it wouldn't make sense
+func (n *Node) getAverageSonsCount() (int, int) {
+	if len(n.Sons) == 0 {
+		return 0, 0
+	}
+	sons, count := len(n.Sons), 1
+	for _, son := range n.Sons {
+		s, c := son.getAverageSonsCount()
+		sons += s
+		count += c
+	}
+	return sons, count
 }
 
 // longestPrefixSize returns the longest prefix of rad and w
 // with shared being the already matched part of w
 // and assuming rad[0] == w[shared]
-func longestPrefixSize(rad, w []byte, shared int) int {
+func longestPrefixSize(rad, w string, shared int) int {
 	length := len(rad)
 	if l := len(w) - shared; l < length {
 		length = l
@@ -250,21 +297,37 @@ func longestPrefixSize(rad, w []byte, shared int) int {
 	return i
 }
 
-// getMatchingNode returns the index of the byte array that starts with a given byte
-// or -1 if no match is found
-func getMatchingNode(sons [][]byte, b byte) int {
-	min := 0
-	max := len(sons) - 1
-	for min <= max {
-		match := (max + min) / 2
-		t := sons[match]
-		if t[0] == b {
-			return match
-		} else if sons[match][0] < b {
-			min = match + 1
-		} else {
-			max = match - 1
+// getMatchingNode returns the index of the
+// first string that starts with a byte >= b
+// or len(sons) if no match is found
+func getMatchingNode(sons []string, b byte) int {
+	switch {
+	case len(sons) == 0:
+		return 0
+
+	case len(sons) < 10:
+		for i, son := range sons {
+			if son[0] >= b {
+				return i
+			}
 		}
+		return len(sons)
+
+	default:
+		// If the slice is long use binary search
+		// better tuning needed here
+		min := 0
+		max := len(sons)
+		var match int
+		for min < max {
+			match = min + (max-min)/2
+			if sons[match][0] < b {
+				min = match + 1
+			} else {
+				max = match
+			}
+		}
+		return min
 	}
-	return -1
+
 }

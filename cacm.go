@@ -47,17 +47,16 @@ type CACMScanner struct {
 	commonWord map[string]bool
 	doc        *Document
 	id         int
-	pos        int
+	trie       *Root
 }
 
 // NewCACMScanner create a CACMScanner from an io reader
-func NewCACMScanner(r io.Reader, cw map[string]bool) *CACMScanner {
-	return &CACMScanner{r: bufio.NewReader(r), commonWord: cw}
+func NewCACMScanner(r io.Reader, cw map[string]bool, trie *Root) *CACMScanner {
+	return &CACMScanner{r: bufio.NewReader(r), commonWord: cw, trie: trie}
 }
 
 func (s *CACMScanner) read() rune {
-	ch, n, err := s.r.ReadRune()
-	s.pos += n
+	ch, _, err := s.r.ReadRune()
 	if err != nil {
 		return eof
 	}
@@ -66,7 +65,6 @@ func (s *CACMScanner) read() rune {
 
 func (s *CACMScanner) unread() {
 	s.r.UnreadRune()
-	s.pos -= 1
 }
 
 func (s *CACMScanner) peek() rune {
@@ -167,12 +165,11 @@ func (s *CACMScanner) Scan(c chan *Document) {
 					// Add the previous document
 					s.doc.Title = s.title.String()
 					// Send the document
-					s.doc.calculScore()
+					s.trie.addDoc(s.doc)
 					c <- s.doc
 				}
 				// Reset the document
 				s.doc = newDocument()
-				s.doc.pos = int64(s.pos)
 				s.title.Reset()
 				s.id++
 			}
@@ -186,7 +183,7 @@ func (s *CACMScanner) Scan(c chan *Document) {
 			// Add the previous document
 			s.doc.Title = s.title.String()
 			// Send the document
-			s.doc.calculScore()
+			s.trie.addDoc(s.doc)
 			c <- s.doc
 			close(c)
 			return

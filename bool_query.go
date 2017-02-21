@@ -98,8 +98,8 @@ func BooleanQuery(s *Search, input string) []Ref {
 			} else {
 				word2 = words[i+2]
 			}
-			refs1 := s.Index.get([]byte(word1))
-			refs2 := s.Index.get([]byte(word2))
+			refs1 := s.Index.get(word1)
+			refs2 := s.Index.get(word2)
 			res := union(refs1, refs2)
 			if i == 0 {
 				results = res
@@ -117,7 +117,7 @@ func BooleanQuery(s *Search, input string) []Ref {
 			} else {
 				word = words[i+1]
 			}
-			not := s.Index.get([]byte(word))
+			not := s.Index.get(word)
 			results = remove(results, not)
 			i++
 		default:
@@ -127,7 +127,7 @@ func BooleanQuery(s *Search, input string) []Ref {
 			} else {
 				word = words[i]
 			}
-			refs := s.Index.get([]byte(word))
+			refs := s.Index.get(word)
 			if i == 0 {
 				results = refs
 			} else {

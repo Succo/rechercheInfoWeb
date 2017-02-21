@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"strings"
 	"time"
 )
@@ -24,102 +23,61 @@ func cs276ToUrl(id int, title string) string {
 
 // ParseCACM creates a cacm scanner, a search struct and connects them
 func ParseCACM(r io.Reader, cw map[string]bool) *Search {
-	cacm := NewCACMScanner(r, cw)
+	// index stored in a prefix trie
+	trie := NewTrie()
+	cacm := NewCACMScanner(r, cw, trie)
 
 	c := make(chan *Document)
 	go cacm.Scan(c)
+
 	search := emptySearch("cacm", cw)
 	search.toUrl = cacmToUrl
 	search.Perf = newCACMPerf()
+	search.Index = trie
 	return buildSearchFromScanner(search, c)
 }
 
 // ParseCS276 creates a parser struct from the root folder of cs216 data
 func ParseCS276(root string, cw map[string]bool) *Search {
-	cs276 := NewCS276Scanner(root)
+	// index stored in a prefix trie
+	trie := NewTrie()
+	cs276 := NewCS276Scanner(root, trie)
+	// chan for processed documents
+	// metadata are handled in the main thread
 	c := make(chan *Document, 100)
 	go cs276.Scan(c)
+
 	search := emptySearch("cs276", cw)
 	search.toUrl = cs276ToUrl
 	search.Perf = newCS276Perf()
+	search.Index = trie
 	return buildSearchFromScanner(search, c)
 }
 
 func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 	now := time.Now()
-	// Temporary storage for document id using delta
-	deltas := make(map[string][]uint)
-	// Temporary storage for the multiples weight
-	tfidfs := make(map[string][]weights)
-
-	// Number of document
-	var count uint
-	// Total number of document/word pairs
-	var pairs int
-	// Document coming from the first channel will go there to be processed
-	meta := make(chan *Document, 100)
-	// synchronisation channel
-	sem := make(chan bool, 1)
-
-	// This goroutine gets document from main and process metadata and scores
-	go func() {
-		for doc := range meta {
-			search.AddDocMetaData(doc)
-			for w, score := range doc.Scores {
-				tfidfs[w] = append(tfidfs[w], score)
-			}
-		}
-		sem <- true
-	}()
 
 	// The main loop process doc ID and passes document to the second goroutine
 	for doc := range c {
-		meta <- doc
-		for w := range doc.Scores {
-			d, found := deltas[w]
-			if !found {
-				// The first element is actually a counter
-				deltas[w] = []uint{count, count}
-			} else {
-				delta := count - d[0]
-				d[0] = count
-				deltas[w] = append(d, delta)
-			}
-			pairs++
-		}
-		count++
+		search.AddDocMetaData(doc)
 	}
-	close(meta)
-	search.Size = int(count)
-	// wait for other goroutine
-	<-sem
+	search.Size = len(search.Tokens)
+	// potentially, the index is not finished so time is innacurate
+	// the mutex protects from incorrect read though
 	search.Perf.Parsing = time.Since(now)
 	log.Printf("%s parsed in  %s \n", search.Corpus, time.Since(now).String())
 
 	now = time.Now()
 	// Now that all documents are known, we can fully calculate tf-idf
-	calculateIDF(tfidfs, count)
+	search.Index.calculateIDF(search.Size)
 	search.Perf.IDF = time.Since(now)
 	log.Printf("%s IDF calculated in  %s \n", search.Corpus, time.Since(now).String())
 
-	// Then we build the *real* index using a prefix tree
-	now = time.Now()
-	trie := trieFromIndex(deltas, tfidfs, pairs)
-	search.Perf.Indexing = time.Since(now)
-	log.Printf("%s index built in  %s \n", search.Corpus, time.Since(now).String())
-	search.Index = trie
+	log.Printf("%s index average sons count for non leaf node %f\n",
+		search.Corpus,
+		search.Index.getAverageSonsCount())
+
 	search.Stat = getStat(search)
 	search.Perf.Name = search.Corpus
 	return search
-}
-
-func calculateIDF(tfidfs map[string][]weights, size uint) {
-	factor := float64(size)
-	for w, tfs := range tfidfs {
-		idf := math.Log(factor / float64(len(tfs)))
-		for i, tf := range tfs {
-			tfs[i] = scale(tf, idf)
-		}
-		tfidfs[w] = tfs
-	}
 }

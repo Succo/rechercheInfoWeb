@@ -63,7 +63,7 @@ func VectorQuery(s *Search, input string, wf weight) []Ref {
 		if len(w) > 3 {
 			w = porter2.Stem(w)
 		}
-		documents[i] = s.Index.get([]byte(w))
+		documents[i] = s.Index.get(w)
 	}
 	results := mergeWithTfIdf(documents, wf)
 	if wf == raw {
