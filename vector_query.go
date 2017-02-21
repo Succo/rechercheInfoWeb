@@ -46,7 +46,7 @@ func mergeWithTfIdf(documents [][]Ref, wf weight) []Ref {
 		ref := Ref{
 			Id: min,
 		}
-		ref.Weights[wf] = floats.Sum(temps) / floats.Norm(temps, 2)
+		ref.Weights[wf] = floats.Sum(temps)
 		merge = append(merge, ref)
 	}
 	return merge
