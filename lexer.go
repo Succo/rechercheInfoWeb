@@ -57,7 +57,7 @@ func ParseCS276(root string, cw map[string]bool) *Search {
 func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 	now := time.Now()
 
-	// The main loop process doc ID and passes document to the second goroutine
+	// The main loop get parsed documents and deals with metadata
 	for doc := range c {
 		search.AddDocMetaData(doc)
 	}
