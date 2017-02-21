@@ -30,11 +30,10 @@ func zip(w1, w2 weights) (w weights) {
 	return w
 }
 
-func scale(w weights, c float64) (newW weights) {
-	newW[raw] = c * w[raw]
-	newW[norm] = c * w[norm]
-	newW[half] = c * w[half]
-	return newW
+func scale(w *weights, c float64) {
+	w[raw] = c * w[raw]
+	w[norm] = c * w[norm]
+	w[half] = c * w[half]
 }
 
 // Document implement a parsed document

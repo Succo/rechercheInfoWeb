@@ -193,8 +193,8 @@ func (r *Root) calculateIDF(size uint) {
 func (n *Node) calculateIDF(factor float64) {
 	n.rw.RLock()
 	idf := math.Log(factor / float64(len(n.Refs)))
-	for i, ref := range n.Refs {
-		n.Refs[i].Weights = scale(ref.Weights, idf)
+	for i := range n.Refs {
+		scale(&n.Refs[i].Weights, idf)
 	}
 	for _, son := range n.Sons {
 		son.calculateIDF(factor)
