@@ -70,7 +70,7 @@ func (r *Root) addDoc(doc *Document) {
 func (r *Root) add(w string, id int, tfidf weights) {
 	// descends the tree to find the proper leaf
 	cur := r.Node             // node we are exploring
-	var shared, i, length int // shared: part of w already matche,
+	var shared, i, length int // shared: part of w already matched
 	rad := ""                 // buffer for radix
 	ref := Ref{id, tfidf}
 	for {
@@ -182,7 +182,7 @@ func (r *Root) buildRef(in []Ref) []Ref {
 }
 
 // calculateIDF calculateIDF in a concurrent maner
-func (r *Root) calculateIDF(size uint) {
+func (r *Root) calculateIDF(size int) {
 	factor := float64(size)
 	for _, son := range r.Node.Sons {
 		go son.calculateIDF(factor)
@@ -259,6 +259,27 @@ func (n *Node) getInfIndex(maxID int) int {
 	return indexSize
 }
 
+// getAverageSonsCount count the number of average number of sons per node
+func (r *Root) getAverageSonsCount() float64 {
+	total, count := r.Node.getAverageSonsCount()
+	return float64(total) / float64(count)
+}
+
+// getAverageSonsCount returns the total number of sons and the total number of Node
+// Doesn't count leaf, or it wouldn't make sense
+func (n *Node) getAverageSonsCount() (int, int) {
+	if len(n.Sons) == 0 {
+		return 0, 0
+	}
+	sons, count := len(n.Sons), 1
+	for _, son := range n.Sons {
+		s, c := son.getAverageSonsCount()
+		sons += s
+		count += c
+	}
+	return sons, count
+}
+
 // longestPrefixSize returns the longest prefix of rad and w
 // with shared being the already matched part of w
 // and assuming rad[0] == w[shared]
@@ -280,27 +301,33 @@ func longestPrefixSize(rad, w string, shared int) int {
 // first string that starts with a byte >= b
 // or len(sons) if no match is found
 func getMatchingNode(sons []string, b byte) int {
-	if len(sons) < 10 {
+	switch {
+	case len(sons) == 0:
+		return 0
+
+	case len(sons) < 10:
 		for i, son := range sons {
 			if son[0] >= b {
 				return i
 			}
 		}
 		return len(sons)
+
+	default:
+		// If the slice is long use binary search
+		// better tuning needed here
+		min := 0
+		max := len(sons)
+		var match int
+		for min < max {
+			match = min + (max-min)/2
+			if sons[match][0] < b {
+				min = match + 1
+			} else {
+				max = match
+			}
+		}
+		return min
 	}
 
-	// If the slice is long use binary search
-	// better tuning needed here
-	min := 0
-	max := len(sons) - 1
-	var match int
-	for min < max {
-		match = min + (max-min)/2
-		if sons[match][0] < b {
-			min = match + 1
-		} else {
-			max = match
-		}
-	}
-	return min
 }

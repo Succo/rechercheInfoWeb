@@ -69,9 +69,13 @@ func buildSearchFromScanner(search *Search, c chan *Document) *Search {
 
 	now = time.Now()
 	// Now that all documents are known, we can fully calculate tf-idf
-	search.Index.calculateIDF(uint(search.Size))
+	search.Index.calculateIDF(search.Size)
 	search.Perf.IDF = time.Since(now)
 	log.Printf("%s IDF calculated in  %s \n", search.Corpus, time.Since(now).String())
+
+	log.Printf("%s index average sons count for non leaf node %f\n",
+		search.Corpus,
+		search.Index.getAverageSonsCount())
 
 	search.Stat = getStat(search)
 	search.Perf.Name = search.Corpus
