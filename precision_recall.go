@@ -247,6 +247,7 @@ func getPlot() *plot.Plot {
 	p.X.Max = 1.0
 	p.Y.Min = 0.0
 	p.Y.Max = 1.0
+	p.Legend.Top = true
 	return p
 }
 
