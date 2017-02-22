@@ -43,22 +43,22 @@ func emptySearch(corpus string, cw map[string]bool) *Search {
 }
 
 // AddDocMetaData adds a parsed document metadata
-func (s *Search) AddDocMetaData(d *Document) {
+func (s *Search) AddDocMetaData(m metadata) {
 	size := len(s.Tokens)
-	id := d.Id
+	id := m.id
 	if id == size {
-		s.Tokens = append(s.Tokens, d.Tokens)
-		s.Titles = append(s.Titles, d.Title)
+		s.Tokens = append(s.Tokens, m.tokens)
+		s.Titles = append(s.Titles, m.title)
 	} else if id < size {
-		s.Tokens[id] = d.Tokens
-		s.Titles[id] = d.Title
+		s.Tokens[id] = m.tokens
+		s.Titles[id] = m.title
 	} else {
 		for i := size; i < id; i++ {
 			s.Tokens = append(s.Tokens, 0)
 			s.Titles = append(s.Titles, "")
 		}
-		s.Tokens = append(s.Tokens, d.Tokens)
-		s.Titles = append(s.Titles, d.Title)
+		s.Tokens = append(s.Tokens, m.tokens)
+		s.Titles = append(s.Titles, m.title)
 	}
 }
 

@@ -41,7 +41,10 @@ func scale(w *weights, c float64) {
 type Document struct {
 	Title string
 	// store the count of each term in the document
-	Count map[string]int
+	// Words is an ordered list of lexemes
+	// Count is the number of occurence for the word at the same index
+	Count []int
+	Words []string
 	// stores the total size
 	Size int
 	// Tokens counts the number of token
@@ -51,8 +54,7 @@ type Document struct {
 }
 
 func newDocument() *Document {
-	count := make(map[string]int)
-	return &Document{Count: count}
+	return &Document{}
 }
 
 // addWord add a word to the model, for now freqs are only stored as count actually
@@ -60,11 +62,63 @@ func (d *Document) addWord(w string) {
 	if len(w) > 3 {
 		w = porter2.Stem(w)
 	}
-	d.Count[w]++
+	i := getWordIndex(d.Words, w)
+	if i < len(d.Words) && d.Words[i] == w {
+		d.Count[i]++
+	} else if i == len(d.Words) {
+		d.Count = append(d.Count, 1)
+		d.Words = append(d.Words, w)
+	} else {
+		d.Count = append(d.Count, 0)
+		d.Words = append(d.Words, "")
+		copy(d.Count[i+1:], d.Count[i:])
+		copy(d.Words[i+1:], d.Words[i:])
+		d.Count[i]++
+		d.Words[i] = w
+	}
 	d.Size += 1
 }
 
 // addToken add the token to the set
 func (d *Document) addToken(w string) {
 	d.Tokens++
+}
+
+func (d *Document) reset() {
+	d.Count = d.Count[:0]
+	d.Words = d.Words[:0]
+	d.Size = 0
+	d.Tokens = 0
+}
+
+func getWordIndex(words []string, w string) int {
+	switch {
+	case len(words) == 0:
+		return 0
+
+	case len(words) < 10:
+		for i, word := range words {
+			if word >= w {
+				return i
+			}
+		}
+		return len(words)
+
+	default:
+		// If the slice is long use binary search
+		// better tuning needed here
+		min := 0
+		max := len(words)
+		var match int
+		for min < max {
+			match = min + (max-min)/2
+			if words[match] < w {
+				min = match + 1
+			} else {
+				max = match
+			}
+		}
+		return min
+	}
+
 }
