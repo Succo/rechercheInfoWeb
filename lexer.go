@@ -8,6 +8,20 @@ import (
 	"time"
 )
 
+type metadata struct {
+	id     int
+	tokens int
+	title  string
+}
+
+func metadataFromDoc(d *Document) metadata {
+	return metadata{
+		id:     d.Id,
+		tokens: d.Tokens,
+		title:  d.Title,
+	}
+}
+
 // cacmToUrl generates url from cacm id
 func cacmToUrl(id int, title string) string {
 	return fmt.Sprintf("/cacm/%d", id)
@@ -27,7 +41,7 @@ func ParseCACM(r io.Reader, cw map[string]bool) *Search {
 	trie := NewTrie()
 	cacm := NewCACMScanner(r, cw, trie)
 
-	c := make(chan *Document)
+	c := make(chan metadata)
 	go cacm.Scan(c)
 
 	search := emptySearch("cacm", cw)
@@ -44,7 +58,7 @@ func ParseCS276(root string, cw map[string]bool) *Search {
 	cs276 := NewCS276Scanner(root, trie)
 	// chan for processed documents
 	// metadata are handled in the main thread
-	c := make(chan *Document, 100)
+	c := make(chan metadata, 100)
 	go cs276.Scan(c)
 
 	search := emptySearch("cs276", cw)
@@ -54,7 +68,7 @@ func ParseCS276(root string, cw map[string]bool) *Search {
 	return buildSearchFromScanner(search, c)
 }
 
-func buildSearchFromScanner(search *Search, c chan *Document) *Search {
+func buildSearchFromScanner(search *Search, c chan metadata) *Search {
 	now := time.Now()
 
 	// The main loop get parsed documents and deals with metadata

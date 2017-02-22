@@ -85,3 +85,10 @@ func (d *Document) addWord(w string) {
 func (d *Document) addToken(w string) {
 	d.Tokens++
 }
+
+func (d *Document) reset() {
+	d.Count = d.Count[:0]
+	d.Words = d.Words[:0]
+	d.Size = 0
+	d.Tokens = 0
+}

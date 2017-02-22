@@ -38,9 +38,9 @@ func NewCS276Scanner(root string, trie *Root) *CS276Scanner {
 
 // scan processes string from the toScan channel
 // it sends parsed document to the channel
-func (s *CS276Scanner) scan(c chan *Document, sem chan bool) {
+func (s *CS276Scanner) scan(c chan metadata, sem chan bool) {
+	doc := newDocument()
 	for filename := range s.toScan {
-		doc := newDocument()
 		doc.Title = filename
 		// words of the title are added too
 		words := strings.Split(filename, "_")
@@ -64,14 +64,15 @@ func (s *CS276Scanner) scan(c chan *Document, sem chan bool) {
 			doc.addWord(w)
 		}
 		s.trie.addDoc(doc)
-		c <- doc
+		c <- metadataFromDoc(doc)
+		doc.reset()
 		file.Close()
 	}
 	sem <- true
 }
 
 // Scan will send scanned doc to the channel using multiple goroutine to parse them
-func (s *CS276Scanner) Scan(c chan *Document) {
+func (s *CS276Scanner) Scan(c chan metadata) {
 	dirs, err := ioutil.ReadDir(s.root)
 	if err != nil {
 		panic(err)
