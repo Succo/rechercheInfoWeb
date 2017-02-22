@@ -1,6 +1,10 @@
 package main
 
-import "github.com/surgebase/porter2"
+import (
+	"sort"
+
+	"github.com/surgebase/porter2"
+)
 
 // weight serves to identify the different weight that can be used
 type weight int
@@ -41,7 +45,8 @@ func scale(w *weights, c float64) {
 type Document struct {
 	Title string
 	// store the count of each term in the document
-	Count map[string]int
+	Count []int
+	Words []string
 	// stores the total size
 	Size int
 	// Tokens counts the number of token
@@ -51,8 +56,7 @@ type Document struct {
 }
 
 func newDocument() *Document {
-	count := make(map[string]int)
-	return &Document{Count: count}
+	return &Document{}
 }
 
 // addWord add a word to the model, for now freqs are only stored as count actually
@@ -60,7 +64,20 @@ func (d *Document) addWord(w string) {
 	if len(w) > 3 {
 		w = porter2.Stem(w)
 	}
-	d.Count[w]++
+	i := sort.SearchStrings(d.Words, w)
+	if i < len(d.Words) && d.Words[i] == w {
+		d.Count[i]++
+	} else if i == len(d.Words) {
+		d.Count = append(d.Count, 1)
+		d.Words = append(d.Words, w)
+	} else {
+		d.Count = append(d.Count, 0)
+		d.Words = append(d.Words, "")
+		copy(d.Count[i+1:], d.Count[i:])
+		copy(d.Words[i+1:], d.Words[i:])
+		d.Count[i]++
+		d.Words[i] = w
+	}
 	d.Size += 1
 }
 

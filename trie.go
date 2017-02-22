@@ -57,12 +57,12 @@ func (r *Root) addDoc(doc *Document) {
 	}
 	maxF := 1 / float64(max)
 	var score weights
-	for w, s := range doc.Count {
+	for i, s := range doc.Count {
 		tf := float64(s)
 		score[raw] = tf
 		score[norm] = 1 + math.Log(tf)
 		score[half] = 0.5 + 0.5*tf*maxF
-		r.add(string(w), doc.Id, score)
+		r.add(doc.Words[i], doc.Id, score)
 	}
 }
 
