@@ -11,7 +11,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"reflect"
 	"strings"
+	"unsafe"
 )
 
 const (
@@ -58,7 +60,7 @@ func (s *CS276Scanner) scan(c chan metadata, sem chan bool) {
 		scanner := bufio.NewScanner(file)
 		scanner.Split(bufio.ScanWords)
 		for scanner.Scan() {
-			w := scanner.Text()
+			w := BytesToString(scanner.Bytes())
 			// all lexeme are compted as "seen"
 			doc.addToken(w)
 			doc.addWord(w)
@@ -104,4 +106,11 @@ func (s *CS276Scanner) Scan(c chan metadata) {
 		}
 		close(c)
 	}()
+}
+
+// BytesToString is an unsafe converter from []byte to string
+func BytesToString(b []byte) string {
+	bytesHeader := (*reflect.SliceHeader)(unsafe.Pointer(&b))
+	strHeader := reflect.StringHeader{bytesHeader.Data, bytesHeader.Len}
+	return *(*string)(unsafe.Pointer(&strHeader))
 }
