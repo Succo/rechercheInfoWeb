@@ -28,7 +28,7 @@ type Node struct {
 	// rw is a RWMutex, can be hold by either
 	// 1 writer or many reader
 	rw sync.RWMutex
-	// Sons and Radix holds information
+	// Sons and Radix holds information about the "descendant" of this node
 	Sons  []*Node
 	Radix []string
 	// Refs hold information about the word ending at this node
@@ -76,11 +76,10 @@ func (r *Root) add(w string, id int, tfidf weights) {
 	for {
 		if shared == len(w) {
 			cur.rw.Lock()
+			idx := getMatchingRef(cur.Refs, ref.Id)
 			cur.Refs = append(cur.Refs, ref)
-			for j := len(cur.Refs) - 1; j > 0 &&
-				cur.Refs[j-1].Id > cur.Refs[j].Id; j-- {
-				cur.Refs[j-1], cur.Refs[j] = cur.Refs[j], cur.Refs[j-1]
-			}
+			copy(cur.Refs[idx+1:], cur.Refs[idx:])
+			cur.Refs[idx] = ref
 			cur.rw.Unlock()
 			return
 		}
@@ -140,9 +139,9 @@ func (r *Root) add(w string, id int, tfidf weights) {
 			cur.Radix = append(cur.Radix, "")
 			copy(cur.Sons[i+1:], cur.Sons[i:])
 			copy(cur.Radix[i+1:], cur.Radix[i:])
+			// bring the new node to it's place
 			cur.Sons[i] = new
 			cur.Radix[i] = w[shared:]
-			// bring the new node to it's place
 			cur.rw.Unlock()
 			break
 		}
@@ -329,5 +328,16 @@ func getMatchingNode(sons []string, b byte) int {
 		}
 		return min
 	}
+}
 
+// getMatchingRef returns the index of the
+// at which to insert the new ref
+func getMatchingRef(refs []Ref, id int) int {
+	// Walk from the end as it's likely to be more efficient
+	for i := len(refs) - 1; i >= 0; i-- {
+		if refs[i].Id < id {
+			return i
+		}
+	}
+	return len(refs)
 }
