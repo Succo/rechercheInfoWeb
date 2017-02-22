@@ -25,6 +25,10 @@ type PreCallCalculator struct {
 	Answer [][]int
 	// Valid is a list of valid graphs (i.e not empty)
 	Valids []int
+	// MAP is the Mean Average Precision Value
+	MAP [total]float64
+	// descirption of the differentts weight function
+	Descrpt [total]string
 }
 
 // Point is a value in a precision/recall graph
@@ -34,7 +38,7 @@ type Point struct {
 
 // NewPreCallCalculator returns an empty PreCallCalculator
 func NewPreCallCalculator() *PreCallCalculator {
-	return &PreCallCalculator{}
+	return &PreCallCalculator{Descrpt: weightName}
 }
 
 // Populate adds all the needed values to tue queries and answer list
@@ -194,12 +198,14 @@ func (p *PreCallCalculator) Draw(cacm *Search) {
 	file := path.Join(dir, "avg.svg")
 	plt := getPlot()
 
+	var f [total]*plotter.Function
 	for wf := 0; wf < total; wf++ {
-		f := averageFunction(Average[wf])
-		f.Color = colors[wf]
-		plt.Add(f)
+		f[wf] = averageFunction(Average[wf])
+		f[wf].Color = colors[wf]
+		plt.Add(f[wf])
 		wn := weightName[wf]
-		plt.Legend.Add(wn, f)
+		plt.Legend.Add(wn, f[wf])
+		p.MAP[wf] = getMAP(f[wf])
 	}
 	if err = plt.Save(20*vg.Centimeter, 20*vg.Centimeter, file); err != nil {
 		panic(err)
@@ -298,4 +304,13 @@ func averageFunction(funcs []*plotter.Function) *plotter.Function {
 	f.Width = vg.Points(2)
 	f.Samples = 256
 	return f
+}
+
+func getMAP(f *plotter.Function) float64 {
+	sample := 256
+	var avg float64
+	for i := 0; i < sample; i++ {
+		avg += f.F(float64(i) / float64(sample))
+	}
+	return avg / float64(sample)
 }
