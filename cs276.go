@@ -58,7 +58,7 @@ func (s *CS276Scanner) scan(c chan metadata, sem chan bool) {
 			break
 		}
 		scanner := bufio.NewScanner(file)
-		scanner.Split(bufio.ScanWords)
+		scanner.Split(scanWords)
 		for scanner.Scan() {
 			w := BytesToString(scanner.Bytes())
 			// all lexeme are compted as "seen"
@@ -113,4 +113,33 @@ func BytesToString(b []byte) string {
 	bytesHeader := (*reflect.SliceHeader)(unsafe.Pointer(&b))
 	strHeader := reflect.StringHeader{bytesHeader.Data, bytesHeader.Len}
 	return *(*string)(unsafe.Pointer(&strHeader))
+}
+
+// scanWords is a split function for a Scanner that returns each
+// space-separated word of text, with surrounding spaces deleted. It will
+// never return an empty string. The definition of space is ' '
+// it expects bytes and no special character
+// should really only be used with CS276, And even then should not be used
+// Addapted from https://golang.org/src/bufio/scan.go?s=12782:12860#L374
+func scanWords(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	// Skip leading spaces.
+	start := 0
+	for ; start < len(data); start++ {
+		if data[start] != ' ' {
+			break
+		}
+	}
+	// Scan until space, marking end of word.
+	for i := start; i < len(data); i++ {
+		if data[i] == ' ' {
+			return i + 1, data[start:i], nil
+		}
+	}
+	// If we're at EOF, we have a final, non-empty, non-terminated word. Return it.
+	// Without the last character (newline)
+	if atEOF && len(data) > start {
+		return len(data), data[start : len(data)-1], nil
+	}
+	// Request more data.
+	return start, nil, nil
 }
