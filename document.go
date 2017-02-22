@@ -1,10 +1,6 @@
 package main
 
-import (
-	"sort"
-
-	"github.com/surgebase/porter2"
-)
+import "github.com/surgebase/porter2"
 
 // weight serves to identify the different weight that can be used
 type weight int
@@ -45,6 +41,8 @@ func scale(w *weights, c float64) {
 type Document struct {
 	Title string
 	// store the count of each term in the document
+	// Words is an ordered list of lexemes
+	// Count is the number of occurence for the word at the same index
 	Count []int
 	Words []string
 	// stores the total size
@@ -64,7 +62,7 @@ func (d *Document) addWord(w string) {
 	if len(w) > 3 {
 		w = porter2.Stem(w)
 	}
-	i := sort.SearchStrings(d.Words, w)
+	i := getWordIndex(d.Words, w)
 	if i < len(d.Words) && d.Words[i] == w {
 		d.Count[i]++
 	} else if i == len(d.Words) {
@@ -91,4 +89,36 @@ func (d *Document) reset() {
 	d.Words = d.Words[:0]
 	d.Size = 0
 	d.Tokens = 0
+}
+
+func getWordIndex(words []string, w string) int {
+	switch {
+	case len(words) == 0:
+		return 0
+
+	case len(words) < 10:
+		for i, word := range words {
+			if word >= w {
+				return i
+			}
+		}
+		return len(words)
+
+	default:
+		// If the slice is long use binary search
+		// better tuning needed here
+		min := 0
+		max := len(words)
+		var match int
+		for min < max {
+			match = min + (max-min)/2
+			if words[match] < w {
+				min = match + 1
+			} else {
+				max = match
+			}
+		}
+		return min
+	}
+
 }
