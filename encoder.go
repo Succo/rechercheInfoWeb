@@ -3,24 +3,29 @@ package main
 
 import (
 	"io"
+	"log"
 	"math"
 	"os"
+	"time"
 )
 
 // Serialize save to file the trie
 func (r *Root) Serialize(name string) {
+	now := time.Now()
 	index, err := os.Create("indexes/" + name + ".index")
 	if err != nil {
 		panic(err)
 	}
 
-	encodeInt(index, r.count)
-	r.Node.Encode(index)
+	buf := make([]byte, 8)
+	encodeInt(index, r.count, buf)
+	r.Node.Encode(index, buf)
 
 	err = index.Close()
 	if err != nil {
 		panic(err.Error())
 	}
+	log.Printf("%s index serialization took %s", name, time.Since(now))
 }
 
 // UnserializeTrie reloads the trie from files
@@ -32,10 +37,11 @@ func UnserializeTrie(name string) *Root {
 	}
 	defer index.Close()
 
-	r.count = decodeInt(index)
+	buf := make([]byte, 8)
+	r.count = decodeInt(index, buf)
 
 	r.Node = &Node{}
-	r.Node.Decode(index)
+	r.Node.Decode(index, buf)
 
 	return r
 }
@@ -49,20 +55,20 @@ func UnserializeTrie(name string) *Root {
 // len(sons)
 // [len(sons] len(str) str
 // [len(sons)] *Node
-func (n *Node) Encode(encoder io.Writer) {
-	encodeInt(encoder, len(n.Refs))
+func (n *Node) Encode(encoder io.Writer, buf []byte) {
+	encodeInt(encoder, len(n.Refs), buf)
 	for _, ref := range n.Refs {
 		for i := 0; i < total; i++ {
-			encodeFloat(encoder, ref.Weights[i])
+			encodeFloat(encoder, ref.Weights[i], buf)
 		}
 	}
 	for _, ref := range n.Refs {
-		encodeInt(encoder, ref.Id)
+		encodeInt(encoder, ref.Id, buf)
 	}
 
-	encodeStringSlice(encoder, n.Radix)
+	encodeStringSlice(encoder, n.Radix, buf)
 	for _, sons := range n.Sons {
-		sons.Encode(encoder)
+		sons.Encode(encoder, buf)
 	}
 }
 
@@ -75,29 +81,28 @@ func (n *Node) Encode(encoder io.Writer) {
 // len(sons)
 // [len(sons] len(str) str
 // [len(sons)] *Node
-func (n *Node) Decode(decoder io.Reader) {
-	length := decodeInt(decoder)
+func (n *Node) Decode(decoder io.Reader, buf []byte) {
+	length := decodeInt(decoder, buf)
 	n.Refs = make([]Ref, length)
 	for i := 0; i < length; i++ {
 		for j := 0; j < total; j++ {
-			n.Refs[i].Weights[j] = decodeFloat(decoder)
+			n.Refs[i].Weights[j] = decodeFloat(decoder, buf)
 		}
 	}
 	for i := 0; i < int(length); i++ {
-		n.Refs[i].Id = decodeInt(decoder)
+		n.Refs[i].Id = decodeInt(decoder, buf)
 	}
 
-	n.Radix = decodeStringSlice(decoder)
+	n.Radix = decodeStringSlice(decoder, buf)
 	n.Sons = make([]*Node, len(n.Radix))
 	for i := 0; i < len(n.Radix); i++ {
 		n.Sons[i] = &Node{}
-		n.Sons[i].Decode(decoder)
+		n.Sons[i].Decode(decoder, buf)
 	}
 }
 
 // encodeInt writes an int to w
-func encodeInt(w io.Writer, n int) {
-	buf := make([]byte, 8)
+func encodeInt(w io.Writer, n int, buf []byte) {
 	for i := 7; i >= 0; i-- {
 		buf[i] = uint8(n)
 		n >>= 8
@@ -109,8 +114,7 @@ func encodeInt(w io.Writer, n int) {
 }
 
 // decodeInt reads an int from r
-func decodeInt(r io.Reader) int {
-	buf := make([]byte, 8)
+func decodeInt(r io.Reader, buf []byte) int {
 	_, err := r.Read(buf)
 	if err != nil {
 		panic(err.Error())
@@ -124,7 +128,7 @@ func decodeInt(r io.Reader) int {
 
 // encodeFloat writes a float64 to w
 // taken from https://github.com/golang/go/blob/964639cc338db650ccadeafb7424bc8ebb2c0f6c/src/encoding/gob/encode.go#L204
-func encodeFloat(w io.Writer, f float64) {
+func encodeFloat(w io.Writer, f float64, buf []byte) {
 	u := math.Float64bits(f)
 	var v uint64
 	for i := 0; i < 8; i++ {
@@ -132,7 +136,6 @@ func encodeFloat(w io.Writer, f float64) {
 		v |= u & 0xFF
 		u >>= 8
 	}
-	buf := make([]byte, 8)
 	for i := 7; i >= 0; i-- {
 		buf[i] = uint8(v)
 		v >>= 8
@@ -144,8 +147,7 @@ func encodeFloat(w io.Writer, f float64) {
 }
 
 // decodeFloat reads a float64 from r
-func decodeFloat(r io.Reader) float64 {
-	buf := make([]byte, 8)
+func decodeFloat(r io.Reader, buf []byte) float64 {
 	_, err := r.Read(buf)
 	if err != nil {
 		panic(err.Error())
@@ -164,11 +166,11 @@ func decodeFloat(r io.Reader) float64 {
 	return math.Float64frombits(v)
 }
 
-func encodeStringSlice(w io.Writer, str []string) {
-	encodeInt(w, len(str))
+func encodeStringSlice(w io.Writer, str []string, buf []byte) {
+	encodeInt(w, len(str), buf)
 	for _, rad := range str {
 		b := []byte(rad)
-		encodeInt(w, len(b))
+		encodeInt(w, len(b), buf)
 		_, err := w.Write(b)
 		if err != nil {
 			panic(err)
@@ -176,15 +178,18 @@ func encodeStringSlice(w io.Writer, str []string) {
 	}
 }
 
-func decodeStringSlice(r io.Reader) []string {
-	length := decodeInt(r)
+func decodeStringSlice(r io.Reader, buf []byte) []string {
+	length := decodeInt(r, buf)
 
 	str := make([]string, length)
+	rad := make([]byte, 8)
 	for i := 0; i < length; i++ {
-		strlen := decodeInt(r)
-		rad := make([]byte, strlen)
-		r.Read(rad)
-		str[i] = string(rad)
+		strlen := decodeInt(r, buf)
+		if strlen > len(rad) {
+			rad = make([]byte, strlen)
+		}
+		r.Read(rad[:strlen])
+		str[i] = string(rad[:strlen])
 	}
 	return str
 }
