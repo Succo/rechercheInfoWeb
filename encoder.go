@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bufio"
 	"io"
 	"log"
 	"math"
@@ -16,10 +17,12 @@ func (r *Root) Serialize(name string) {
 	if err != nil {
 		panic(err)
 	}
+	buffered := bufio.NewWriter(index)
 
 	buf := make([]byte, 8)
-	encodeInt(index, r.count, buf)
-	r.Node.Encode(index, buf)
+	encodeInt(buffered, r.count, buf)
+	r.Node.Encode(buffered, buf)
+	buffered.Flush()
 
 	err = index.Close()
 	if err != nil {
@@ -30,19 +33,25 @@ func (r *Root) Serialize(name string) {
 
 // UnserializeTrie reloads the trie from files
 func UnserializeTrie(name string) *Root {
+	now := time.Now()
 	r := &Root{}
 	index, err := os.Open("indexes/" + name + ".index")
 	if err != nil {
 		panic(err)
 	}
-	defer index.Close()
+	buffered := bufio.NewReader(index)
 
 	buf := make([]byte, 8)
-	r.count = decodeInt(index, buf)
+	r.count = decodeInt(buffered, buf)
 
 	r.Node = &Node{}
-	r.Node.Decode(index, buf)
+	r.Node.Decode(buffered, buf)
 
+	err = index.Close()
+	if err != nil {
+		panic(err.Error())
+	}
+	log.Printf("%s index unserialization took %s", name, time.Since(now))
 	return r
 }
 
@@ -115,10 +124,7 @@ func encodeInt(w io.Writer, n int, buf []byte) {
 
 // decodeInt reads an int from r
 func decodeInt(r io.Reader, buf []byte) int {
-	_, err := r.Read(buf)
-	if err != nil {
-		panic(err.Error())
-	}
+	read(buf, r)
 	var n uint64
 	for _, b := range buf {
 		n = n<<8 | uint64(b)
@@ -148,10 +154,7 @@ func encodeFloat(w io.Writer, f float64, buf []byte) {
 
 // decodeFloat reads a float64 from r
 func decodeFloat(r io.Reader, buf []byte) float64 {
-	_, err := r.Read(buf)
-	if err != nil {
-		panic(err.Error())
-	}
+	read(buf, r)
 	var u uint64
 	for _, b := range buf {
 		u = u<<8 | uint64(b)
@@ -188,8 +191,21 @@ func decodeStringSlice(r io.Reader, buf []byte) []string {
 		if strlen > len(rad) {
 			rad = make([]byte, strlen)
 		}
-		r.Read(rad[:strlen])
+		read(rad[:strlen], r)
 		str[i] = string(rad[:strlen])
 	}
 	return str
+}
+
+// read wraps r.Read, making sure all reads are complete
+func read(buf []byte, r io.Reader) {
+	var read int
+	length := len(buf)
+	for read < length {
+		n, err := r.Read(buf[read:length])
+		if err != nil {
+			panic(err.Error())
+		}
+		read += n
+	}
 }
