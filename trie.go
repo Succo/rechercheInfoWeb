@@ -5,13 +5,9 @@
 package main
 
 import (
-	"encoding/gob"
 	"math"
-	"os"
 	"strings"
 	"sync"
-
-	"github.com/golang/snappy"
 )
 
 // Root is the root of the prefix tree
@@ -199,44 +195,6 @@ func (n *Node) calculateIDF(factor float64) {
 		son.calculateIDF(factor)
 	}
 	n.rw.RUnlock()
-}
-
-// Serialize save to file the trie
-func (r *Root) Serialize(name string) {
-	index, err := os.Create("indexes/" + name + ".index")
-	if err != nil {
-		panic(err)
-	}
-	defer index.Close()
-	snap := snappy.NewBufferedWriter(index)
-	en := gob.NewEncoder(snap)
-	err = en.Encode(r.Node)
-	if err != nil {
-		panic(err)
-	}
-	err = snap.Close()
-	if err != nil {
-		panic(err.Error())
-	}
-	index.Close()
-}
-
-// UnserializeTrie reloads the trie from files
-func UnserializeTrie(name string) *Root {
-	r := &Root{}
-	index, err := os.Open("indexes/" + name + ".index")
-	if err != nil {
-		panic(err)
-	}
-	defer index.Close()
-	snap := snappy.NewReader(index)
-	en := gob.NewDecoder(snap)
-	err = en.Decode(&r.Node)
-	if err != nil {
-		panic(err)
-	}
-	index.Close()
-	return r
 }
 
 // getInfIndex walks the tree
