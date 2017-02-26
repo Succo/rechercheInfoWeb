@@ -60,19 +60,23 @@ func UnserializeTrie(name string) *Root {
 // Schema is
 // len(Ref)
 // [len(Ref)][total]float64 weights
-// [len(Ref)]int ids
+// [len(Ref)]int ids // delta encoded
 // len(sons)
 // [len(sons] len(str) str
 // [len(sons)] *Node
 func (n *Node) Encode(encoder io.Writer, buf []byte) {
 	encodeUInt(encoder, uint(len(n.Refs)), buf)
-	for _, ref := range n.Refs {
-		for i := 0; i < total; i++ {
-			encodeFloat(encoder, ref.Weights[i], buf)
+	if len(n.Refs) > 0 {
+		for _, ref := range n.Refs {
+			for i := 0; i < total; i++ {
+				encodeFloat(encoder, ref.Weights[i], buf)
+			}
 		}
-	}
-	for _, ref := range n.Refs {
-		encodeUInt(encoder, uint(ref.Id), buf)
+		encodeUInt(encoder, uint(n.Refs[0].Id), buf)
+		for i := 1; i < len(n.Refs); i++ {
+			// delta encoding
+			encodeUInt(encoder, uint(n.Refs[i].Id-n.Refs[i-1].Id), buf)
+		}
 	}
 
 	encodeStringSlice(encoder, n.Radix, buf)
@@ -98,8 +102,11 @@ func (n *Node) Decode(decoder io.Reader, buf []byte) {
 			n.Refs[i].Weights[j] = decodeFloat(decoder, buf)
 		}
 	}
-	for i := 0; i < int(length); i++ {
-		n.Refs[i].Id = int(decodeUInt(decoder, buf))
+	if length > 0 {
+		n.Refs[0].Id = int(decodeUInt(decoder, buf))
+		for i := 1; i < length; i++ {
+			n.Refs[i].Id = int(decodeUInt(decoder, buf)) + n.Refs[i-1].Id
+		}
 	}
 
 	n.Radix = decodeStringSlice(decoder, buf)
