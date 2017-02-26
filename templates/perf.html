@@ -6,26 +6,20 @@
 		{{ template "topbar" }}
 		<h3> Temps pris pour la construction de l'index. </h3>
 		<ul>
-			<li>Parsing: découpage des documents en tokens</li>
-			<li>IDF: multiplication des TFs, par les IDFs</li>
-			<li>Indexing: construction de l'arbre des préfixes</li>
+			<li>Indexation: realisation de l'arbre de préfixe, incluant la lecture et tokenisation des fichiers</li>
 			<li>Serialization: écritures des fichiers</li>
 		</ul>
 		<table width="100%" cellspacing="0">
 			<tr style="background:#EFEFEF">
 				<th>Corpus</th>
-				<th>Parsing</th>
-				<th>IDF</th>
-				<th>Indexing</th>
+				<th>Indexation</th>
 				<th>Serialization</th>
 				<th>Total</th>
 			</tr>
 			{{ range . }}
 			<tr>
 				<td>{{ .Name }}</td>
-				<td>{{ .Parsing | duration  }}</td>
-				<td>{{ .IDF | duration }}</td>
-				<td>{{ .Indexing | duration }}</td>
+				<td>{{ .Parsing | duration }}</td>
 				<td>{{ .Serialization | duration }}</td>
 				<td>{{ .TotalTime | duration }}</td>
 			</tr>
@@ -33,7 +27,7 @@
 		</table>
 		<p>
 		Voici un <a href="http://www.brendangregg.com/flamegraphs.html">flamegraph</a>
-		illustrant les performances lors de l'indexage.
+		illustrant le temps passé lors des différentes étapes.
 		</p>
 		<p>
 			<object class="p" data="/graphs/torch.svg" type="image/svg+xml" 
@@ -45,22 +39,24 @@
 		La librairie que j'utilise (<a href="https://github.com/surgebase/porter2">https://github.com/surgebase/porter2</a>) est une des plus rapide que j'ai pus tester.
 		Différentes expérience tels que l'ajout d'un "cache" n'ont pas permis d'améliorer ça.
 		</br>
-		Il serait possible de "tricher" en abusant du caractère pré-traité de CS276.
-		Ainsi pas besoin de séparer les mots en <a href="https://blog.golang.org/strings">rune</a> quand tous les caractère sont en ASCII.
-		De même pas besoin de lowercasé les strings qui le sont déjà.
+		Il serait possible de "tricher" en abusant du caractère pré-traité de CS276, pour améliorer cet étape (pas d'accent ou de majuscule),
+		mais j'ai estimé que ce serait un peu contourner l'obstacle.
+		De plus la librairie est déjà très rapide, utilisant un Finite State Tree, et du code généré pour ne pas dépendre de hashmap dans les listes de cas.
 		</br>
-		Cependant en raison de l'utilisation de goroutine pour le traitement des fichiers,
-		Le vrais point bloquant est l'ajout des documents traité à l'index.
-		Il serait intéressant de chercher à effectuer cette opération de manière concurrente.
+		Les optimisations les plus efficace ont été:
+		<ul>
+			<li>L'utilisation de goroutine pour répartir le travail au maximun, il serait d'ailleur intéressant de regarder la vitesse en fonction du nombre de goroutine, de core et de l'accès disque.</li>
+			<li>Avoir choisi un arbre de préfixe comme indexe et pas une hashmap, en particulier car il est accesible de façon concurrente en écriture.</li>
+			<li>Pour les index temporaire (par fichier) ne pas passer par des hashmap mais des listes ordonné fu un gain de temps,
+				c'est assez marginale et probablement vrai que parce que les documents sont cours.</li>
+			<li>La transformation rapide en []byte en string, possible que parce que, j'avais la certitude que les bytes ne seraient plus réutilisé.</li> 
+		</ul>
+		Globalement la génération rapide de flammegraph fut très utile pour l'optimisation.
 		</p>
 
-
-		</br>
 		<h3> Tailles des différents parties de l'index. </h3>
 		<ul>
-			<li>Index: tableau des docID, delta encoded</li>
-			<li>Poids: tableau des valeurs de tfidf</li>
-			<li>Arbre des préfixes: pointeurs dans les 2 tableaux précédents</li>
+			<li>Index: arbre des préfixes, contient la structure de l'arbre et les listes de docID et de poids, les ID sont delta encoded</li>
 			<li>Titre: liste des titres des documents</li>
 		</ul>
 		<table width="100%" cellspacing="0">
@@ -84,9 +80,10 @@
 			{{ end }}
 		</table>
 		<p align="justify">
-		L'élément le plus impactant est clairement le tableaux contenant tous les poids.
+		L'index est évidement le plus gros fichier (longue liste de float, et de string).
 		C'est pour cela que j'utilse <a href="https://google.github.io/snappy/">snappy</a>.
-		Cela a permis de gagner près de 30% pour la taille du tableau, sans impact sensible sur le temps de serialisation.
+		Cela a permis de gagner près de 60% pour la taille du tableau, avec un léger impact sur le temps d'écriture.
+		Il y aurait surement des gains à faire au niveau des listes de string, peut être en encodant la taile du string que pour les exception vu que beaucoup dans le haut de l'arbre sont de taille 1.
 		</p>
 		<p align="justify">
 		Il convient néanmoins de noter que mon tableau des poids stockes les valeurs correspondants aux 3 fonctions utilisable pour la recherche vectorielle.
