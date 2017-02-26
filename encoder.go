@@ -1,4 +1,8 @@
 // Encoder.go stores function related to encding the index
+// other classes are written to files using gob a encoding library inclued in go
+// besause the library needs to "read" the underlying type of the data it was
+// way too slow to use directly on a recursive data structure like a trie
+
 package main
 
 import (
@@ -24,6 +28,7 @@ func (r *Root) Serialize(name string) {
 	}
 	buffered := snappy.NewBufferedWriter(index)
 
+	// 9 is the size of a uint64 + 1, see encodeUint for details
 	buf := make([]byte, 9)
 	encodeUInt(buffered, uint(r.count), buf)
 	r.Node.Encode(buffered, buf)
@@ -95,7 +100,7 @@ func (n *Node) Encode(encoder io.Writer, buf []byte) {
 // Schema is
 // len(Ref)
 // [len(Ref)][total]float64 weights
-// [len(Ref)]int ids
+// [len(Ref)]int ids // delta encoded
 // len(sons)
 // [len(sons] len(str) str
 // [len(sons)] *Node
@@ -122,7 +127,9 @@ func (n *Node) Decode(decoder io.Reader, buf []byte) {
 	}
 }
 
-// encodeUInt writes an int to w
+// encodeUInt writes an uint to w
+// if the int is smaller than 128 it's written as is
+// otherwise the number of bytes is written followed by the values
 func encodeUInt(w io.Writer, n uint, buf []byte) {
 	if n <= 0x7F {
 		w.Write([]byte{uint8(n)})
@@ -141,7 +148,9 @@ func encodeUInt(w io.Writer, n uint, buf []byte) {
 	}
 }
 
-// decodeUInt reads an int from r
+// decodeUInt reads an uint from r
+// if the int is smaller than 128 then it's the first byte
+// otherwise the first byte is the number of byte
 func decodeUInt(r io.Reader, buf []byte) uint {
 	read(buf[:1], r)
 	if buf[0] <= 0x7F {
@@ -184,6 +193,9 @@ func decodeFloat(r io.Reader, buf []byte) float64 {
 	return math.Float64frombits(v)
 }
 
+// encodeStringSlice encodes a slice of string
+// first encoding the length of the slice
+// then the len of each string followed by the bytes composing the string
 func encodeStringSlice(w io.Writer, str []string, buf []byte) {
 	encodeUInt(w, uint(len(str)), buf)
 	for _, rad := range str {
@@ -196,10 +208,13 @@ func encodeStringSlice(w io.Writer, str []string, buf []byte) {
 	}
 }
 
+// decodeStringSlice decodes a slice of string
+// first decoding the length of the slice
+// then the len of each string followed by the bytes composing the string
 func decodeStringSlice(r io.Reader, buf []byte) []string {
 	length := int(decodeUInt(r, buf))
-
 	str := make([]string, length)
+	// Uses this as a potentially bigger buffer
 	rad := make([]byte, 8)
 	for i := 0; i < length; i++ {
 		strlen := int(decodeUInt(r, buf))
