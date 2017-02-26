@@ -2,12 +2,13 @@
 package main
 
 import (
-	"bufio"
 	"io"
 	"log"
 	"math"
 	"os"
 	"time"
+
+	"github.com/golang/snappy"
 )
 
 const (
@@ -21,7 +22,7 @@ func (r *Root) Serialize(name string) {
 	if err != nil {
 		panic(err)
 	}
-	buffered := bufio.NewWriter(index)
+	buffered := snappy.NewBufferedWriter(index)
 
 	buf := make([]byte, 9)
 	encodeUInt(buffered, uint(r.count), buf)
@@ -43,7 +44,7 @@ func UnserializeTrie(name string) *Root {
 	if err != nil {
 		panic(err)
 	}
-	buffered := bufio.NewReader(index)
+	buffered := snappy.NewReader(index)
 
 	buf := make([]byte, 9)
 	r.count = int(decodeUInt(buffered, buf))
