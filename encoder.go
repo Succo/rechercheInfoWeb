@@ -20,7 +20,7 @@ func (r *Root) Serialize(name string) {
 	buffered := bufio.NewWriter(index)
 
 	buf := make([]byte, 8)
-	encodeInt(buffered, r.count, buf)
+	encodeUInt(buffered, uint(r.count), buf)
 	r.Node.Encode(buffered, buf)
 	buffered.Flush()
 
@@ -42,7 +42,7 @@ func UnserializeTrie(name string) *Root {
 	buffered := bufio.NewReader(index)
 
 	buf := make([]byte, 8)
-	r.count = decodeInt(buffered, buf)
+	r.count = int(decodeUInt(buffered, buf))
 
 	r.Node = &Node{}
 	r.Node.Decode(buffered, buf)
@@ -65,14 +65,14 @@ func UnserializeTrie(name string) *Root {
 // [len(sons] len(str) str
 // [len(sons)] *Node
 func (n *Node) Encode(encoder io.Writer, buf []byte) {
-	encodeInt(encoder, len(n.Refs), buf)
+	encodeUInt(encoder, uint(len(n.Refs)), buf)
 	for _, ref := range n.Refs {
 		for i := 0; i < total; i++ {
 			encodeFloat(encoder, ref.Weights[i], buf)
 		}
 	}
 	for _, ref := range n.Refs {
-		encodeInt(encoder, ref.Id, buf)
+		encodeUInt(encoder, uint(ref.Id), buf)
 	}
 
 	encodeStringSlice(encoder, n.Radix, buf)
@@ -91,7 +91,7 @@ func (n *Node) Encode(encoder io.Writer, buf []byte) {
 // [len(sons] len(str) str
 // [len(sons)] *Node
 func (n *Node) Decode(decoder io.Reader, buf []byte) {
-	length := decodeInt(decoder, buf)
+	length := int(decodeUInt(decoder, buf))
 	n.Refs = make([]Ref, length)
 	for i := 0; i < length; i++ {
 		for j := 0; j < total; j++ {
@@ -99,7 +99,7 @@ func (n *Node) Decode(decoder io.Reader, buf []byte) {
 		}
 	}
 	for i := 0; i < int(length); i++ {
-		n.Refs[i].Id = decodeInt(decoder, buf)
+		n.Refs[i].Id = int(decodeUInt(decoder, buf))
 	}
 
 	n.Radix = decodeStringSlice(decoder, buf)
@@ -110,8 +110,8 @@ func (n *Node) Decode(decoder io.Reader, buf []byte) {
 	}
 }
 
-// encodeInt writes an int to w
-func encodeInt(w io.Writer, n int, buf []byte) {
+// encodeUInt writes an int to w
+func encodeUInt(w io.Writer, n uint, buf []byte) {
 	for i := 7; i >= 0; i-- {
 		buf[i] = uint8(n)
 		n >>= 8
@@ -122,14 +122,14 @@ func encodeInt(w io.Writer, n int, buf []byte) {
 	}
 }
 
-// decodeInt reads an int from r
-func decodeInt(r io.Reader, buf []byte) int {
+// decodeUInt reads an int from r
+func decodeUInt(r io.Reader, buf []byte) uint {
 	read(buf, r)
 	var n uint64
 	for _, b := range buf {
 		n = n<<8 | uint64(b)
 	}
-	return int(n)
+	return uint(n)
 }
 
 // encodeFloat writes a float64 to w
@@ -142,24 +142,12 @@ func encodeFloat(w io.Writer, f float64, buf []byte) {
 		v |= u & 0xFF
 		u >>= 8
 	}
-	for i := 7; i >= 0; i-- {
-		buf[i] = uint8(v)
-		v >>= 8
-	}
-	_, err := w.Write(buf)
-	if err != nil {
-		panic(err.Error())
-	}
+	encodeUInt(w, uint(v), buf)
 }
 
 // decodeFloat reads a float64 from r
 func decodeFloat(r io.Reader, buf []byte) float64 {
-	read(buf, r)
-	var u uint64
-	for _, b := range buf {
-		u = u<<8 | uint64(b)
-	}
-
+	u := uint64(decodeUInt(r, buf))
 	var v uint64
 	for i := 0; i < 8; i++ {
 		v <<= 8
@@ -170,10 +158,10 @@ func decodeFloat(r io.Reader, buf []byte) float64 {
 }
 
 func encodeStringSlice(w io.Writer, str []string, buf []byte) {
-	encodeInt(w, len(str), buf)
+	encodeUInt(w, uint(len(str)), buf)
 	for _, rad := range str {
 		b := []byte(rad)
-		encodeInt(w, len(b), buf)
+		encodeUInt(w, uint(len(b)), buf)
 		_, err := w.Write(b)
 		if err != nil {
 			panic(err)
@@ -182,12 +170,12 @@ func encodeStringSlice(w io.Writer, str []string, buf []byte) {
 }
 
 func decodeStringSlice(r io.Reader, buf []byte) []string {
-	length := decodeInt(r, buf)
+	length := int(decodeUInt(r, buf))
 
 	str := make([]string, length)
 	rad := make([]byte, 8)
 	for i := 0; i < length; i++ {
-		strlen := decodeInt(r, buf)
+		strlen := int(decodeUInt(r, buf))
 		if strlen > len(rad) {
 			rad = make([]byte, strlen)
 		}
