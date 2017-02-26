@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+const (
+	uint64Size = 8
+)
+
 // Serialize save to file the trie
 func (r *Root) Serialize(name string) {
 	now := time.Now()
@@ -19,7 +23,7 @@ func (r *Root) Serialize(name string) {
 	}
 	buffered := bufio.NewWriter(index)
 
-	buf := make([]byte, 8)
+	buf := make([]byte, 9)
 	encodeUInt(buffered, uint(r.count), buf)
 	r.Node.Encode(buffered, buf)
 	buffered.Flush()
@@ -41,7 +45,7 @@ func UnserializeTrie(name string) *Root {
 	}
 	buffered := bufio.NewReader(index)
 
-	buf := make([]byte, 8)
+	buf := make([]byte, 9)
 	r.count = int(decodeUInt(buffered, buf))
 
 	r.Node = &Node{}
@@ -119,11 +123,18 @@ func (n *Node) Decode(decoder io.Reader, buf []byte) {
 
 // encodeUInt writes an int to w
 func encodeUInt(w io.Writer, n uint, buf []byte) {
-	for i := 7; i >= 0; i-- {
+	if n <= 0x7F {
+		w.Write([]byte{uint8(n)})
+		return
+	}
+	i := uint64Size
+	for n > 0 {
 		buf[i] = uint8(n)
 		n >>= 8
+		i--
 	}
-	_, err := w.Write(buf)
+	buf[i] = uint8(i - 8)
+	_, err := w.Write(buf[i : uint64Size+1])
 	if err != nil {
 		panic(err.Error())
 	}
@@ -131,9 +142,17 @@ func encodeUInt(w io.Writer, n uint, buf []byte) {
 
 // decodeUInt reads an int from r
 func decodeUInt(r io.Reader, buf []byte) uint {
-	read(buf, r)
+	read(buf[:1], r)
+	if buf[0] <= 0x7F {
+		return uint(buf[0])
+	}
+	i := -int(int8(buf[0]))
+	if i > uint64Size {
+		panic("Error encoded interger too big")
+	}
+	read(buf[:i], r)
 	var n uint64
-	for _, b := range buf {
+	for _, b := range buf[:i] {
 		n = n<<8 | uint64(b)
 	}
 	return uint(n)

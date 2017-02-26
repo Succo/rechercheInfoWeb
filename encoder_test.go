@@ -8,15 +8,17 @@ import (
 
 func TestEncodeInt(t *testing.T) {
 	var buf bytes.Buffer
-	ints := make([]int, 10)
+	temp := make([]byte, 9)
+
+	uints := make([]uint, 10)
 	for i := 0; i < 10; i++ {
-		ints[i] = rand.Int()
-		encodeInt(&buf, ints[i])
+		uints[i] = uint(rand.Uint32())
+		encodeUInt(&buf, uints[i], temp)
 	}
 	reader := bytes.NewReader(buf.Bytes())
 	for i := 0; i < 10; i++ {
-		j := decodeInt(reader)
-		if ints[i] != j {
+		j := decodeUInt(reader, temp)
+		if uints[i] != j {
 			t.Fatal("Incorrect int recovered")
 		}
 	}
@@ -24,14 +26,15 @@ func TestEncodeInt(t *testing.T) {
 
 func TestEncodeFloat(t *testing.T) {
 	var buf bytes.Buffer
+	temp := make([]byte, 9)
 	floats := make([]float64, 10)
 	for i := 0; i < 10; i++ {
 		floats[i] = rand.Float64()
-		encodeFloat(&buf, floats[i])
+		encodeFloat(&buf, floats[i], temp)
 	}
 	reader := bytes.NewReader(buf.Bytes())
 	for i := 0; i < 10; i++ {
-		j := decodeFloat(reader)
+		j := decodeFloat(reader, temp)
 		if floats[i] != j {
 			t.Fatal("Incorrect float recovered")
 		}
@@ -40,9 +43,10 @@ func TestEncodeFloat(t *testing.T) {
 
 func TestEncodeStringSlice(t *testing.T) {
 	var buf bytes.Buffer
-	encodeStringSlice(&buf, testWords)
+	temp := make([]byte, 9)
+	encodeStringSlice(&buf, testWords, temp)
 	reader := bytes.NewReader(buf.Bytes())
-	unserialized := decodeStringSlice(reader)
+	unserialized := decodeStringSlice(reader, temp)
 	for i, w := range unserialized {
 		if testWords[i] != w {
 			t.Fatal("Incorrect float recovered")
