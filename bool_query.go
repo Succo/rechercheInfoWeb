@@ -1,10 +1,107 @@
+// Bool_query implements the boolean queery function
+//
+// it uses Shunting-yard algorithm to parse the query
+// it tries to be smart when dealing with NOT operator but will faill silently if it can't
+// and default to AND operator if not specified (for example "test student" == "test AND student")
 package main
 
 import (
+	"log"
 	"strings"
 
 	"github.com/surgebase/porter2"
 )
+
+type operator int
+
+const (
+	// The operators are defined in their precedence order
+	and operator = iota
+	or
+	not
+	leftParen
+)
+
+// stack is a basic stack implementation
+type stack []operator
+
+func (s stack) push(t operator) stack {
+	return append(s, t)
+}
+
+func (s stack) pop() (stack, operator) {
+	l := len(s)
+	return s[:l-1], s[l-1]
+}
+
+// BQuery is the interface for all boolean query
+// prec is the previous result, only used by the not operator
+// because it doesn't wan't to be executed on empty question
+// it would generate too big of a result set
+type BQuery interface {
+	evaluate(s *Search, prec []Ref) []Ref
+	isNot() bool
+}
+
+// WordQuery implements the boolean query interface
+// and correspond to a single word query
+type WordQuery struct {
+	w string
+}
+
+func (w WordQuery) evaluate(s *Search, prec []Ref) []Ref {
+	if len(w.w) > 3 {
+		w.w = porter2.Stem(w.w)
+	}
+	return s.Index.get(w.w)
+}
+
+func (w WordQuery) isNot() bool { return false }
+
+// NotQuery implements the negation of a query
+// it will returns empty if not applied on an alread defined set
+type NotQuery struct {
+	b BQuery
+}
+
+func (n NotQuery) evaluate(s *Search, prec []Ref) []Ref {
+	refs := n.b.evaluate(s, []Ref{})
+	return remove(prec, refs)
+}
+
+func (n NotQuery) isNot() bool { return true }
+
+// OrQuery implements the union of two queries
+type OrQuery struct {
+	b1 BQuery
+	b2 BQuery
+}
+
+func (o OrQuery) evaluate(s *Search, prec []Ref) []Ref {
+	res1 := o.b1.evaluate(s, prec)
+	res2 := o.b2.evaluate(s, prec)
+	return union(res1, res2)
+}
+
+func (o OrQuery) isNot() bool { return false }
+
+// AndQuery is implements the  intersection of two queries
+// it tries to keep not element for the end
+type AndQuery struct {
+	b1 BQuery
+	b2 BQuery
+}
+
+func (a AndQuery) evaluate(s *Search, prec []Ref) []Ref {
+	if a.b1.isNot() && !a.b2.isNot() {
+		a.b1, a.b2 = a.b2, a.b1
+	}
+	res1 := a.b1.evaluate(s, prec)
+	res2 := a.b2.evaluate(s, res1)
+	return intersect(res1, res2)
+}
+
+func (a AndQuery) isNot() bool { return false }
 
 func intersect(refs1, refs2 []Ref) []Ref {
 	intersection := make([]Ref, 0, len(refs1))
@@ -76,64 +173,125 @@ func remove(refs1, refs2 []Ref) []Ref {
 	return removed
 }
 
-func BooleanQuery(s *Search, input string) []Ref {
+// BooleanQuery parses a query tring it's best to interpret it as a boolean query
+// it will fail silently and returns empty results if it can't
+func BooleanQuery(s *Search, input string) (results []Ref) {
+	// split the words == really basic parsing of the query
 	words := strings.FieldsFunc(input, splitter)
-	var results []Ref
-	for i := 0; i < len(words); i++ {
-		switch {
-		case len(words[i]) == 0:
-		case i < len(words)-1 && strings.ToUpper(words[i+1]) == "OR":
-			if i >= len(words)-2 {
-				return results
-			}
 
-			var word1, word2 string
-			if len(words[i]) > 3 {
-				word1 = porter2.Stem(words[i])
-			} else {
-				word1 = words[i]
+	// query interpretation using Shunting-yard
+	// query is the output queue
+	var query []BQuery
+	// operators is the stack of operator
+	operators := stack(make([]operator, 0))
+	for i, word := range words {
+		switch strings.ToUpper(word) {
+		case "OR", "AND", "NOT":
+			var op operator
+			switch strings.ToUpper(word) {
+			case "OR":
+				op = or
+			case "AND":
+				op = and
+			case "NOT":
+				op = not
 			}
-			if len(words[i+2]) > 3 {
-				word2 = porter2.Stem(words[i+2])
-			} else {
-				word2 = words[i+2]
+			// first treat all operator with a higher precedence
+			for len(operators) > 0 {
+				var oldOp operator
+				operators, oldOp = operators.pop()
+				if op < oldOp {
+					query = addBOperator(query, oldOp)
+				} else {
+					operators = operators.push(oldOp)
+					break
+				}
 			}
-			refs1 := s.Index.get(word1)
-			refs2 := s.Index.get(word2)
-			res := union(refs1, refs2)
-			if i == 0 {
-				results = res
-			} else {
-				results = intersect(results, res)
+			// then add the operator to the stack
+			operators = operators.push(op)
+		case "(":
+			// just add it to the stack
+			operators = operators.push(leftParen)
+		case ")":
+			// pop from the stack until the matching parentheses is found
+			for len(operators) > 0 {
+				var oldOp operator
+				operators, oldOp = operators.pop()
+				if oldOp != leftParen {
+					query = addBOperator(query, oldOp)
+				} else {
+					break
+				}
 			}
-			i += 2 // Jump two words
-		case strings.ToUpper(words[i]) == "NOT":
-			if i == len(words)-1 {
-				return results
-			}
-			var word string
-			if len(words[i+1]) > 3 {
-				word = porter2.Stem(words[i+1])
-			} else {
-				word = words[i+1]
-			}
-			not := s.Index.get(word)
-			results = remove(results, not)
-			i++
 		default:
-			var word string
-			if len(words[i]) > 3 {
-				word = porter2.Stem(words[i])
-			} else {
-				word = words[i]
-			}
-			refs := s.Index.get(word)
-			if i == 0 {
-				results = refs
-			} else {
-				results = intersect(results, refs)
+			query = append(query, WordQuery{w: word})
+			// default "OR" operaor between words
+			if i+1 < len(words) {
+				switch strings.ToUpper(words[i+1]) {
+				case "OR", "AND", "(", ")":
+					// An operator is already present
+					// Do nothing
+					continue
+				default:
+					// Add an or operator
+					// repeat the same insertion procedure from the previous case
+					op := and
+					for len(operators) > 0 {
+						operators, oldOp := operators.pop()
+						if oldOp < op {
+							query = addBOperator(query, oldOp)
+						} else {
+							operators = operators.push(oldOp)
+							break
+						}
+					}
+					operators = operators.push(op)
+				}
 			}
 		}
 	}
+	// empty the stack of operator
+	for i := len(operators) - 1; i >= 0; i-- {
+		query = addBOperator(query, operators[i])
+	}
+	if len(query) != 1 {
+		log.Println("error when processing bool query")
+	} else {
+		results = query[0].evaluate(s, make([]Ref, 0))
+	}
 	return results
+}
+
+func addBOperator(out []BQuery, op operator) []BQuery {
+	// case wher it's an unary operator
+	if op == not {
+		l := len(out)
+		if l < 1 {
+			// that would mean two operator in a row
+			// Don't throw error just silently "fix" the query
+			return out
+		}
+		b := out[l-1]
+		out = out[:l-1]
+		out = append(out, NotQuery{b})
+		return out
+	}
+
+	l := len(out)
+	if l < 2 {
+		// that would mean two operator in a row
+		// Don't throw error just silently "fix" the query
+		return out
+	}
+	// Apply the operator to the two BExpr in out
+	b1 := out[l-1]
+	b2 := out[l-2]
+	out = out[:l-2]
+	switch op {
+	case or:
+		out = append(out, OrQuery{b1, b2})
+	case and:
+		out = append(out, AndQuery{b1, b2})
+	}
+	return out
 }
