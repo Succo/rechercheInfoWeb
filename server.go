@@ -170,6 +170,13 @@ func serve(cacm, cs276 *Search, precall *PreCallCalculator) {
 		}
 	})
 
+	http.HandleFunc("/archi", func(w http.ResponseWriter, r *http.Request) {
+		err := templates.ExecuteTemplate(w, "archi", nil)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+	})
+
 	// Static content
 	fs := http.FileServer(http.Dir("graphs"))
 	http.Handle("/graphs/", http.StripPrefix("/graphs/", fs))

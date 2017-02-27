@@ -8,6 +8,8 @@ A working version of the code is available [here](https://riw.succo.fr).
 
 # Notice d'intallation
 
+Le projet est disponible sur [github](https://github.com/Succo/rechercheInfoWeb).
+
 Mon projet de RIW a été réalisé en [golang](https://golang.org/).
 Pour pouvoir lancer mon projet il faut le compilateur trouvable [ici](https://golang.org/dl/).
 

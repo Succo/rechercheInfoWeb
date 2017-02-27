@@ -1,0 +1,42 @@
+{{ define "archi" }}
+<!DOCTYPE html>
+<html>
+	{{ template "header" }}
+	<body>
+		{{ template "topbar" }}
+	<h2>Détails sur le système</h2>
+	<h3>Architecture général</h3>
+	<p>
+	Golang est un langage impératif avec un concept de struct, qui sont ne première approximation équivalent à des classes. 
+	Les slices servent grosso modo de list, notation "[]" et reposent sur des array.
+	<p>
+	</p>
+	Mon au programme utilise une struct "Search" (dans le fichier "search.go") comme structure de base contenant l'information sur un corpus.
+	L'index est sous la forme d'un arbre de préfixe (struct "Node" et "Root" dans trie.go).
+	Chaque node contient une slice de ses fils et une slice de préfixes associé.
+	De plus les nodes correspondants à un mon ont une slice de "Ref" une ref étant la combinaison d'une docID et d'un tableaux de poids utilisé pour les recherches vectorielle.
+	De plus "search" contient des métadatas telles que le nombre de Token par documents ou la liste des titres.
+	<p>
+	</p>
+	L'index est peuplé par des méthodes spécifique à CACM et CS276 décrites ci-dessous.
+	<p>
+	</p>
+	Les requètes sont effectué par les struct "vector_query" et "bool_query" situé dans les fichiers respectif. 
+	Le parsing des requètes est assez basique en comptant comme séparateur tout ce qui n'est ni une lettre ni un chiffre.
+	Les requètes booléenne contruisent un AST à partir de la requète en appliquant l'algorithme de Shunting-yard des opérateur AND sont inseré par défauts entre deux mots consécutifs.
+	Elles échoueront silencieusement si l'ensemble demandé est trop gros (requète composé uniquement d'un NOT par exemple).
+	Pour les requètes vectorielle l'implémentation est encore plsu basique, chaque est recherché dans l'index puis les listes de Ref sont mergé en sommant les poids, la liste résultante est ordonné.
+	Pour pouvoir comparer facilement 3 poids sont stocké:
+	</p>
+	<ul>
+		<li>la fréquence brute: nombre de fois ou le mot est présent dans le document</li>
+		<li>la fréquence log normalisé: 1 + le log de la valeur précédente</li>
+		<li>la normalisation par 0.5: 0.5 + 0.5 * la fréquence sur la fréquence max dans ce document</li>
+	</ul>
+	<p>
+	Tout ces poids sont normalisé par l'inverse document frequency.
+	D'après les résultats de qrels fourni avec CACM le dernier poids est le plus intéressant.
+	</p>
+	</body>
+</html>
+{{ end }}
