@@ -21,6 +21,8 @@
 	</p>
 	L'index est peuplé par des méthodes spécifique à CACM et CS276 décrites ci-dessous.
 	<p>
+
+	<h3>Requète</h3>
 	</p>
 	Les requètes sont effectué par les struct "vector_query" et "bool_query" situé dans les fichiers respectif. 
 	Le parsing des requètes est assez basique en comptant comme séparateur tout ce qui n'est ni une lettre ni un chiffre.
@@ -63,6 +65,19 @@
 	</p>
 	<img src="/archi_indexing.svg" style="margin:auto;width:100%"
 	alt="archi indexing CS276">
+
+	<h3>Commentaire sur l'index</h3>
+	<p>
+	L'index est un arbre des préfixes c'est une structure qui est très addapté au index de moteur de recherche.
+	En effet contrairement à une structure de type hashmap la localité des donné est optimisé ce qui peut accelérer les requète.
+	</p>
+	<p>
+	Un autre gros avantage est que sa structure ordonné permet des découplage du travail assez facilement.
+	Propriété dont je profite en accèdant aux différentes nodes de façon concurentiel, vu que des modifications à un sous arbre n'impacte pas le reste de l'arbre.
+	Cela permet d'autre chose dont je n'ai pas eu le temps de profiter pour faire un moteur de recherche qui serait vraiment distribué.
+	Par exemple pour merger deux index le travail peut directement se découper en travail au niveau des fils de la racine (ou à une échelle plus basse récursivement).
+	Pour ne pas avoir tous en mémoire ce qui serait nécessaire pour des corpus plus gros les nodes pourrait être soit sur fichier soit en mémoire est chargé uniquement quand elles sont lus.
+	</p>
 
 	<h3>Serialization</h3>
 	<p>
