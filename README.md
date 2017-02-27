@@ -53,7 +53,7 @@ Dans tous les cas le même programme est disponible en ligne à [https://riw.suc
 
 + Le détails de la structure du programme est disponible à [https://riw.succo.fr/archi](https://riw.succo.fr/archi).
 + Des mesures de performances sont indiqué ici [https://riw.succo.fr/perf](https://riw.succo.fr/perf).
-+ Et des percentiles sur les temsp moyen des requètes sont là [https://riw.succo.fr/percentile](https://riw.succo.fr/percentile)  mais assez imprécis en raison du faible nombre de requète.
++ Et des percentiles sur les temps moyen des requètes sont là [https://riw.succo.fr/percentile](https://riw.succo.fr/percentile)  mais assez imprécis en raison du faible nombre de requète.
 + Les graphes de précision rappel pour l'ensembles des requètes (ayant donné des résultats) de CACM sont [https://riw.succo.fr/qrels](https://riw.succo.fr/qrels) et le graphe moyenné avec les valeurs de MAPS est [https://riw.succo.fr/precall](https://riw.succo.fr/precall).
 
 Toutes ces pages sont aussi accessible localement à l'adresse donné ci dessus tant que le serveur tourne.
