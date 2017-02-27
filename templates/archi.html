@@ -62,6 +62,17 @@
 	<img src="/archi_indexing.svg" style="margin:auto;width:100%"
 	alt="archi indexing CS276">
 	</p>
+
+	<h3>Serialization</h3>
+	<p>
+	Même si ce moteur triche un peu et garde son index en mémoire il est aussi sérialisé, ne serait-ce que pour ne pas avoir à le reconstruire à chaque fois.
+	Le librairie utilisé pour encodes les différents fichier est gob qui fait partie de la librairie standart.
+	Cependant l'arbre des préfixe est sérialisé à la main, la librairie devant lire le type de chaque struct, elle est très lente pour une structure récursive comme un arbre. 
+	J'ai pu gagner 4 secondes sur le temps de sérialisation ainsi alors que mon code est peu optimisé.
+	Cette sérialisation est détaillé dans "encoder.go".
+	J'utilise du delta encoding et du Variable Byte Encoding pour les listes d'entier.
+	Il y aurait probablement des optimisation à faire au niveau des listes de string, certaines étant des longues liste de la forme ['a', 'b', ...] et quasiment complète.
+	</p>
 	</body>
 </html>
 {{ end }}
