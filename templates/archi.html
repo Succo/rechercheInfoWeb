@@ -59,9 +59,9 @@
 	Les index sont ajouté à l'arbre des préfixes ce qui est faisable de façon concurentiel car chaque node est protégé par un mutex (lock).
 	Tous ces workers renvoient aussi les métadata au "thread" principale.
 	Enfin un dernier thread de synchronisation fermera le channel des métadata quand tous l'index est parsé.
+	</p>
 	<img src="/archi_indexing.svg" style="margin:auto;width:100%"
 	alt="archi indexing CS276">
-	</p>
 
 	<h3>Serialization</h3>
 	<p>
