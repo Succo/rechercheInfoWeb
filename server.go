@@ -192,6 +192,10 @@ func serve(cacm, cs276 *Search, precall *PreCallCalculator) {
 		http.ServeFile(w, r, "favicon.ico")
 	})
 
+	http.HandleFunc("/archi_indexing.svg", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "archi_indexing.svg")
+	})
+
 	log.Println("riw starting to serve traffic")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

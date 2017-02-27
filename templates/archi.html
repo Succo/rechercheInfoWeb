@@ -9,6 +9,7 @@
 	<p>
 	Golang est un langage impératif avec un concept de struct, qui sont ne première approximation équivalent à des classes. 
 	Les slices servent grosso modo de list, notation "[]" et reposent sur des array.
+	Une autre structure importante est les channel utilisé pour le travail en concurrence car go est inspiré par "Hoare's Communicating Sequential Processes".
 	<p>
 	</p>
 	Mon au programme utilise une struct "Search" (dans le fichier "search.go") comme structure de base contenant l'information sur un corpus.
@@ -36,6 +37,30 @@
 	<p>
 	Tout ces poids sont normalisé par l'inverse document frequency.
 	D'après les résultats de qrels fourni avec CACM le dernier poids est le plus intéressant.
+	</p>
+
+	<h3>Indexation de CACM</h3>
+	<p>
+	La struct de base pour mes index et le documents qui contient des "index intermédiaire" lié à un document.
+	Cette struct est définie dans "document.go".
+	Les mots présent dans le document et nettoyé sont stocké sous la forme d'une liste ordonné, avec une liste équivalene pour les fréquences brutes.
+	Ces index intermédiaire sont ajouté à l'index principale dès qu'un document est lu dans son entiereté.
+	Le fichier "cacm.go" contient la struct qui réalise le parsing.
+	Le fichier est lu séquentiellement est une variable mémorise dans quel block on se situe.
+	Les métadata des documents indexé sont aussi envoyé par un channel pour être ajouté à la struct "search".
+	Cette construction est surtout pour avoir la même interface que CS276.
+	</p>
+
+	<h3>Indexation de CS276</h3>
+	<p>
+	L'indexation de CS276 est faite en parrallèle utilisant des workers qui recoivent les documents à traiter par des channels.
+	Une goroutine (équivalent en plus légers des threads) envoie sur un channel la liste des documents à traiter.
+	Les documents sont parsé ce qui est très basique vu que le travail est quasiment déjà fait.
+	Les index sont ajouté à l'arbre des préfixes ce qui est faisable de façon concurentiel car chaque node est protégé par un mutex (lock).
+	Tous ces workers renvoient aussi les métadata au "thread" principale.
+	Enfin un dernier thread de synchronisation fermera le channel des métadata quand tous l'index est parsé.
+	<img src="/archi_indexing.svg" style="margin:auto;width:100%"
+	alt="archi indexing CS276">
 	</p>
 	</body>
 </html>
