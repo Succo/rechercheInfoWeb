@@ -10,8 +10,12 @@ A working version of the code is available [here](https://riw.succo.fr).
 
 Le projet est disponible sur [github](https://github.com/Succo/rechercheInfoWeb).
 
+## Création du binaire 
+
 Mon projet de RIW a été réalisé en [golang](https://golang.org/).
-Pour pouvoir lancer mon projet il faut le compilateur trouvable [ici](https://golang.org/dl/).
+Le plus simple pour lancer le projet reste l'utilisation du binaire précompilé accesible sur [github](https://github.com/Succo/rechercheInfoWeb/releases/tag/v1.0).
+
+Sinon pour tout installer à partir du code source, il faut le compilateur trouvable [ici](https://golang.org/dl/).
 
 Un particularité de go est l'utilisation du GOPATH qui est la racine d'un dossier ou seront tous les programmes et librairies liè à go.
 Par défaut la valeur de $GOPATH est $HOME/go, il est possible de choisir un autre chemin en modifiant la variable d'environnement.
@@ -28,6 +32,8 @@ go get github.com/golang/snappy
 
 Pour utiliser le programme il faut le compiler en lancant `go install` dans la racine du dossier `$GOPATH/src/github.com/Succo/rechercheInfoWeb`.
 Le binaire produit sera `$GOPATH/bin/rechercheInfoWeb`.
+
+## Utilisation du binaire
 
 Pour lancer le binaire il faut
 
