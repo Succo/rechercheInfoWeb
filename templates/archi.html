@@ -43,10 +43,11 @@
 	<p>
 	La struct de base pour mes index et le documents qui contient des "index intermédiaire" lié à un document.
 	Cette struct est définie dans "document.go".
-	Les mots présent dans le document et nettoyé sont stocké sous la forme d'une liste ordonné, avec une liste équivalene pour les fréquences brutes.
+	Les mots présent dans le document et nettoyé sont stocké sous la forme d'une liste ordonné, avec une liste équivalente pour les fréquences brutes (i.e la fréquence en position 43 correspond au lexeme en position 43).
 	Ces index intermédiaire sont ajouté à l'index principale dès qu'un document est lu dans son entiereté.
 	Le fichier "cacm.go" contient la struct qui réalise le parsing.
-	Le fichier est lu séquentiellement est une variable mémorise dans quel block on se situe.
+	Le fichier est lu séquentiellement et une variable mémorise dans quel type de block on se situe (title, summary ...).
+	Dans un premier temps j'avis séparé le lexing et le parsing mais au vu de la simplicité de la structure de donné ça c'est averé pas nécessaire.
 	Les métadata des documents indexé sont aussi envoyé par un channel pour être ajouté à la struct "search".
 	Cette construction est surtout pour avoir la même interface que CS276.
 	</p>
@@ -55,7 +56,7 @@
 	<p>
 	L'indexation de CS276 est faite en parrallèle utilisant des workers qui recoivent les documents à traiter par des channels.
 	Une goroutine (équivalent en plus légers des threads) envoie sur un channel la liste des documents à traiter.
-	Les documents sont parsé ce qui est très basique vu que le travail est quasiment déjà fait.
+	Les documents sont parsé, ce qui est très basique vu que le travail est quasiment déjà fait.
 	Les index sont ajouté à l'arbre des préfixes ce qui est faisable de façon concurentiel car chaque node est protégé par un mutex (lock).
 	Tous ces workers renvoient aussi les métadata au "thread" principale.
 	Enfin un dernier thread de synchronisation fermera le channel des métadata quand tous l'index est parsé.
