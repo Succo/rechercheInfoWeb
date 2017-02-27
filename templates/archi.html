@@ -22,14 +22,22 @@
 	L'index est peuplé par des méthodes spécifique à CACM et CS276 décrites ci-dessous.
 	<p>
 
-	<h3>Requète</h3>
-	</p>
-	Les requètes sont effectué par les struct "vector_query" et "bool_query" situé dans les fichiers respectif. 
+	<h3>Requète boolénne</h3>
+	<p>
+	Tous le code nécessaire au requète booléenne est dans le fichier "bool_query.go".
 	Le parsing des requètes est assez basique en comptant comme séparateur tout ce qui n'est ni une lettre ni un chiffre.
-	Les requètes booléenne contruisent un AST à partir de la requète en appliquant l'algorithme de Shunting-yard des opérateur AND sont inseré par défauts entre deux mots consécutifs.
-	Elles échoueront silencieusement si l'ensemble demandé est trop gros (requète composé uniquement d'un NOT par exemple).
-	Pour les requètes vectorielle l'implémentation est encore plsu basique, chaque est recherché dans l'index puis les listes de Ref sont mergé en sommant les poids, la liste résultante est ordonné.
-	Pour pouvoir comparer facilement 3 poids sont stocké:
+	Ensuite un AST est construit en interprétant les parenthèse, les AND, les OR et les NOT.
+	L'AST est construit grace à l'algorithme de <a href="https://en.wikipedia.org/wiki/Shunting-yard_algorithm">Shunting-Yardh</a>.
+	Un opérateur AND est inseré par défaut entre deux mot consécutifs sans opérateur définis.
+	La requète échoue silencieusement si l'ensemble demandé est trop gros (requète composé uniquement d'un NOT par exemple), le résultats sera l'ensemble vide.
+	</p>
+
+	<h3>Requète vectorielle</h3>
+	<p>
+	Pour les requètes vectorielle le est encore plus basique, vu qu'il n'y a pas d'opérateur.
+	Chaque terme est recherché dans l'index puis les listes de Ref sont mergé en sommant les poids, la liste résultante est ordonné.
+	La liste entière est ordonné et renvoyé alors que après elle est réduite, il y aurait des optimisations possible dans ce cas.
+	Pour pouvoir comparer les performances facilement 3 poids sont stocké:
 	</p>
 	<ul>
 		<li>la fréquence brute: nombre de fois ou le mot est présent dans le document</li>
@@ -39,6 +47,7 @@
 	<p>
 	Tout ces poids sont normalisé par l'inverse document frequency.
 	D'après les résultats de qrels fourni avec CACM le dernier poids est le plus intéressant.
+	Les détails des performances de ces poids sont dans <a href="/qrels">qrels</a> pour l'ensemble des query et <a href="/precall">precall</a> pour les graphes moyen et les valeurs de MAPS.
 	</p>
 
 	<h3>Indexation de CACM</h3>
@@ -46,6 +55,10 @@
 	La struct de base pour mes index et le documents qui contient des "index intermédiaire" lié à un document.
 	Cette struct est définie dans "document.go".
 	Les mots présent dans le document et nettoyé sont stocké sous la forme d'une liste ordonné, avec une liste équivalente pour les fréquences brutes (i.e la fréquence en position 43 correspond au lexeme en position 43).
+	Un dictionnaire était plus lent, mais la liste ordonné n'est pas parfaite, en particulier l'insertio est lente et serait critique avec des documets plius long.
+	La solution serait peur être une skip list, ou une hashmap avec un hash plus rapide.
+	</p>
+	<p>
 	Ces index intermédiaire sont ajouté à l'index principale dès qu'un document est lu dans son entiereté.
 	Le fichier "cacm.go" contient la struct qui réalise le parsing.
 	Le fichier est lu séquentiellement et une variable mémorise dans quel type de block on se situe (title, summary ...).
@@ -70,9 +83,14 @@
 	<p>
 	L'index est un arbre des préfixes c'est une structure qui est très addapté au index de moteur de recherche.
 	En effet contrairement à une structure de type hashmap la localité des donné est optimisé ce qui peut accelérer les requète.
+	<p>
+	L'insertion est faite en descendant l'arbre tant que c'est possible (le mutex autorise la lecture par plusieurs threads).
+	Si nécessaire le radical est splitté: pour insérer "chat" dans un arbre avec le radical "chien", on introduit une node "ch" avec deux fils "at" et "ien".
+	Enfin si une node terminal est atteinte la reférence (docId et poids) est ajouté à la liste de cet node.
+	Cas deux dernières opérations utilisent le mutex pour bloquer l'écriture, et sont donc monothread.
 	</p>
 	<p>
-	Un autre gros avantage est que sa structure ordonné permet des découplage du travail assez facilement.
+	Un autre gros avantage est que sa structure ordonné permet un découpage du travail assez facilement.
 	Propriété dont je profite en accèdant aux différentes nodes de façon concurentiel, vu que des modifications à un sous arbre n'impacte pas le reste de l'arbre.
 	Cela permet d'autre chose dont je n'ai pas eu le temps de profiter pour faire un moteur de recherche qui serait vraiment distribué.
 	Par exemple pour merger deux index le travail peut directement se découper en travail au niveau des fils de la racine (ou à une échelle plus basse récursivement).
