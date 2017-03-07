@@ -1,0 +1,177 @@
+{
+    "memo": "7b62d3dd4daff08a05fc87eb1ab651f0e64397ea1e1688b4628d615baeed3cbd",
+    "projects": [
+        {
+            "name": "bitbucket.org/zombiezen/gopdf",
+            "branch": "default",
+            "revision": "1c63dc69751bc45441c2ce1f56b631c55294b4d5",
+            "packages": [
+                "pdf"
+            ]
+        },
+        {
+            "name": "github.com/VividCortex/gohistogram",
+            "branch": "master",
+            "revision": "51564d9861991fb0ad0f531c99ef602d0f9866e6",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/ajstarks/svgo",
+            "branch": "master",
+            "revision": "672fe547df4e49efc6db67a74391368bcb149b37",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/biogo/graphics",
+            "branch": "master",
+            "revision": "ee9e4a4ad8d5c6c55688ec8da3f96f8bd3f09b85",
+            "packages": [
+                "bezier"
+            ]
+        },
+        {
+            "name": "github.com/dustin/go-humanize",
+            "branch": "master",
+            "revision": "2fcb5204cdc65b4bec9fd0a87606bb0d0e3c54e8",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/go-kit/kit",
+            "branch": "master",
+            "revision": "bbb2306ec1318f1da5e9cba56bf933d0c7641e84",
+            "packages": [
+                "metrics",
+                "metrics/expvar",
+                "metrics/generic",
+                "metrics/internal/lv"
+            ]
+        },
+        {
+            "name": "github.com/golang/freetype",
+            "branch": "master",
+            "revision": "38b4c392adc5eed94207994c4848fff99f4ac234",
+            "packages": [
+                ".",
+                "raster",
+                "truetype"
+            ]
+        },
+        {
+            "name": "github.com/golang/snappy",
+            "branch": "master",
+            "revision": "7db9049039a047d955fe8c19b83c8ff5abd765c7",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/gonum/blas",
+            "branch": "master",
+            "revision": "f6d28c18e71668e63984d0eec21fe11804c6fa30",
+            "packages": [
+                ".",
+                "blas64",
+                "native",
+                "native/internal/math32"
+            ]
+        },
+        {
+            "name": "github.com/gonum/floats",
+            "branch": "master",
+            "revision": "b87c65fd450a3f7a8875a16e4b2dbf5556ede4f1",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/gonum/internal",
+            "branch": "master",
+            "revision": "aa14b654e75da6e47f3c563fbda889112fe5ac94",
+            "packages": [
+                "asm/f32",
+                "asm/f64"
+            ]
+        },
+        {
+            "name": "github.com/gonum/lapack",
+            "branch": "master",
+            "revision": "7bd627ff95a90e02d58bc8346c7172b3d66b98e6",
+            "packages": [
+                ".",
+                "lapack64",
+                "native"
+            ]
+        },
+        {
+            "name": "github.com/gonum/matrix",
+            "branch": "master",
+            "revision": "1b010f5792b7006e929e4833b43628e6115c8988",
+            "packages": [
+                ".",
+                "mat64"
+            ]
+        },
+        {
+            "name": "github.com/gonum/plot",
+            "branch": "master",
+            "revision": "0e3ec68ffcc2ae4cc415fd64dec3a0ed24db3401",
+            "packages": [
+                ".",
+                "palette",
+                "plotter",
+                "vg",
+                "vg/draw",
+                "vg/fonts",
+                "vg/vgeps",
+                "vg/vgimg",
+                "vg/vgpdf",
+                "vg/vgsvg"
+            ]
+        },
+        {
+            "name": "github.com/llgcode/draw2d",
+            "branch": "master",
+            "revision": "1286d3b2030ac9952e59c5ef29ef3cc24a8e83d5",
+            "packages": [
+                ".",
+                "draw2dbase",
+                "draw2dimg"
+            ]
+        },
+        {
+            "name": "github.com/lucasb-eyer/go-colorful",
+            "branch": "master",
+            "revision": "9c2852a141bf4711e4276f8f119c90d0f20a556c",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/surgebase/porter2",
+            "branch": "master",
+            "revision": "56e4718818e8dc4ea5ba6348402fc7661863732a",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "golang.org/x/image",
+            "branch": "master",
+            "revision": "507b1a44bd72830c136e6ecf7c05f9089796d572",
+            "packages": [
+                "draw",
+                "font",
+                "math/f64",
+                "math/fixed",
+                "tiff",
+                "tiff/lzw"
+            ]
+        }
+    ]
+}

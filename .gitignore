@@ -1,6 +1,10 @@
+# Files specific to rechercheInfoWeb
 data/CS276/pa1-data/
 indexes/
 graphs/
 *.png
 *.gob
 *.odg
+
+# Vendoring and other golang stuff
+vendor/

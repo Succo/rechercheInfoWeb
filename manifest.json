@@ -1,0 +1,25 @@
+{
+    "dependencies": {
+        "github.com/dustin/go-humanize": {
+            "branch": "master"
+        },
+        "github.com/go-kit/kit": {
+            "branch": "master"
+        },
+        "github.com/golang/snappy": {
+            "branch": "master"
+        },
+        "github.com/gonum/floats": {
+            "branch": "master"
+        },
+        "github.com/gonum/plot": {
+            "branch": "master"
+        },
+        "github.com/lucasb-eyer/go-colorful": {
+            "branch": "master"
+        },
+        "github.com/surgebase/porter2": {
+            "branch": "master"
+        }
+    }
+}
