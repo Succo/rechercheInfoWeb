@@ -23,7 +23,6 @@ const (
 // CS276Scanner will walk the buffer and return characters
 type CS276Scanner struct {
 	root   string
-	dirs   []string
 	toScan chan string
 	trie   *Root
 }
